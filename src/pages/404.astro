@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="페이지를 찾을 수 없습니다">
+  <div class="nf">
+    <p class="kicker">404</p>
+    <h1>이 주소엔 글이 없다</h1>
+    <p>지워졌거나 주소가 바뀌었을 수 있다.</p>
+    <a class="nf-home" href="/">홈으로</a>
+  </div>
+</Base>
+
+<style>
+  .nf { max-width: 720px; margin: 0 auto; padding-top: 80px; text-align: center; }
+  .nf h1 { font-family: var(--serif); font-weight: 900; font-size: 32px; margin: 12px 0 10px; }
+  .nf p { color: var(--ink-2); }
+  .nf .kicker::after { display: none; }
+  .nf .kicker { justify-content: center; }
+  .nf-home {
+    display: inline-block; margin-top: 28px; padding: 10px 24px;
+    background: var(--money); color: #fff; border-radius: 999px; font-weight: 700; font-size: 14px;
+  }
+</style>

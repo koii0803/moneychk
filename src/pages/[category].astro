@@ -1,0 +1,67 @@
+---
+import { getPublished } from '../lib/posts';
+import Base from '../layouts/Base.astro';
+import { CATEGORIES, type CategoryKey } from '../config/site';
+
+export function getStaticPaths() {
+  return Object.keys(CATEGORIES).map((category) => ({ params: { category } }));
+}
+
+const { category } = Astro.params as { category: CategoryKey };
+const cat = CATEGORIES[category];
+
+const posts = (await getPublished()).filter((p) => p.data.category === category);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+---
+
+<Base title={`${cat.name} 팩트체크`} description={`${cat.desc} — ${cat.name} 카테고리의 생활경제 팩트체크 모음.`}>
+  <header class="cat-head" style={`--c:${cat.color}`}>
+    <p class="cat-no">{cat.no}</p>
+    <h1>{cat.name}</h1>
+    <p class="cat-desc">{cat.desc}</p>
+  </header>
+
+  <ol class="catlist" style={`--c:${cat.color}`}>
+    {
+      posts.map((p) => (
+        <li>
+          <a href={`/posts/${p.id}`}>
+            <span class="date">{fmt(p.data.pubDate)}</span>
+            <span class="t">{p.data.title}</span>
+            <span class="s">{p.data.description}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+  {posts.length === 0 && <p class="empty">이 방은 아직 비어 있다. 글이 준비되는 대로 채운다.</p>}
+</Base>
+
+<style>
+  .cat-head { padding: 44px 0 28px; border-bottom: 3px solid var(--c); }
+  .cat-no { margin: 0; font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--c); }
+  .cat-head h1 {
+    margin: 6px 0 8px;
+    font-family: var(--serif); font-weight: 900; font-size: clamp(30px, 5vw, 44px);
+    letter-spacing: -0.02em;
+  }
+  .cat-desc { margin: 0; color: var(--ink-2); }
+
+  .catlist { list-style: none; margin: 0; padding: 0; }
+  .catlist li { border-bottom: 1px solid var(--hair); }
+  .catlist a {
+    display: grid; grid-template-columns: 96px 1fr; gap: 4px 20px; padding: 22px 0;
+  }
+  .catlist .date { font-size: 12.5px; color: var(--ink-3); padding-top: 5px; grid-row: span 2; }
+  .catlist .t { font-family: var(--serif); font-weight: 700; font-size: 19.5px; line-height: 1.45; }
+  .catlist a:hover .t { color: var(--c); text-decoration: underline; text-underline-offset: 4px; }
+  .catlist .s { grid-column: 2; font-size: 14px; color: var(--ink-2); }
+  .empty { color: var(--ink-2); padding: 32px 0; }
+
+  @media (max-width: 640px) {
+    .catlist a { grid-template-columns: 1fr; }
+    .catlist .date { grid-row: auto; order: 3; }
+  }
+</style>

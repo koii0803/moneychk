@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config/site';
+---
+
+<Base title="문의" description={`${SITE.name} 문의 안내.`}>
+  <div class="page">
+    <h1>문의</h1>
+    <p>
+      기사 내용의 오류 제보, 제도 변경 알림, 광고·제휴 문의는 아래 이메일로 받는다.
+      확인되는 대로 답한다.
+    </p>
+    <p class="mail"><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+    <p>
+      숫자 오류 제보 시 해당 글 주소와 근거 자료(공식 문서 링크)를 함께 보내주면
+      더 빨리 반영할 수 있다.
+    </p>
+  </div>
+</Base>
+
+<style>
+  .mail { font-family: var(--serif); font-weight: 700; font-size: 22px; margin: 24px 0; }
+  .mail a { border-bottom: 2px solid var(--money); }
+</style>

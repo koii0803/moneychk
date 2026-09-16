@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config/site';
+---
+
+<Base title="개인정보처리방침" description={`${SITE.name} 개인정보처리방침.`}>
+  <div class="page">
+    <h1>개인정보처리방침</h1>
+    <p>
+      {SITE.name}({SITE.latin})는 회원가입 없이 운영되는 정보 제공 사이트로,
+      이용자의 개인정보를 직접 수집·저장하지 않는다.
+    </p>
+    <h2>쿠키와 광고</h2>
+    <p>
+      본 사이트는 Google AdSense 광고를 게재할 수 있다. Google을 포함한 제3자 광고
+      사업자는 쿠키를 사용해 이용자의 이전 방문 기록에 기반한 광고를 표시할 수 있다.
+      이용자는 <a href="https://adssettings.google.com" rel="noopener" target="_blank">Google 광고 설정</a>에서
+      맞춤 광고를 해제할 수 있다.
+    </p>
+    <h2>통계 도구</h2>
+    <p>
+      방문 통계 파악을 위해 익명화된 트래픽 분석 도구를 사용할 수 있으며, 이 과정에서
+      개인을 식별할 수 있는 정보는 수집하지 않는다.
+    </p>
+    <h2>문의</h2>
+    <p>개인정보 관련 문의는 <a href="/contact">문의 페이지</a>를 통해 받는다.</p>
+    <p class="date">시행일: 2026년 9월 14일</p>
+  </div>
+</Base>
+
+<style>
+  .date { font-size: 13px; color: var(--ink-3); margin-top: 36px; }
+</style>

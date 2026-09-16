@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config/site';
+---
+
+<Base title="소개" description={`${SITE.name} 소개 — 생활경제 팩트체크의 기준과 원칙.`}>
+  <div class="page">
+    <h1>머니첵은 이렇게 쓴다</h1>
+    <p>
+      머니첵(moneychk)은 지원금·환급·대출·주거·절약 같은 생활 속 돈 문제를 다루는
+      생활경제 팩트체크 사이트다. 의견이나 예측이 아니라, 정부·공공기관이 공개한
+      공식 자료의 숫자만을 근거로 쓴다.
+    </p>
+    <h2>세 가지 원칙</h2>
+    <ul>
+      <li><strong>숫자에는 출처가 붙는다.</strong> 금액·비율·기한은 반드시 공식 문서를 근거로 적는다.</li>
+      <li><strong>기준일을 밝힌다.</strong> 제도는 바뀐다. 모든 글은 발행일 기준임을 명시한다.</li>
+      <li><strong>결론을 먼저 쓴다.</strong> 읽는 사람이 답부터 확인할 수 있게 구성한다.</li>
+    </ul>
+    <p>
+      제도 내용은 수시로 개정되므로, 신청·계약 등 실제 행동 전에는 반드시 해당 기관의
+      최신 공고를 확인하기 바란다.
+    </p>
+  </div>
+</Base>
+
+<style is:global>
+  .page { max-width: 720px; margin: 0 auto; padding-top: 44px; }
+  .page h1 {
+    font-family: var(--serif); font-weight: 900; font-size: 32px; letter-spacing: -0.02em;
+    margin: 0 0 24px; padding-bottom: 18px; border-bottom: 3px solid var(--ink);
+  }
+  .page h2 { font-family: var(--serif); font-weight: 700; font-size: 21px; margin: 36px 0 12px; }
+  .page p, .page li { color: var(--ink-2); }
+  .page strong { color: var(--ink); }
+</style>

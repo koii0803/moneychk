@@ -1,0 +1,19 @@
+name: daily-rebuild
+# 매일 06:00 KST(21:00 UTC) 빈 커밋을 푸시해 Cloudflare 빌드를 돌린다.
+# 그날 날짜가 된 예약 글이 이때 공개된다. G2가 새벽 5시에 이미 푸시했으면 중복 빌드 한 번일 뿐이다.
+on:
+  schedule:
+    - cron: "0 21 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name "daily-rebuild"
+          git config user.email "koii0803@users.noreply.github.com"
+          git commit --allow-empty -m "daily rebuild $(date -u +%F)"
+          git push

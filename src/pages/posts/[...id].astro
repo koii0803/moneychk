@@ -1,0 +1,160 @@
+---
+import { render } from 'astro:content';
+import { getPublished } from '../../lib/posts';
+import Base from '../../layouts/Base.astro';
+import { CATEGORIES, SITE, fmtDate } from '../../config/site';
+
+export async function getStaticPaths() {
+  const posts = await getPublished();
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post, related: posts.filter((p) => p.id !== post.id && p.data.category === post.data.category).slice(0, 3) },
+  }));
+}
+
+const { post, related } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+const cat = CATEGORIES[d.category];
+
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: d.title,
+  description: d.description,
+  datePublished: d.pubDate.toISOString(),
+  ...(d.updatedDate && { dateModified: d.updatedDate.toISOString() }),
+  ...(d.thumbnail && { image: new URL(d.thumbnail, SITE.url).href }),
+  author: { '@type': 'Organization', name: SITE.name },
+  publisher: { '@type': 'Organization', name: SITE.name },
+  mainEntityOfPage: new URL(`/posts/${post.id}`, SITE.url).href,
+});
+---
+
+<Base title={d.title} description={d.description} article ogImage={d.thumbnail} pubDate={d.pubDate} updatedDate={d.updatedDate}>
+  <script type="application/ld+json" set:html={jsonLd} slot="head" />
+
+  <article class="post" style={`--c:${cat.color}`}>
+    <header class="post-head">
+      <a class="post-cat" href={`/${d.category}`}>{cat.no} · {cat.name}</a>
+      <h1>{d.title}</h1>
+      <p class="post-desc">{d.description}</p>
+      <p class="post-meta">
+        {SITE.name} · <time datetime={d.pubDate.toISOString()}>{fmtDate(d.pubDate)}</time>
+        {d.updatedDate && <> · 수정 {fmtDate(d.updatedDate)}</>}
+      </p>
+    </header>
+
+    {d.thumbnail && <img class="post-hero" src={d.thumbnail} alt={d.title} loading="eager" width="1280" height="720" />}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {d.tags.length > 0 && (
+      <ul class="post-tags">
+        {d.tags.map((t) => <li><a href={`/tag/${t}`}>#{t}</a></li>)}
+      </ul>
+    )}
+
+    <aside class="post-note">
+      이 글은 공식 자료를 근거로 한 일반 정보이며, 개인의 자격·금액 판정은 해당 기관의 최종 심사에 따릅니다.
+      제도·금액·기한은 발행일 기준이므로 신청 전 기관 공고에서 다시 확인하세요.
+    </aside>
+
+    <footer class="post-foot">
+      <a href={`/${d.category}`}>← {cat.name} 글 더 보기</a>
+      <a href="/">홈</a>
+    </footer>
+  </article>
+
+  {related.length > 0 && (
+    <section class="related">
+      <p class="kicker">같이 볼 글</p>
+      <ul class="related-list">
+        {related.map((p) => (
+          <li>
+            <a href={`/posts/${p.id}`}>
+              <span class="t">{p.data.title}</span>
+              <span class="s">{p.data.description}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</Base>
+
+<style is:global>
+  .post { max-width: 720px; margin: 0 auto; }
+  .post-head { padding: 44px 0 26px; border-bottom: 1px solid var(--hair); margin-bottom: 30px; }
+  .post-cat { font-size: 13px; font-weight: 700; color: var(--c); letter-spacing: 0.06em; }
+  .post-head h1 {
+    margin: 12px 0 14px;
+    font-family: var(--serif); font-weight: 900;
+    font-size: clamp(26px, 4.4vw, 38px); line-height: 1.38; letter-spacing: -0.02em;
+  }
+  .post-desc { margin: 0 0 16px; font-size: 17px; color: var(--ink-2); }
+  .post-meta { margin: 0; font-size: 13px; color: var(--ink-3); }
+  .post-hero { border-radius: 4px; margin-bottom: 30px; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; }
+  .prose img { border-radius: 4px; margin: 26px 0; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; }
+  .post-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 0; padding: 0; }
+  .post-tags a {
+    display: inline-block; padding: 4px 12px; border: 1px solid var(--hair); border-radius: 999px;
+    font-size: 12.5px; color: var(--ink-2); background: #fff;
+  }
+  .post-tags a:hover { border-color: var(--money); color: var(--money); }
+  .post-note {
+    margin: 32px 0 0; padding: 16px 20px;
+    border: 1px solid var(--hair); background: #fff; border-radius: 4px;
+    font-size: 14px; color: var(--ink-2); line-height: 1.7;
+  }
+  .related { max-width: 720px; margin: 64px auto 0; }
+  .related-list { list-style: none; margin: 0; padding: 0; }
+  .related-list li { border-bottom: 1px solid var(--hair); }
+  .related-list a { display: block; padding: 16px 0; }
+  .related-list .t { display: block; font-family: var(--serif); font-weight: 700; font-size: 17px; line-height: 1.45; }
+  .related-list a:hover .t { color: var(--money); }
+  .related-list .s { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 4px; }
+
+  .prose { font-size: 16.5px; }
+  .prose h2 {
+    font-family: var(--serif); font-weight: 900; font-size: 23px; letter-spacing: -0.01em;
+    margin: 52px 0 16px; padding-top: 22px; border-top: 3px solid var(--ink);
+  }
+  .prose h3 {
+    font-family: var(--serif); font-weight: 700; font-size: 18.5px; margin: 36px 0 10px;
+  }
+  .prose h3::before { content: '― '; color: var(--money); }
+  .prose p { margin: 0 0 18px; }
+  .prose strong { font-weight: 700; box-shadow: inset 0 -9px 0 var(--money-soft); }
+  .prose ul, .prose ol { padding-left: 22px; margin: 0 0 18px; }
+  .prose li { margin-bottom: 6px; }
+  .prose blockquote {
+    margin: 26px 0; padding: 16px 20px;
+    border-left: 3px solid var(--money); background: var(--paper-2);
+    font-size: 15.5px;
+  }
+  .prose blockquote p { margin: 0; }
+  .prose table {
+    width: 100%; border-collapse: collapse; margin: 26px 0;
+    font-size: 14.5px; line-height: 1.55;
+  }
+  .prose thead th {
+    font-family: var(--serif); font-size: 13.5px;
+    border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink);
+    padding: 10px 10px; text-align: left; white-space: nowrap;
+  }
+  .prose tbody td { border-bottom: 1px solid var(--hair); padding: 10px 10px; vertical-align: top; }
+  .prose tbody tr:last-child td { border-bottom: 2px solid var(--ink); }
+  .prose td:not(:first-child), .prose th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  .prose hr { border: 0; border-top: 1px solid var(--hair); margin: 40px 0; }
+  .prose a { color: var(--money); border-bottom: 1px solid currentColor; }
+
+  .post-foot {
+    display: flex; justify-content: space-between;
+    margin-top: 56px; padding-top: 18px; border-top: 3px solid var(--ink);
+    font-weight: 700; font-size: 14.5px;
+  }
+  .post-foot a:hover { color: var(--money); }
+</style>
