@@ -206,11 +206,21 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   .glow { position: absolute; inset: -6px; border-radius: 999px; background: radial-gradient(circle, color-mix(in srgb, var(--mint) 55%, transparent) 0%, transparent 70%); filter: blur(4px); animation: breathe 2.4s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { opacity: .25; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.15); } }
   @media (prefers-reduced-motion: reduce) { .glow { animation: none; opacity: .6; } }
-  /* 2단 제호: 이름 위, 작은 영문 태그 아래 */
-  .wordmark-type { display: flex; flex-direction: column; gap: 4px; line-height: 1; }
-  .wordmark-text { font-weight: 800; font-size: 19px; letter-spacing: -0.025em; color: var(--ink); transition: color .2s; }
-  .wordmark:hover .wordmark-text { color: var(--mint); }
+  /* 2단 제호: 이름 위, 작은 영문 태그 아래(가운데). 평소엔 연녹색 빛이 글자를 훑고 지나가고, 올리면 연녹색으로 */
+  .wordmark-type { display: flex; flex-direction: column; align-items: center; gap: 4px; line-height: 1; }
+  .wordmark-text {
+    font-weight: 800; font-size: 19px; letter-spacing: -0.025em;
+    color: transparent;
+    background: linear-gradient(110deg, var(--ink) 0%, var(--ink) 40%, #b9f5dc 50%, var(--ink) 60%, var(--ink) 100%);
+    background-size: 300% 100%; background-position: 100% 0;
+    -webkit-background-clip: text; background-clip: text;
+    animation: sheen 6s ease-in-out infinite;
+    transition: color .25s;
+  }
+  @keyframes sheen { 0%, 70% { background-position: 100% 0; } 90%, 100% { background-position: 0% 0; } }
+  .wordmark:hover .wordmark-text { animation: none; background: none; color: #a8efd0; }
   .wordmark-sub { font-size: 8.5px; font-weight: 700; letter-spacing: 0.18em; color: var(--mint); }
+  @media (prefers-reduced-motion: reduce) { .wordmark-text { animation: none; background: none; color: var(--ink); } }
   @media (max-width: 480px) { .wordmark-sub { display: none; } }
   .top-nav { display: flex; align-items: center; gap: 2px; }
   .top-nav a {
