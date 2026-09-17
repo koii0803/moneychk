@@ -1,69 +1,110 @@
 ---
 import Base from '../layouts/Base.astro';
-// 홈 화면 구조도: 위에서 아래로 블록 순서, 각 블록이 어디서 데이터를 받는지
-const blocks = [
-  { n: '01', name: '헤더 (Base.astro)', what: '로고 묶음(3D ₩ + 숨쉬는 빛 · Moneycheck / POLICY DATA LAB) · 파이프라인 배지 · GNB 4개 · 밝기 토글', from: 'src/layouts/Base.astro', h: 60 },
-  { n: '02', name: '히어로 롤링', what: 'h1 두 줄(윗줄 회색·아랫줄 흰→파랑) + 서브 한 줄. 20쌍이 3.4초마다 페이드. 높이 고정', from: 'index.astro → rolling[20]', h: 200 },
-  { n: '03', name: '영역 칩', what: '전체 + 7분류, 가운데 정렬, 각 분류 페이지로', from: 'site.ts CATEGORIES', h: 44 },
-  { n: '04', name: '대표 카드 #featured', what: '최신 글 1편. 남색 그라데이션(썸네일 있으면 사진), 파란 배지, 분류 아이콘, 제목 / 요약 + 긴 화살표', from: 'getPublished()[0]', h: 360 },
-  { n: '05', name: '두 단', what: '왼쪽: 지금 많이 보는 콘텐츠(번호 4개, 1번 NEW) · 오른쪽: 나를 위한 정책 알아두기(제목·요약·⏳분·분류 배지 | 썸네일, 올리면 확대 + 4색 테두리)', from: 'posts[0..4] / posts[1..9]', h: 520 },
-  { n: '06', name: '오리지널 시리즈', what: '세로 카드 4개(도시와 내 집의 설계도 · 월급의 마지막 방어선 · 청년 자산 빌드업 · 비상금과 출구 전략). 색 판 + 3D 아이콘, 콘텐츠 N개 실측', from: 'index.astro → series[4]', h: 380 },
-  { n: '07', name: '방금 올라온 콘텐츠', what: '4열 × 2 = 8개(썸네일·제목·날짜, 올리면 확대) + 더 펼쳐보기 → /posts', from: 'posts[0..8]', h: 520 },
-  { n: '08', name: '푸터 (Base.astro)', what: '로고 묶음(헤더와 동일) · 태그라인 · 분류 7 · 소개/개인정보/법적 고지/문의/RSS · ©', from: 'src/layouts/Base.astro', h: 200 },
-];
+import { CATEGORIES } from '../config/site';
+import { getPublished } from '../lib/posts';
+import tools from '../data/tools.json';
+
+// 사이트 구조도: 상위 → 하위 페이지 연결. 숫자는 실측(발행 글 수·도구 수).
+const posts = await getPublished();
+const cats = Object.entries(CATEGORIES).map(([key, c]) => ({
+  key, ...c,
+  n: posts.filter((p) => p.data.category === key).length,
+  t: (tools as { cat: string }[]).filter((x) => x.cat === key).length,
+  ex: posts.filter((p) => p.data.category === key).slice(0, 2).map((p) => p.data.title),
+}));
+const tags = new Set(posts.flatMap((p) => p.data.tags)).size;
 ---
-<Base title="홈 화면 구조" description="머니첵 홈 화면이 어떤 블록으로 짜였는지.">
-  <div class="map">
-    <h1>홈 화면 구조 — 위에서 아래로 8블록</h1>
-    <p class="sub">왼쪽은 화면 비율 그대로 줄인 와이어프레임, 오른쪽은 각 블록이 뭘 그리고 어디서 데이터를 받는지.</p>
+<Base title="사이트 구조" description="머니첵 페이지가 상위 → 하위로 어떻게 연결되는지.">
+  <div class="tree">
+    <h1>머니첵 사이트 구조 — 상위 → 하위 페이지 연결</h1>
+    <p class="sub">공공데이터 팩트체크 & 지원금·대출 애드센스 결합형 3단계 정보 구조. 숫자는 지금 빌드 실측.</p>
 
-    <div class="grid">
-      <div class="wire" aria-hidden="true">
-        {blocks.map((b) => <div class="w" style={`flex-basis:${b.h / 6}px`}><span>{b.n}</span></div>)}
-      </div>
-      <ol class="list">
-        {blocks.map((b) => (
-          <li>
-            <span class="no">{b.n}</span>
-            <div>
-              <b>{b.name}</b>
-              <p>{b.what}</p>
-              <code>{b.from}</code>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
+    <!-- TIER 1 -->
+    <section class="t1">
+      <span class="tag mint">TIER 1 · 허브</span>
+      <h2><a href="/">홈 /</a></h2>
+      <p>히어로 롤링 20쌍 · 영역 칩 7 · 대표 카드 · 지금 많이 보는 콘텐츠 · 나를 위한 정책 · 오리지널 시리즈 4 · 방금 올라온 콘텐츠 8</p>
+      <p class="side">같은 층: <a href="/tools">모의계산기 /tools</a> ({tools.length}개 · 인기 26) · <a href="/posts">전체 콘텐츠 /posts</a> ({posts.length}편) · <a href="/about">분석 원칙 /about</a></p>
+    </section>
+    <div class="down"></div>
 
-    <h2>공통 규칙</h2>
-    <ul class="rules">
-      <li><b>색</b> — 배경 #101013 · 카드 #1c1d23 · 글자 #e5e8eb · 강조 토스 블루 #3182f6 · 민트 #00d287(로고·datalab) · 분류 배지 7색(민트·앰버·블루·코랄·틸·바이올렛·핑크)</li>
-      <li><b>서체</b> — SUIT Variable(대체 Pretendard), 숫자 고정폭. 제목 800 자간 -0.03em, 본문 400</li>
-      <li><b>호버</b> — 제목·메뉴 글씨 파랑, 썸네일 1.06배, 카드 테두리 파랑 40%</li>
-      <li><b>이미지</b> — 글 썸네일 없으면 분류 3D 아이콘(public/img/icons)으로 대체</li>
-      <li><b>테마</b> — 어두운 화면 기본, 헤더 달 버튼으로 밝은 화면(localStorage 기억)</li>
+    <!-- TIER 2 -->
+    <p class="lbl">TIER 2 · 분류 7 (카테고리별 전문 권위)</p>
+    <ul class="t2">
+      {cats.map((c, i) => (
+        <li style={`--b:${c.badge}`}>
+          <a href={`/${c.key}`}>
+            <span class="pill">{['①','②','③','④','⑤','⑥','⑦'][i]} {c.short}</span>
+            <b>{c.n}편</b>
+            <small>{c.name} · 도구 {c.t}</small>
+            <em>{c.desc}</em>
+          </a>
+          <div class="drop"></div>
+        </li>
+      ))}
+    </ul>
+
+    <!-- TIER 3 -->
+    <p class="lbl">TIER 3 · 롱테일 글 /posts/slug (55 → G1 경제 모드 → G2)</p>
+    <ul class="t3">
+      {cats.map((c) => (
+        <li style={`--b:${c.badge}`}>
+          {c.ex.length ? c.ex.map((t) => <span>{t}</span>) : <span class="dim">데이터 구축 중</span>}
+        </li>
+      ))}
+    </ul>
+    <p class="note">글 형식: 3초 즉답 → 자격 체크표 → 감액·환수 리스크 → 원스톱 실행 가이드 + 계산기 박스 + 내부 링크 3 + 관련 글 3 + 태그(/tag/…, 지금 {tags}개)</p>
+
+    <!-- 공통 -->
+    <p class="lbl">공통 페이지</p>
+    <ul class="common">
+      <li><a href="/about">분석 원칙</a></li>
+      <li><a href="/privacy">개인정보처리방침</a></li>
+      <li><a href="/disclaimer">책임의 한계와 법적 고지</a></li>
+      <li><a href="/contact">문의</a></li>
+      <li><a href="/rss.xml">RSS</a></li>
+      <li><span>sitemap-index.xml · robots.txt · ads.txt · 404</span></li>
     </ul>
   </div>
 </Base>
 
 <style>
-  .map { max-width: 960px; margin: 0 auto; padding-top: 44px; }
-  .map h1 { margin: 0 0 6px; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
-  .map h2 { margin: 56px 0 14px; font-size: 20px; font-weight: 800; }
-  .sub { margin: 0 0 32px; color: var(--ink-3); font-size: 14px; }
-  .grid { display: grid; grid-template-columns: 150px 1fr; gap: 32px; align-items: start; }
-  .wire { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--hair); border-radius: 10px; padding: 6px; background: var(--surface-2); }
-  .w { flex: 0 0 auto; border-radius: 4px; background: var(--surface); border: 1px solid var(--hair); display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--ink-3); }
-  .w:nth-child(4) { background: linear-gradient(45deg, #0f172a, #334155); }
-  .w:nth-child(1), .w:nth-child(8) { background: color-mix(in srgb, var(--surface) 60%, var(--bg)); }
-  .list { list-style: none; margin: 0; padding: 0; }
-  .list li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--hair); }
-  .no { font-weight: 800; color: var(--money); font-size: 15px; }
-  .list b { display: block; font-size: 16px; font-weight: 800; margin-bottom: 4px; }
-  .list p { margin: 0 0 6px; font-size: 14px; color: var(--ink-2); line-height: 1.6; }
-  .list code { font-size: 12px; color: var(--mint); background: var(--surface-2); padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, Consolas, monospace; }
-  .rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-  .rules li { padding: 12px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--hair); font-size: 14px; color: var(--ink-2); line-height: 1.6; }
-  .rules b { color: var(--ink); margin-right: 8px; }
-  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .wire { position: static; flex-direction: row; } .w { flex: 1 1 0; height: 40px; } }
+  .tree { max-width: 1080px; margin: 0 auto; padding-top: 44px; }
+  .tree h1 { margin: 0 0 6px; font-size: 24px; font-weight: 800; letter-spacing: -0.03em; }
+  .sub { margin: 0 0 28px; color: var(--ink-3); font-size: 14px; }
+  .lbl { margin: 0 0 12px; font-size: 12.5px; font-weight: 700; color: var(--ink-3); letter-spacing: .02em; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+  .tag.mint { background: var(--mint); color: #0f1f1a; }
+
+  .t1 { border: 2px solid var(--mint); border-radius: 16px; padding: 18px 22px; background: color-mix(in srgb, var(--surface) 80%, var(--mint) 4%); }
+  .t1 h2 { margin: 10px 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .t1 h2 a:hover { color: var(--mint); }
+  .t1 p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+  .t1 .side { margin-top: 8px; color: var(--ink-3); }
+  .t1 .side a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .down { width: 2px; height: 40px; margin: 0 auto; background: var(--mint); position: relative; }
+  .down::after { content: ''; position: absolute; left: -5px; bottom: -2px; border: 6px solid transparent; border-top: 8px solid var(--mint); }
+
+  .t2 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  .t2 li { position: relative; }
+  .t2 a { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 14px 8px 12px; border-radius: 12px; border: 2px solid var(--b); background: var(--surface); height: 100%; transition: background .15s; }
+  .t2 a:hover { background: color-mix(in srgb, var(--b) 10%, var(--surface)); }
+  .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #0f1f1a; background: var(--b); white-space: nowrap; }
+  .t2 b { font-size: 16px; font-weight: 800; margin-top: 2px; }
+  .t2 small { font-size: 11px; color: var(--ink-3); }
+  .t2 em { font-style: normal; font-size: 11px; color: var(--ink-2); line-height: 1.4; margin-top: 4px; }
+  .drop { width: 0; height: 36px; margin: 0 auto; border-left: 2px dashed color-mix(in srgb, var(--b) 60%, transparent); }
+
+  .t3 { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  .t3 li { display: grid; gap: 6px; }
+  .t3 span { display: block; padding: 8px 9px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--b); font-size: 11px; line-height: 1.4; color: var(--ink-2); }
+  .t3 .dim { color: var(--ink-3); border-left-color: var(--hair); }
+  .note { margin: 0 0 36px; font-size: 12.5px; color: var(--ink-3); }
+
+  .common { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .common li { padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--hair); font-size: 13px; }
+  .common a:hover { color: var(--money); }
+  .common span { color: var(--ink-3); }
+
+  @media (max-width: 900px) { .t2, .t3 { grid-template-columns: repeat(2, 1fr); } .drop { display: none; } }
 </style>
