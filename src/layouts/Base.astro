@@ -210,17 +210,16 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   .wordmark-type { display: flex; flex-direction: column; align-items: center; gap: 4px; line-height: 1; }
   .wordmark-text {
     font-weight: 800; font-size: 19px; letter-spacing: -0.025em;
-    color: transparent;
-    background: linear-gradient(110deg, var(--ink) 0%, var(--ink) 40%, #b9f5dc 50%, var(--ink) 60%, var(--ink) 100%);
-    background-size: 300% 100%; background-position: 100% 0;
+    color: transparent; -webkit-text-fill-color: transparent;
+    background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 30%, #7fe8b8 45%, #c8fbe4 50%, #7fe8b8 55%, var(--ink) 70%, var(--ink) 100%);
+    background-size: 250% 100%; background-position: 100% 0;
     -webkit-background-clip: text; background-clip: text;
-    animation: sheen 6s ease-in-out infinite;
-    transition: color .25s;
+    animation: sheen 4.5s ease-in-out infinite;
   }
-  @keyframes sheen { 0%, 70% { background-position: 100% 0; } 90%, 100% { background-position: 0% 0; } }
-  .wordmark:hover .wordmark-text { animation: none; background: none; color: #a8efd0; }
+  @keyframes sheen { 0%, 45% { background-position: 100% 0; } 80%, 100% { background-position: 0% 0; } }
+  .wordmark:hover .wordmark-text { animation: none; background: none; color: #a8efd0; -webkit-text-fill-color: #a8efd0; }
   .wordmark-sub { font-size: 8.5px; font-weight: 700; letter-spacing: 0.18em; color: var(--mint); }
-  @media (prefers-reduced-motion: reduce) { .wordmark-text { animation: none; background: none; color: var(--ink); } }
+  @media (prefers-reduced-motion: reduce) { .wordmark-text { animation: none; background: none; color: var(--ink); -webkit-text-fill-color: var(--ink); } }
   @media (max-width: 480px) { .wordmark-sub { display: none; } }
   .top-nav { display: flex; align-items: center; gap: 2px; }
   .top-nav a {
