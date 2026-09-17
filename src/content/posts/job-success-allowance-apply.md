@@ -48,8 +48,6 @@ draft: false
 
 ![취업성공수당 지급신청은 어디에 무슨 서류로 하나](https://pub-71a067f62c754bb0b68600c1ca0758c9.r2.dev/moneychk/job-success-allowance-apply/job-success-allowance-apply-1.webp)
 
-![취업성공수당 지급신청은 어디에 무슨 서류로 하나](https://pub-71a067f62c754bb0b68600c1ca0758c9.r2.dev/moneychk/job-success-allowance-apply/job-success-allowance-apply-1.webp)
-
 ### 서류가 빠지면 생기는 일
 
 고용노동부는 서류가 빠지면 보완 요청을 보내고 그만큼 처리가 늦어진다고 안내한다. 근로계약서를 처음부터 붙이는 편이 빠르다. 주당 근무시간은 계약서가 아니라 고용보험 피보험 자격 신고 자료로 보므로, 둘이 다르면 신고 쪽이 잣대다.
@@ -57,8 +55,6 @@ draft: false
 ## 4. 취업성공수당 처리 14일은 달력으로 며칠인가
 
 **처리 14일은 토요일과 공휴일을 뺀 날수라 달력으로는 3주 가까이 걸린다.** 정부24 처리기간 계산 방법이 그렇게 세므로, 추석 연휴가 끼면 그만큼 뒤로 밀린다. 반년 시점에 바로 청구했다면 입금은 대략 한 달 뒤로 잡는 것이 안전하다.
-
-![취업성공수당 처리 14일은 달력으로 며칠인가](https://pub-71a067f62c754bb0b68600c1ca0758c9.r2.dev/moneychk/job-success-allowance-apply/job-success-allowance-apply-2.webp)
 
 ![취업성공수당 처리 14일은 달력으로 며칠인가](https://pub-71a067f62c754bb0b68600c1ca0758c9.r2.dev/moneychk/job-success-allowance-apply/job-success-allowance-apply-2.webp)
 
