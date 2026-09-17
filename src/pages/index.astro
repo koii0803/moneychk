@@ -28,7 +28,7 @@ const tagsOf = (k: string) => {
         </div>
       </a>
       <div class="feat-body">
-        <p class="feat-cat">{CATEGORIES[lead.data.category].name} · 방금 올라온 글</p>
+        <p class="feat-cat">{CATEGORIES[lead.data.category].name} · 최신 분석</p>
         <h1 class="feat-title"><a href={`/posts/${lead.id}`}>{lead.data.title}</a></h1>
         <p class="feat-desc">{lead.data.description}</p>
         <div class="feat-foot">
@@ -40,15 +40,15 @@ const tagsOf = (k: string) => {
   ) : (
     <section class="feat feat-empty">
       <div class="feat-body">
-        <h1 class="feat-title">지원금·환급·대출, 자격과 금액을 숫자로 확인한다</h1>
-        <p class="feat-desc">고시·공고의 숫자만 쓴다. 신청 전 체크표와 기한, 신청 창구까지 한 글에 담는다. 첫 글이 곧 올라온다.</p>
+        <h1 class="feat-title">복잡한 정부 정책 지원금, 내 조건의 정확한 숫자로 확인합니다</h1>
+        <p class="feat-desc">수백 장의 행정 고시를 단 1장의 자격 체크표와 계산기로 압축했습니다. 대상 판정부터 마감 기한, 공식 접수처까지 한눈에 확인하세요.</p>
       </div>
     </section>
   )}
 
   <section class="cats">
-    <h2 class="section-h">돈의 일곱 방향</h2>
-    <p class="section-sub">내 상황에 맞는 방향부터 고른다</p>
+    <h2 class="section-h">7개 정책 영역</h2>
+    <p class="section-sub">내 상황에 맞는 영역부터 확인하세요</p>
     <ul class="cat-grid">
       {Object.entries(CATEGORIES).map(([key, c]) => {
         const n = countOf(key);
@@ -59,7 +59,7 @@ const tagsOf = (k: string) => {
               <span class="cat-swatch"><b>₩</b></span>
               <span class="cat-name">{c.name}</span>
               <span class="cat-desc">{tags.length ? tags.join(' · ') : c.desc}</span>
-              <span class="chip">{n > 0 ? `글 ${n}편` : '준비 중'}</span>
+              <span class="chip">{n > 0 ? `분석 ${n}건` : '데이터 구축 중'}</span>
             </a>
           </li>
         );
@@ -70,8 +70,8 @@ const tagsOf = (k: string) => {
   {posts.length > 1 && (
     <section class="two">
       <div class="rank">
-        <h2 class="section-h">먼저 읽을 글</h2>
-        <p class="section-sub">최근에 확인한 순서</p>
+        <h2 class="section-h">지금 확인할 분석</h2>
+        <p class="section-sub">최근 검증 순</p>
         <ol class="rank-list">
           {ranked.map((p) => (
             <li><a href={`/posts/${p.id}`}>{p.data.title}</a></li>
@@ -79,8 +79,8 @@ const tagsOf = (k: string) => {
         </ol>
       </div>
       <div class="recent">
-        <h2 class="section-h">방금 올라온 글</h2>
-        <p class="section-sub">발행일 기준 숫자, 신청 전 다시 확인</p>
+        <h2 class="section-h">최신 업데이트</h2>
+        <p class="section-sub">발행일 기준 수치입니다. 신청 전 공식 공고를 다시 확인하세요.</p>
         <ul class="card-grid">
           {grid.map((p) => (
             <li style={`--c:${catColor(p.data.category)}`}>
@@ -104,14 +104,14 @@ const tagsOf = (k: string) => {
   <section class="how">
     <div class="how-in">
       <div>
-        <h2 class="section-h">글 하나로 끝내는 순서</h2>
-        <p class="section-sub">모든 글이 같은 뼈대로 간다. 어디를 봐야 하는지 미리 안다.</p>
+        <h2 class="section-h">모든 분석은 같은 4단계로 갑니다</h2>
+        <p class="section-sub">어느 글을 열어도 같은 자리에서 같은 답을 찾을 수 있습니다.</p>
       </div>
       <ol class="how-steps">
-        <li><b>즉답</b><span>첫 문단에서 되나·안 되나, 얼마인지부터</span></li>
-        <li><b>자격 체크표</b><span>나이·가구·소득·재산, 내가 해당되는지 표로</span></li>
-        <li><b>손해 보는 조건</b><span>중복 수혜·환수·기한 놓침 같은 함정</span></li>
-        <li><b>행동 블록</b><span>준비 서류 → 기한 → 공식 신청 링크</span></li>
+        <li><b>3초 즉답 판정</b><span>서론 없이 내 수급 대상 여부와 예상 지원 금액부터 먼저 확인</span></li>
+        <li><b>조건 대조 매트릭스</b><span>나이·가구원·중위소득·보유재산 기준을 단 1개의 표로 즉시 대조</span></li>
+        <li><b>감액·환수 리스크 방어</b><span>중복 수혜 불가 조항, 부적격 환수, 신청 기한 누락 등 필수 예외 통제</span></li>
+        <li><b>원스톱 실행 가이드</b><span>주민센터·정부24 발급 서류 리스트와 공식 접수 창구 직통 링크 제공</span></li>
       </ol>
     </div>
   </section>
@@ -180,7 +180,7 @@ const tagsOf = (k: string) => {
   .how { margin-top: 96px; }
   .how-in { display: grid; grid-template-columns: 1fr 1.4fr; gap: 40px; padding: 36px; border-radius: 24px; background: var(--surface); border: 1px solid var(--hair); }
   .how-steps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; gap: 4px; }
-  .how-steps li { counter-increment: s; display: grid; grid-template-columns: 34px 150px 1fr; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--hair); }
+  .how-steps li { counter-increment: s; display: grid; grid-template-columns: 34px 180px 1fr; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--hair); }
   .how-steps li:last-child { border-bottom: 0; }
   .how-steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--money-soft); color: var(--money); font-weight: 800; font-size: 13px; }
   .how-steps b { font-weight: 700; font-size: 15.5px; }
