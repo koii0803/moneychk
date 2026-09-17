@@ -153,12 +153,10 @@ const jsonLd = JSON.stringify({
       }
       // 읽은 만큼 진행 바
       const bar = document.querySelector('.progress i');
-      const art = document.querySelector('.post');
-      if (bar && art) {
+      if (bar) {
         const tick = () => {
-          const r = art.getBoundingClientRect();
-          const total = r.height - window.innerHeight;
-          const done = Math.min(1, Math.max(0, -r.top / (total || 1)));
+          const total = document.documentElement.scrollHeight - window.innerHeight;
+          const done = Math.min(1, Math.max(0, window.scrollY / (total || 1)));
           bar.style.transform = 'scaleX(' + done + ')';
         };
         tick();
