@@ -80,7 +80,7 @@ const jsonLd = JSON.stringify({
           <strong>내 {cat.name} 한도·금액 10초 모의계산기</strong>
           <span>나이, 소득, 가구원만 입력하면 예상 수령액과 자격을 판정합니다.</span>
         </div>
-        <span class="calc-icon" aria-hidden="true">🧮</span>
+        <img class="calc-icon" src="/img/icons/calc.webp" alt="" width="64" height="64" loading="lazy" />
         <span class="calc-btn">내 수령 가능 금액 직접 계산하기 →</span>
       </a>
 
@@ -279,7 +279,7 @@ const jsonLd = JSON.stringify({
   .calc-tag { align-self: flex-start; padding: 2px 8px; border-radius: 4px; background: var(--money-soft); color: var(--money); font-size: 11px; font-weight: 700; text-transform: uppercase; }
   .calc-text strong { font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 4px; }
   .calc-text span:last-child { font-size: 12.5px; color: var(--ink-3); }
-  .calc-icon { font-size: 30px; }
+  .prose .calc-icon { width: 64px; height: 64px; aspect-ratio: 1; margin: 0; border-radius: 0; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0,0,0,.35)); } /* 3D 계산기 아이콘(누끼제거/Calculator_pastel_3d) — 분류 무관 공통 */
   .calc-btn { grid-column: 1 / -1; display: block; padding: 12px; border-radius: 12px; background: var(--money); color: #fff; font-size: 14px; font-weight: 700; text-align: center; box-shadow: 0 8px 20px color-mix(in srgb, var(--money) 25%, transparent); }
   .calc:hover .calc-btn { filter: brightness(1.08); }
   .prose blockquote { margin: 28px 0; padding: 16px 20px; border-left: 3px solid var(--money); background: var(--surface); border-radius: 0 12px 12px 0; font-size: 15.5px; }
