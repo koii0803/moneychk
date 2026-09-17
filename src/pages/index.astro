@@ -208,7 +208,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .hero p.out { opacity: 0; transition-delay: 0s; }
   @media (prefers-reduced-motion: reduce) { .hero .l1, .hero .l2 { transition: none; } }
 
-  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 28px 0 32px; padding-bottom: 4px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 28px 0 32px; padding-bottom: 4px; justify-content: center; }
+  @media (max-width: 760px) { .chips { justify-content: flex-start; } }
   .chips::-webkit-scrollbar { display: none; }
   .chips a { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-3); background: var(--surface); border: 1px solid var(--hair); }
   .chips a:hover { color: var(--ink); }
