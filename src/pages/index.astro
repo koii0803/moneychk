@@ -7,6 +7,16 @@ const posts = await getPublished();
 const [lead, ...rest] = posts;
 const feed = rest.slice(0, 8);
 const ranked = posts.slice(0, 4);
+const recent = posts.slice(0, 8);
+const countOf = (...keys: string[]) => posts.filter((p) => keys.includes(p.data.category)).length;
+
+// 오리지널 시리즈 4대 테마 (분류 묶음에 이름을 붙인 것. 글 수는 실측)
+const series = [
+  { icon: '🏠', name: '도시와 내 집의 설계도', desc: '전세사기 안 당하고, 정부 저금리 디딤돌·버팀목 대출로 서울·수도권에 내 집 마련하는 합법적 레버리지.', cats: ['home'], bg: 'linear-gradient(135deg, #0e7490, #164e63)' },
+  { icon: '🛡️', name: '월급의 마지막 방어선', desc: '낸 세금 1원까지 돌려받는 숨은 환급금부터 공과금·교통비 깎아내는 직장인·자영업자 감면 공식.', cats: ['refund', 'save'], bg: 'linear-gradient(135deg, #1e3a2f, #0f2a1f)' },
+  { icon: '🌱', name: '청년 자산 빌드업', desc: '청년도약계좌 연 6% 기여금과 청년주택드림 청약통장으로 종잣돈 5천만 원 만드는 가장 확실한 로드맵.', cats: ['future'], bg: 'linear-gradient(135deg, #1e1b4b, #0f172a)' },
+  { icon: '🚨', name: '비상금과 출구 전략', desc: '1금융권 막혔을 때 찾는 정부 햇살론, 최저신용자 특례보증, 신용회복위원회의 채무조정 실전 매뉴얼.', cats: ['loan'], bg: 'linear-gradient(135deg, #7c2d12, #3b1d0e)' },
+];
 const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ?? '').replace(/\s+/g, '').length / 500));
 ---
 
@@ -76,6 +86,54 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
       </div>
     </section>
   )}
+
+  <section class="series">
+    <h2 class="section-h">오리지널 시리즈</h2>
+    <p class="section-sub">정책을 바라보는 네 가지 관점</p>
+    <ul class="series-list">
+      {series.map((sr) => {
+        const n = countOf(...sr.cats);
+        return (
+          <li>
+            <a class="series-card" href={`/${sr.cats[0]}`}>
+              <div class="series-art" style={`background:${sr.bg}`}><span aria-hidden="true">{sr.icon}</span></div>
+              <div class="series-body">
+                <h3>{sr.name}</h3>
+                <p>{sr.desc}</p>
+                <span class="chip">{n > 0 ? `아티클 ${n}개` : '데이터 구축 중'}</span>
+              </div>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+
+  {recent.length > 0 && (
+    <section class="recent">
+      <h2 class="section-h">방금 올라온 콘텐츠</h2>
+      <p class="section-sub">실시간 업데이트 소식 살펴보기</p>
+      <ul class="recent-grid">
+        {recent.map((p) => {
+          const c = CATEGORIES[p.data.category];
+          return (
+            <li style={`--c:${c.color}`}>
+              <a href={`/posts/${p.id}`}>
+                <div class="thumb">
+                  {p.data.thumbnail
+                    ? <img src={p.data.thumbnail} alt="" width="640" height="360" loading="lazy" />
+                    : <div class="thumb-fallback"><span>{c.icon}</span></div>}
+                </div>
+                <h3>{p.data.title}</h3>
+                <span class="recent-date">{fmtDate(p.data.pubDate)}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      <p class="more"><a href="/posts">더 펼쳐보기</a></p>
+    </section>
+  )}
 </Base>
 
 <style>
@@ -128,9 +186,33 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .feed-list .thumb { border-radius: 14px; }
   .feed-list .thumb-fallback { font-size: 56px; }
 
+  /* 오리지널 시리즈 */
+  .series { margin-top: 96px; }
+  .series-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .series-card { display: flex; flex-direction: column; height: 100%; border-radius: 18px; overflow: hidden; background: var(--surface); border: 1px solid var(--hair); transition: border-color .2s, transform .2s; }
+  .series-card:hover { border-color: color-mix(in srgb, var(--money) 40%, transparent); transform: translateY(-2px); }
+  .series-art { aspect-ratio: 1 / 0.85; display: grid; place-items: center; font-size: 72px; }
+  .series-body { display: flex; flex-direction: column; gap: 8px; padding: 18px 18px 20px; flex: 1; }
+  .series-body h3 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .series-body p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-3); flex: 1; }
+  .series-body .chip { align-self: flex-start; }
+
+  /* 방금 올라온 콘텐츠 */
+  .recent { margin-top: 96px; }
+  .recent-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px 20px; }
+  .recent-grid a { display: flex; flex-direction: column; gap: 8px; }
+  .recent-grid .thumb { border-radius: 12px; }
+  .recent-grid .thumb-fallback { font-size: 44px; }
+  .recent-grid h3 { margin: 4px 0 0; font-size: 15px; font-weight: 700; line-height: 1.45; letter-spacing: -0.01em; }
+  .recent-grid a:hover h3 { color: var(--money); }
+  .recent-date { font-size: 12.5px; color: var(--ink-3); }
+  .more { margin: 36px 0 0; text-align: center; }
+  .more a { display: inline-block; padding: 10px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--hair); font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .more a:hover { color: var(--ink); border-color: var(--ink-3); }
+
   .empty { padding: 48px 24px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); text-align: center; color: var(--ink-3); }
 
-  @media (max-width: 900px) { .two { grid-template-columns: 1fr; gap: 48px; } }
+  @media (max-width: 900px) { .two { grid-template-columns: 1fr; gap: 48px; } .series-list, .recent-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 720px) {
     .hero { padding: 40px 0 20px; }
     .two { grid-template-columns: 1fr; gap: 48px; margin-top: 64px; }

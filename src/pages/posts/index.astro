@@ -1,0 +1,47 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getPublished } from '../../lib/posts';
+import { CATEGORIES, fmtDate } from '../../config/site';
+const posts = await getPublished();
+---
+
+<Base title="전체 콘텐츠" description="머니첵의 모든 분석을 최신순으로.">
+  <header class="all-head">
+    <h1>전체 콘텐츠</h1>
+    <p>{posts.length}편 · 최신순</p>
+  </header>
+  <ul class="all-grid">
+    {posts.map((p) => {
+      const c = CATEGORIES[p.data.category];
+      return (
+        <li style={`--c:${c.color}`}>
+          <a href={`/posts/${p.id}`}>
+            <div class="thumb">
+              {p.data.thumbnail
+                ? <img src={p.data.thumbnail} alt="" width="640" height="360" loading="lazy" />
+                : <div class="thumb-fallback"><span>{c.icon}</span></div>}
+            </div>
+            <span class="all-cat">{c.name}</span>
+            <h2>{p.data.title}</h2>
+            <span class="all-date">{fmtDate(p.data.pubDate)}</span>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</Base>
+
+<style>
+  .all-head { padding: 52px 0 28px; }
+  .all-head h1 { margin: 0; font-weight: 800; font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.025em; }
+  .all-head p { margin: 4px 0 0; color: var(--ink-2); }
+  .all-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px 20px; }
+  .all-grid a { display: flex; flex-direction: column; gap: 6px; }
+  .all-grid .thumb { border-radius: 12px; margin-bottom: 4px; }
+  .all-grid .thumb-fallback { font-size: 44px; }
+  .all-cat { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+  .all-grid h2 { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.45; }
+  .all-grid a:hover h2 { color: var(--money); }
+  .all-date { font-size: 12.5px; color: var(--ink-3); }
+  @media (max-width: 900px) { .all-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
