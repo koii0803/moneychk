@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LUMINA 3D - Frosted Glass & Claymorphic Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-main);
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    /* Ambient Background Animated Gradients */
+    .bg-nebula-dark {
+      background: radial-gradient(circle at 15% 20%, #1e1b4b 0%, #0b0f19 45%, #030712 100%);
+    }
+    .bg-pearl-light {
+      background: radial-gradient(circle at 20% 15%, #f1f5f9 0%, #e2e8f0 45%, #cbd5e1 100%);
+    }
+
+    /* Floating Ambient Glowing Orbs */
+    .ambient-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.65;
+      animation: floatOrb 12s ease-in-out infinite alternate;
+    }
+    @keyframes floatOrb {
+      0% { transform: translate(0px, 0px) scale(1); }
+      50% { transform: translate(30px, -25px) scale(1.08); }
+      100% { transform: translate(-25px, 35px) scale(0.95); }
+    }
+
+    /* Frosted Glass Panels */
+    .glass-shell {
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      transition: transform 0.15s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.3s ease;
+      transform-style: preserve-3d;
+      perspective: 1200px;
+    }
+
+    .dark .glass-shell {
+      background: rgba(18, 24, 38, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow:
+        0 25px 60px -15px rgba(0, 0, 0, 0.6),
+        0 10px 20px -5px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    html:not(.dark) .glass-shell {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow:
+        0 30px 65px -20px rgba(100, 116, 139, 0.25),
+        0 12px 25px -10px rgba(148, 163, 184, 0.3),
+        inset 0 2px 3px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(148, 163, 184, 0.15);
+    }
+
+    /* 3D Specular Glare Layer */
+    .glass-glare {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.25) 0%, transparent 65%);
+      mix-blend-mode: overlay;
+      z-index: 2;
+    }
+
+    /* Claymorphic 3D Tactile Buttons */
+    .clay-btn {
+      position: relative;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      border-radius: 1.25rem;
+      transition: all 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform: translateY(0);
+      outline: none;
+      touch-action: manipulation;
+    }
+
+    .clay-btn:active {
+      transform: translateY(3px) scale(0.97);
+    }
+
+    /* Button Colors & Themes (Dark Mode) */
+    .dark .btn-num {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.85));
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.35),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.45);
+    }
+    .dark .btn-num:hover {
+      background: linear-gradient(145deg, rgba(51, 65, 85, 0.85), rgba(30, 41, 59, 0.95));
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .dark .btn-op {
+      background: linear-gradient(145deg, #0d9488, #059669);
+      color: #ffffff;
+      border: 1px solid rgba(167, 243, 208, 0.35);
+      box-shadow:
+        0 6px 16px rgba(13, 148, 136, 0.45),
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -2px 4px rgba(4, 78, 56, 0.5);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .dark .btn-op:hover {
+      box-shadow: 0 8px 22px rgba(13, 148, 136, 0.65);
+      filter: brightness(1.08);
+    }
+
+    .dark .btn-special {
+      background: linear-gradient(145deg, rgba(71, 85, 105, 0.6), rgba(51, 65, 85, 0.7));
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow:
+        0 5px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3),
+        inset 0 -2px 3px rgba(15, 23, 42, 0.5);
+    }
+
+    .dark .btn-accent {
+      background: linear-gradient(135deg, #f43f5e 0%, #ec4899 40%, #fb923c 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow:
+        0 8px 24px rgba(244, 63, 94, 0.55),
+        inset 0 2px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -2px 5px rgba(159, 18, 57, 0.6);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+    .dark .btn-accent:hover {
+      box-shadow: 0 10px 28px rgba(244, 63, 94, 0.75);
+      filter: brightness(1.1);
+    }
+
+    /* Light Mode Button Styles */
+    html:not(.dark) .btn-num {
+      background: linear-gradient(145deg, #ffffff, #f1f5f9);
+      color: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow:
+        0 6px 14px rgba(148, 163, 184, 0.35),
+        inset 0 2px 2px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(203, 213, 225, 0.6);
+    }
+    html:not(.dark) .btn-num:hover {
+      background: #ffffff;
+      box-shadow: 0 8px 18px rgba(148, 163, 184, 0.45);
+    }
+
+    html:not(.dark) .btn-op {
+      background: linear-gradient(145deg, #10b981, #059669);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow:
+        0 6px 16px rgba(16, 185, 129, 0.4),
+        inset 0 2px 2px rgba(255, 255, 255, 0.55),
+        inset 0 -2px 4px rgba(4, 120, 87, 0.5);
+    }
+
+    html:not(.dark) .btn-special {
+      background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+      color: #64748b;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow:
+        0 5px 12px rgba(148, 163, 184, 0.25),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        inset 0 -2px 3px rgba(203, 213, 225, 0.5);
+    }
+
+    html:not(.dark) .btn-accent {
+      background: linear-gradient(135deg, #fb7185 0%, #f43f5e 45%, #f97316 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 8px 20px rgba(244, 63, 94, 0.45),
+        inset 0 2px 2px rgba(255, 255, 255, 0.6),
+        inset 0 -2px 4px rgba(190, 18, 60, 0.5);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.5);
+    }
+
+    /* Custom Smooth Pulse & Glow */
+    @keyframes neonGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4)); }
+      50% { filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.75)); }
+    }
+    .neon-mint-pulse {
+      animation: neonGlow 3.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-nebula-dark text-slate-100 flex flex-col items-center justify-start p-3 sm:p-6 transition-colors duration-500 relative selection:bg-rose-500 selection:text-white">
+
+  <!-- Ambient Glowing Blobs inspired by Reference Art (Pink, Cyan, Lavender, Gold) -->
+  <div class="ambient-orb w-96 h-96 -top-16 -left-16 bg-pink-600/30"></div>
+  <div class="ambient-orb w-[28rem] h-[28rem] top-1/3 -right-24 bg-teal-500/25" style="animation-delay: -3s;"></div>
+  <div class="ambient-orb w-80 h-80 bottom-10 left-1/4 bg-violet-600/25" style="animation-delay: -6s;"></div>
+  <div class="ambient-orb w-72 h-72 top-2/3 right-1/3 bg-amber-500/20" style="animation-delay: -9s;"></div>
+
+  <header class="w-full max-w-lg mx-auto flex items-center justify-between z-10 mb-4 px-2">
+    <!-- Brand Logo inspired by the 3D Translucent "M" Checkmark & Piggy Bank -->
+    <div class="flex items-center gap-3">
+      <div class="relative w-10 h-10 rounded-2xl flex items-center justify-center p-2 shadow-lg bg-gradient-to-br from-emerald-400 to-teal-600 border border-white/30 neon-mint-pulse">
+        <!-- 3D Checkmark SVG -->
+        <svg class="w-6 h-6 text-white filter drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5">
+          <h1 class="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-200 to-pink-300">
+            LUMINA 3D
+          </h1>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            PRO
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 font-medium">Liquid Glass & Claymorphic Calc</p>
+      </div>
+    </div>
+
+    <!-- Quick Utilities: Sound, Theme, History Flyout Toggle -->
+    <div class="flex items-center gap-2">
+      <!-- Sound Mute/Unmute Button -->
+      <button id="btn-sound-toggle" aria-label="사운드 토글" class="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-95 transition border border-white/15 text-slate-300">
+        <svg id="icon-sound-on" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+        <svg id="icon-sound-off" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      </button>
+
+      <!-- History Flyout Toggle -->
+      <button id="btn-history-toggle" aria-label="계산 기록" class="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-95 transition border border-white/15 text-slate-300 relative">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="history-badge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900"></span>
+      </button>
+
+      <!-- Theme Switcher (Dark Nebula / Pearl Light) -->
+      <button id="btn-theme-toggle" aria-label="테마 변경" class="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-95 transition border border-white/15 text-amber-300">
+        <svg id="icon-theme-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="icon-theme-moon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="w-full max-w-lg mx-auto z-10 mb-4">
+    <div class="grid grid-cols-4 gap-1.5 p-1.5 rounded-2xl bg-slate-900/40 dark:bg-slate-950/50 backdrop-blur-xl border border-white/10 shadow-inner">
+      
+      <!-- Tab 1: Standard Calculator -->
+      <button data-tab="tab-standard" class="nav-tab-btn active-tab flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl font-semibold text-xs transition-all duration-200 bg-gradient-to-r from-emerald-500/30 to-teal-500/20 text-emerald-300 border border-emerald-400/40 shadow-sm">
+        <!-- Mini 3D Return Arrow Coin SVG -->
+        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="2" width="16" height="20" rx="3"></rect>
+          <line x1="8" y1="6" x2="16" y2="6"></line>
+          <line x1="16" y1="14" x2="16" y2="18"></line>
+          <path d="M16 10h.01M12 10h.01M8 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"></path>
+        </svg>
+        <span class="truncate">기본</span>
+      </button>
+
+      <!-- Tab 2: Piggy Bank Savings Simulator -->
+      <button data-tab="tab-savings" class="nav-tab-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl font-semibold text-xs text-slate-400 hover:text-slate-200 transition-all duration-200">
+        <!-- Mini Piggy Bank SVG -->
+        <svg class="w-4 h-4 flex-shrink-0 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 5c-1.5 0-2.8 1.2-3 2.7-.8-.4-1.8-.7-3-.7-3.9 0-7 2.7-7 6 0 1.5.6 2.9 1.6 4L7 19h3l.5-1.5c.5.2 1 .3 1.5.3 3.9 0 7-2.7 7-6 0-.3 0-.6-.1-.9 1.5-.7 2.1-2.2 2.1-3.9 0-1.1-.9-2-2-2z"></path>
+          <circle cx="16" cy="11" r="1"></circle>
+          <path d="M2 10s2-2 4 0"></path>
+        </svg>
+        <span class="truncate">적금·복리</span>
+      </button>
+
+      <!-- Tab 3: Loan & Mortgage -->
+      <button data-tab="tab-loan" class="nav-tab-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl font-semibold text-xs text-slate-400 hover:text-slate-200 transition-all duration-200">
+        <!-- Mini Vault Safe SVG -->
+        <svg class="w-4 h-4 flex-shrink-0 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"></circle>
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="3" x2="12" y2="7"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span class="truncate">대출이자</span>
+      </button>
+
+      <!-- Tab 4: Discount & Percentage -->
+      <button data-tab="tab-percent" class="nav-tab-btn flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl font-semibold text-xs text-slate-400 hover:text-slate-200 transition-all duration-200">
+        <!-- Mini Shield SVG -->
+        <svg class="w-4 h-4 flex-shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+          <circle cx="9.5" cy="14.5" r="1"></circle>
+          <circle cx="14.5" cy="9.5" r="1"></circle>
+        </svg>
+        <span class="truncate">할인·%</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <main class="w-full max-w-lg mx-auto z-10 relative">
+
+    <!-- 3D Parallax Card Shell -->
+    <div id="calculator-shell" class="glass-shell relative rounded-[2.5rem] p-5 sm:p-7 overflow-hidden">
+      <!-- Dynamic Specular Glare Overlay -->
+      <div id="glass-glare" class="glass-glare"></div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 1: STANDARD SMART CALCULATOR                             -->
+      <!-- ============================================================ -->
+      <section id="tab-standard" class="tab-pane active flex flex-col gap-4">
+
+        <!-- Display Area with Dual Expression & Korean Monetary Unit Indicator -->
+        <div class="relative rounded-3xl p-5 bg-gradient-to-b from-slate-900/60 to-slate-950/70 dark:from-slate-950/70 dark:to-black/80 border border-white/10 shadow-inner flex flex-col justify-between min-h-[140px] overflow-hidden group">
+          
+          <!-- Top Row: History formula & Copy button -->
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+            <div id="calc-expression" class="font-mono tracking-wider truncate pr-2 h-5 text-slate-400/90 text-sm font-medium">
+              <!-- e.g. 1,250 × 400 -->
+            </div>
+            <button id="btn-copy-result" title="결과값 복사" class="opacity-70 group-hover:opacity-100 hover:text-emerald-400 active:scale-90 transition flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10 text-[11px]">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>복사</span>
+            </button>
+          </div>
+
+          <!-- Main Dynamic Value Display -->
+          <div class="w-full text-right my-auto overflow-hidden">
+            <div id="calc-display" class="font-extrabold text-4xl sm:text-5xl tracking-tight text-white transition-all duration-100 break-all select-all font-mono leading-none">
+              0
+            </div>
+          </div>
+
+          <!-- Bottom: Real-time Korean Money / Unit Preview (1억 2,500만 원) -->
+          <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+            <span class="text-[11px] font-semibold text-emerald-400/90 tracking-wide flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              한글 표기
+            </span>
+            <span id="korean-unit-preview" class="font-medium text-emerald-300 text-right truncate max-w-[260px]">
+              0 원
+            </span>
+          </div>
+        </div>
+
+        <!-- Tactile 3D Keypad (Claymorphic Buttons) -->
+        <div class="grid grid-cols-4 gap-2.5 sm:gap-3.5 pt-1">
+          <!-- Row 1 -->
+          <button data-action="clear" class="clay-btn btn-special h-14 text-sm font-bold text-rose-400 hover:text-rose-300">
+            AC
+          </button>
+          <button data-action="backspace" class="clay-btn btn-special h-14">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+              <line x1="18" y1="9" x2="12" y2="15"></line>
+              <line x1="12" y1="9" x2="18" y2="15"></line>
+            </svg>
+          </button>
+          <button data-action="percent" class="clay-btn btn-special h-14 text-base">
+            %
+          </button>
+          <button data-action="op" data-val="/" class="clay-btn btn-op h-14 text-xl">
+            ÷
+          </button>
+
+          <!-- Row 2 -->
+          <button data-action="num" data-val="7" class="clay-btn btn-num h-14 text-2xl font-bold">7</button>
+          <button data-action="num" data-val="8" class="clay-btn btn-num h-14 text-2xl font-bold">8</button>
+          <button data-action="num" data-val="9" class="clay-btn btn-num h-14 text-2xl font-bold">9</button>
+          <button data-action="op" data-val="*" class="clay-btn btn-op h-14 text-xl">
+            ×
+          </button>
+
+          <!-- Row 3 -->
+          <button data-action="num" data-val="4" class="clay-btn btn-num h-14 text-2xl font-bold">4</button>
+          <button data-action="num" data-val="5" class="clay-btn btn-num h-14 text-2xl font-bold">5</button>
+          <button data-action="num" data-val="6" class="clay-btn btn-num h-14 text-2xl font-bold">6</button>
+          <button data-action="op" data-val="-" class="clay-btn btn-op h-14 text-2xl">
+            −
+          </button>
+
+          <!-- Row 4 -->
+          <button data-action="num" data-val="1" class="clay-btn btn-num h-14 text-2xl font-bold">1</button>
+          <button data-action="num" data-val="2" class="clay-btn btn-num h-14 text-2xl font-bold">2</button>
+          <button data-action="num" data-val="3" class="clay-btn btn-num h-14 text-2xl font-bold">3</button>
+          <button data-action="op" data-val="+" class="clay-btn btn-op h-14 text-xl">
+            +
+          </button>
+
+          <!-- Row 5 -->
+          <button data-action="negate" class="clay-btn btn-num h-14 text-base font-bold text-slate-400">
+            ±
+          </button>
+          <button data-action="num" data-val="0" class="clay-btn btn-num h-14 text-2xl font-bold">0</button>
+          <button data-action="num" data-val="." class="clay-btn btn-num h-14 text-2xl font-bold">.</button>
+          <button data-action="calculate" class="clay-btn btn-accent h-14 text-2xl font-black">
+            =
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB 2: PIGGY BANK SAVINGS & COMPOUND SIMULATOR               -->
+      <!-- ============================================================ -->
+      <section id="tab-savings" class="tab-pane hidden flex-col gap-5">
+        
+        <!-- Header banner inspired by the 3D frosted piggy bank -->
+        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-pink-500/20 via-rose-500/10 to-amber-500/20 border border-pink-500/30">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center shadow-lg shadow-pink-500/30 text-white font-bold text-xl border border-white/30">
+              🐖
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-pink-200">목돈 & 적금 복리 시뮬레이터</h2>
+              <p class="text-xs text-pink-300/70">투명 저금통에 쌓이는 복리 이자 계산</p>
+            </div>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-xl bg-pink-500/30 text-pink-200 font-semibold border border-pink-400/40">
+            월복리 지원
+          </span>
+        </div>
+
+        <!-- Input controls -->
+        <div class="space-y-3 text-xs">
+          <!-- Monthly Deposit -->
+          <div class="space-y-1">
+            <div class="flex justify-between font-semibold text-slate-300">
+              <label for="savings-deposit">월 적립액 (원)</label>
+              <span id="savings-deposit-label" class="text-emerald-400 font-mono font-bold">500,000원</span>
+            </div>
+            <div class="relative">
+              <input id="savings-deposit" type="number" step="10000" value="500000" class="w-full bg-slate-900/60 dark:bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-pink-400 transition" />
+            </div>
+            <!-- Quick Chips -->
+            <div class="flex gap-1.5 pt-1">
+              <button data-add-deposit="100000" class="quick-chip px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 border border-white/10">+10만</button>
+              <button data-add-deposit="500000" class="quick-chip px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 border border-white/10">+50만</button>
+              <button data-add-deposit="1000000" class="quick-chip px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 border border-white/10">+100만</button>
+            </div>
+          </div>
+
+          <!-- Interest Rate & Duration -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label for="savings-rate" class="font-semibold text-slate-300">연이자율 (%)</label>
+              <input id="savings-rate" type="number" step="0.1" value="4.5" class="w-full bg-slate-900/60 dark:bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-pink-400 transition" />
+            </div>
+            <div class="space-y-1">
+              <label for="savings-period" class="font-semibold text-slate-300">적립 기간 (개월)</label>
+              <input id="savings-period" type="number" step="6" value="24" class="w-full bg-slate-900/60 dark:bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-pink-400 transition" />
+            </div>
+          </div>
+
+          <!-- Tax Setting & Interest Mode Toggle -->
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div class="space-y-1">
+              <span class="font-semibold text-slate-300">이자 계산 방식</span>
+              <div class="grid grid-cols-2 gap-1 p-1 bg-slate-900/60 rounded-xl border border-white/10">
+                <button id="btn-calc-compound" class="py-1.5 rounded-lg text-center font-bold bg-pink-500/40 text-pink-200 border border-pink-400/40 shadow">월복리</button>
+                <button id="btn-calc-simple" class="py-1.5 rounded-lg text-center font-medium text-slate-400 hover:text-white">단리</button>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <span class="font-semibold text-slate-300">이자 과세율</span>
+              <div class="grid grid-cols-2 gap-1 p-1 bg-slate-900/60 rounded-xl border border-white/10">
+                <button id="btn-tax-normal" class="py-1.5 rounded-lg text-center font-bold bg-pink-500/40 text-pink-200 border border-pink-400/40 shadow">일반(15.4%)</button>
+                <button id="btn-tax-free" class="py-1.5 rounded-lg text-center font-medium text-slate-400 hover:text-white">비과세(0%)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Visual Summary Card -->
+        <div class="rounded-2xl p-4 bg-gradient-to-b from-slate-900/80 to-slate-950/90 border border-pink-500/20 shadow-lg space-y-3">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>만기 시 최종 수령액</span>
+            <span id="savings-tag-mode" class="px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 font-semibold text-[10px]">월복리 · 일반과세</span>
+          </div>
+
+          <div class="flex items-baseline justify-between">
+            <span id="savings-total-result" class="text-3xl font-extrabold font-mono text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-rose-200 to-amber-200">
+              0 원
+            </span>
+            <span id="savings-total-korean" class="text-xs font-semibold text-pink-300">0원</span>
+          </div>
+
+          <!-- Glowing Proportion Progress Bar (Principal vs Interest) -->
+          <div class="space-y-1">
+            <div class="h-3 w-full rounded-full bg-slate-800/80 overflow-hidden flex p-0.5 border border-white/10">
+              <div id="savings-bar-principal" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full transition-all duration-500" style="width: 85%;"></div>
+              <div id="savings-bar-interest" class="h-full bg-gradient-to-r from-pink-500 to-amber-400 rounded-full transition-all duration-500 ml-1" style="width: 15%;"></div>
+            </div>
+            <div class="flex justify-between text-[11px] pt-1">
+              <span class="flex items-center gap-1 text-teal-300">
+                <span class="w-2 h-2 rounded-full bg-teal-400 inline-block"></span>
+                원금: <b id="savings-principal-val" class="font-mono text-slate-100">12,000,000원</b>
+              </span>
+              <span class="flex items-center gap-1 text-pink-300">
+                <span class="w-2 h-2 rounded-full bg-pink-400 inline-block"></span>
+                이자수익: <b id="savings-interest-val" class="font-mono text-rose-300">+473,085원</b>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB 3: LOAN & MORTGAGE CALCULATOR                           -->
+      <!-- ============================================================ -->
+      <section id="tab-loan" class="tab-pane hidden flex-col gap-5">
+        
+        <!-- Header banner inspired by the Vault Safe Door & House Key -->
+        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-indigo-500/20 border border-cyan-500/30">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 text-white font-bold text-xl border border-white/30">
+              🔑
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-cyan-200">금고 대출이자 & 상환 계산기</h2>
+              <p class="text-xs text-cyan-300/70">상환 방식별 월 납입금 및 총이자 비교</p>
+            </div>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-xl bg-cyan-500/30 text-cyan-200 font-semibold border border-cyan-400/40">
+            원리금균등
+          </span>
+        </div>
+
+        <!-- Input controls -->
+        <div class="space-y-3 text-xs">
+          <!-- Loan Amount -->
+          <div class="space-y-1">
+            <div class="flex justify-between font-semibold text-slate-300">
+              <label for="loan-amount">대출 원금 (원)</label>
+              <span id="loan-amount-korean" class="text-cyan-300 font-mono font-bold">1억 원</span>
+            </div>
+            <input id="loan-amount" type="number" step="10000000" value="100000000" class="w-full bg-slate-900/60 dark:bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-cyan-400 transition" />
+            <!-- Quick Chips -->
+            <div class="flex gap-1.5 pt-1">
+              <button data-add-loan="10000000" class="quick-chip px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 border border-white/10">+1,000만</button>
+              <button data-add-loan="50000000" class="quick-chip px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 border border-white/10">+5,000만</button>
+              <button data-add-loan="100000000" class="quick-chip px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 border border-white/10">+1억</button>
+            </div>
+          </div>
+
+          <!-- Interest Rate & Duration -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label for="loan-rate" class="font-semibold text-slate-300">연이자율 (%)</label>
+              <input id="loan-rate" type="number" step="0.1" value="4.2" class="w-full bg-slate-900/60 dark:bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-cyan-400 transition" />
+            </div>
+            <div class="space-y-1">
+              <label for="loan-term-years" class="font-semibold text-slate-300">대출 기간 (년)</label>
+              <input id="loan-term-years" type="number" step="1" value="10" class="w-full bg-slate-900/60 dark:bg-black/50 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-cyan-400 transition" />
+            </div>
+          </div>
+
+          <!-- Repayment Strategy Type -->
+          <div class="space-y-1 pt-1">
+            <span class="font-semibold text-slate-300">상환 방식</span>
+            <div class="grid grid-cols-3 gap-1 p-1 bg-slate-900/60 rounded-xl border border-white/10 text-center">
+              <button id="btn-repay-amort" class="py-1.5 rounded-lg text-xs font-bold bg-cyan-500/40 text-cyan-200 border border-cyan-400/40 shadow">원리금균등</button>
+              <button id="btn-repay-principal" class="py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white">원금균등</button>
+              <button id="btn-repay-bullet" class="py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white">만기일시</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Loan Output Box -->
+        <div class="rounded-2xl p-4 bg-gradient-to-b from-slate-900/80 to-slate-950/90 border border-cyan-500/20 shadow-lg space-y-3">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>첫 달 상환 금액 (원금+이자)</span>
+            <span class="text-cyan-300 font-mono text-[11px]" id="loan-months-count">120회 납입</span>
+          </div>
+
+          <div class="flex items-baseline justify-between">
+            <span id="loan-first-payment" class="text-3xl font-extrabold font-mono text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-indigo-200">
+              0 원
+            </span>
+            <span id="loan-first-payment-korean" class="text-xs font-semibold text-cyan-300">0원</span>
+          </div>
+
+          <!-- Details Breakdown -->
+          <div class="pt-2 border-t border-white/10 grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-white/5 p-2.5 rounded-xl border border-white/5">
+              <span class="text-slate-400 text-[11px] block">총 대출 이자</span>
+              <span id="loan-total-interest" class="font-mono font-bold text-rose-300 text-sm">0원</span>
+            </div>
+            <div class="bg-white/5 p-2.5 rounded-xl border border-white/5">
+              <span class="text-slate-400 text-[11px] block">총 상환 금액 (원금+이자)</span>
+              <span id="loan-total-payment" class="font-mono font-bold text-slate-200 text-sm">0원</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB 4: QUICK PERCENT & DISCOUNT CALCULATOR                  -->
+      <!-- ============================================================ -->
+      <section id="tab-percent" class="tab-pane hidden flex-col gap-5">
+        
+        <!-- Header banner inspired by the 3D Shield & Won coin return arrow -->
+        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-rose-500/20 border border-amber-500/30">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 text-white font-bold text-xl border border-white/30">
+              🛡️
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-amber-200">쉴드 할인 & 비율 계산기</h2>
+              <p class="text-xs text-amber-300/70">세일 가격, 절약 금액 및 증감율 계산</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub Module A: Discount Price -->
+        <div class="space-y-2 p-3.5 rounded-2xl bg-slate-900/60 dark:bg-black/40 border border-white/10">
+          <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            1. 할인율(Sale %) 적용 계산
+          </span>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label for="discount-original" class="text-slate-400 block mb-1">정상가 (원)</label>
+              <input id="discount-original" type="number" step="1000" value="89000" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-amber-400" />
+            </div>
+            <div>
+              <label for="discount-percent" class="text-slate-400 block mb-1">할인율 (%)</label>
+              <input id="discount-percent" type="number" step="1" value="25" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-amber-400" />
+            </div>
+          </div>
+
+          <!-- Quick Discount Sliders / Chips -->
+          <div class="flex gap-1 pt-0.5">
+            <button data-rate-chip="10" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">10%</button>
+            <button data-rate-chip="20" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">20%</button>
+            <button data-rate-chip="30" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">30%</button>
+            <button data-rate-chip="50" class="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 border border-white/10">50%</button>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+            <div>
+              <span class="text-slate-400 text-[11px]">최종 결제 금액:</span>
+              <span id="discount-final-price" class="font-mono font-extrabold text-base text-amber-300 ml-1">66,750원</span>
+            </div>
+            <div class="text-[11px] text-rose-300 font-medium">
+              절약: <span id="discount-saved-amount" class="font-mono font-bold">-22,250원</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub Module B: Rate of Increase / Decrease -->
+        <div class="space-y-2 p-3.5 rounded-2xl bg-slate-900/60 dark:bg-black/40 border border-white/10">
+          <span class="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            2. 이전값 대비 증감율 (%) 분석
+          </span>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label for="rate-before" class="text-slate-400 block mb-1">기존 값</label>
+              <input id="rate-before" type="number" value="120000" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-emerald-400" />
+            </div>
+            <div>
+              <label for="rate-after" class="text-slate-400 block mb-1">변경 값</label>
+              <input id="rate-after" type="number" value="156000" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-emerald-400" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+            <span class="text-slate-400 text-[11px]">변동 분석 결과:</span>
+            <span id="rate-result-badge" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs">
+              +30.00% 증가 📈
+            </span>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- History Flyout Drawer -->
+  <aside id="history-drawer" class="fixed inset-y-0 right-0 w-full sm:w-80 max-w-full bg-slate-950/95 backdrop-blur-2xl border-l border-white/15 p-5 shadow-2xl transform translate-x-full transition-transform duration-300 ease-out z-50 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between pb-4 border-b border-white/10">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <h2 class="font-bold text-base text-white">계산 기록</h2>
+        </div>
+        <button id="btn-close-history" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 active:scale-95 transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- History List Container -->
+      <div id="history-list" class="space-y-2 mt-4 max-h-[75vh] overflow-y-auto pr-1">
+        <div class="text-center text-slate-500 text-xs py-10">
+          아직 계산된 기록이 없습니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- History Footer Actions -->
+    <div class="pt-3 border-t border-white/10 flex gap-2">
+      <button id="btn-clear-history" class="w-full py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold text-xs transition active:scale-95">
+        기록 모두 지우기
+      </button>
+    </div>
+  </aside>
+
+  <!-- Custom Frosted Glass Toast Notification (Zero Alert() policy) -->
+  <div id="toast-container" class="fixed bottom-6 z-50 pointer-events-none flex flex-col items-center gap-2 transition-all">
+    <div id="toast-message" class="hidden pointer-events-auto px-4 py-2.5 rounded-2xl bg-slate-900/90 text-white backdrop-blur-xl border border-emerald-400/40 shadow-2xl text-xs font-semibold flex items-center gap-2 transform translate-y-4 transition-all duration-300">
+      <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20 6L9 17l-5-5"></path>
+      </svg>
+      <span id="toast-text">복사되었습니다!</span>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+     * 1. WEB AUDIO API SYNTHESIZER (Tactile Bubble Pops & Chimes)
+     * ============================================================ */
+    let audioCtx = null;
+    let isSoundEnabled = true;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type = 'tap') {
+      if (!isSoundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'tap') {
+          // Soft bubbly tactile pop (frequency drops sharply)
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.04);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'operator') {
+          // Crisp modern tech blip
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(540, now);
+          osc.frequency.exponentialRampToValueAtTime(420, now + 0.06);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } else if (type === 'equals') {
+          // Ascending two-tone glass chime
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.setValueAtTime(880, now + 0.08); // A5
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.36);
+        } else if (type === 'clear') {
+          // Gentle low sweep
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(240, now);
+          osc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.11);
+        }
+      } catch (e) {
+        // Fallback gracefully if audio not permitted
+      }
+    }
+
+    // Toggle Sound Button
+    const btnSoundToggle = document.getElementById('btn-sound-toggle');
+    const iconSoundOn = document.getElementById('icon-sound-on');
+    const iconSoundOff = document.getElementById('icon-sound-off');
+
+    btnSoundToggle.addEventListener('click', () => {
+      isSoundEnabled = !isSoundEnabled;
+      iconSoundOn.classList.toggle('hidden', !isSoundEnabled);
+      iconSoundOff.classList.toggle('hidden', isSoundEnabled);
+      if (isSoundEnabled) playSound('tap');
+      showToast(isSoundEnabled ? "사운드가 켜졌습니다 🔔" : "사운드가 음소거되었습니다 🔕");
+    });
+
+    /* ============================================================
+     * 2. TOAST NOTIFICATION UTILITY (No alert() Rule)
+     * ============================================================ */
+    let toastTimeout = null;
+    function showToast(message) {
+      const toastEl = document.getElementById('toast-message');
+      const textEl = document.getElementById('toast-text');
+      textEl.textContent = message;
+
+      toastEl.classList.remove('hidden');
+      // Trigger animation
+      setTimeout(() => {
+        toastEl.classList.remove('translate-y-4');
+        toastEl.classList.add('translate-y-0');
+      }, 10);
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toastEl.classList.remove('translate-y-0');
+        toastEl.classList.add('translate-y-4');
+        setTimeout(() => toastEl.classList.add('hidden'), 300);
+      }, 2500);
+    }
+
+    /* ============================================================
+     * 3. 3D DEVICE TILT & MOUSE PARALLAX EFFECT
+     * ============================================================ */
+    const cardShell = document.getElementById('calculator-shell');
+    const glassGlare = document.getElementById('glass-glare');
+
+    if (window.matchMedia("(hover: hover)").matches) {
+      document.addEventListener('mousemove', (e) => {
+        const rect = cardShell.getBoundingClientRect();
+        const cardCenterX = rect.left + rect.width / 2;
+        const cardCenterY = rect.top + rect.height / 2;
+
+        const deltaX = (e.clientX - cardCenterX) / (window.innerWidth / 2);
+        const deltaY = (e.clientY - cardCenterY) / (window.innerHeight / 2);
+
+        const rotateX = -deltaY * 7; // Max tilt 7deg
+        const rotateY = deltaX * 7;
+
+        cardShell.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+        // Adjust specular glare highlight center
+        const glareX = ((e.clientX - rect.left) / rect.width) * 100;
+        const glareY = ((e.clientY - rect.top) / rect.height) * 100;
+        glassGlare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.22) 0%, transparent 60%)`;
+      });
+
+      document.addEventListener('mouseleave', () => {
+        cardShell.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+      });
+    }
+
+    /* ============================================================
+     * 4. THEME TOGGLER (Nebula Dark vs Soft Pearl Light)
+     * ============================================================ */
+    const htmlEl = document.documentElement;
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+    const iconSun = document.getElementById('icon-theme-sun');
+    const iconMoon = document.getElementById('icon-theme-moon');
+
+    function setTheme(isDark) {
+      if (isDark) {
+        htmlEl.classList.add('dark');
+        document.body.classList.remove('bg-pearl-light');
+        document.body.classList.add('bg-nebula-dark');
+        iconSun.classList.add('hidden');
+        iconMoon.classList.remove('hidden');
+      } else {
+        htmlEl.classList.remove('dark');
+        document.body.classList.remove('bg-nebula-dark');
+        document.body.classList.add('bg-pearl-light');
+        iconMoon.classList.add('hidden');
+        iconSun.classList.remove('hidden');
+      }
+    }
+
+    btnThemeToggle.addEventListener('click', () => {
+      const isCurrentlyDark = htmlEl.classList.contains('dark');
+      setTheme(!isCurrentlyDark);
+      playSound('tap');
+    });
+
+    /* ============================================================
+     * 5. KOREAN MONETARY NUMBER FORMATTER (억, 만 원)
+     * ============================================================ */
+    function formatKoreanMoney(val) {
+      if (isNaN(val) || val === null) return "0 원";
+      const num = Math.floor(Math.abs(val));
+      if (num === 0) return "0 원";
+
+      const units = ["", "만", "억", "조", "경"];
+      let result = [];
+      let temp = num;
+      let unitIndex = 0;
+
+      while (temp > 0 && unitIndex < units.length) {
+        const chunk = temp % 10000;
+        if (chunk > 0) {
+          result.unshift(`${chunk.toLocaleString()}${units[unitIndex]}`);
+        }
+        temp = Math.floor(temp / 10000);
+        unitIndex++;
+      }
+
+      const sign = val < 0 ? "-" : "";
+      return sign + result.join(" ") + " 원";
+    }
+
+    /* ============================================================
+     * 6. STANDARD CALCULATOR LOGIC
+     * ============================================================ */
+    let currentInput = "0";
+    let previousExpression = "";
+    let shouldResetDisplay = false;
+    let calculationHistory = [];
+
+    const displayEl = document.getElementById('calc-display');
+    const expressionEl = document.getElementById('calc-expression');
+    const koreanUnitPreviewEl = document.getElementById('korean-unit-preview');
+
+    function updateDisplay() {
+      // Formatted with commas
+      const rawNum = parseFloat(currentInput);
+      if (!isNaN(rawNum) && !currentInput.endsWith('.')) {
+        displayEl.textContent = formatDisplayNumber(currentInput);
+        koreanUnitPreviewEl.textContent = formatKoreanMoney(rawNum);
+      } else {
+        displayEl.textContent = currentInput;
+        koreanUnitPreviewEl.textContent = isNaN(rawNum) ? "—" : formatKoreanMoney(rawNum);
+      }
+
+      // Auto-shrink font size for long digits
+      if (currentInput.length > 12) {
+        displayEl.className = "font-extrabold text-2xl sm:text-3xl tracking-tight text-white transition-all select-all font-mono leading-none";
+      } else if (currentInput.length > 8) {
+        displayEl.className = "font-extrabold text-3xl sm:text-4xl tracking-tight text-white transition-all select-all font-mono leading-none";
+      } else {
+        displayEl.className = "font-extrabold text-4xl sm:text-5xl tracking-tight text-white transition-all select-all font-mono leading-none";
+      }
+    }
+
+    function formatDisplayNumber(str) {
+      if (str.includes('.')) {
+        const parts = str.split('.');
+        return Number(parts[0]).toLocaleString() + '.' + parts[1];
+      }
+      const parsed = Number(str);
+      return isNaN(parsed) ? str : parsed.toLocaleString();
+    }
+
+    function inputDigit(digit) {
+      playSound('tap');
+      if (currentInput === "0" || shouldResetDisplay) {
+        currentInput = digit;
+        shouldResetDisplay = false;
+      } else {
+        if (currentInput.length < 15) {
+          currentInput += digit;
+        }
+      }
+      updateDisplay();
+    }
+
+    function inputDecimal() {
+      playSound('tap');
+      if (shouldResetDisplay) {
+        currentInput = "0.";
+        shouldResetDisplay = false;
+      } else if (!currentInput.includes('.')) {
+        currentInput += '.';
+      }
+      updateDisplay();
+    }
+
+    function inputOperator(op) {
+      playSound('operator');
+      const symbolMap = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      if (previousExpression && !shouldResetDisplay) {
+        executeCalculation(false);
+      }
+      previousExpression = `${currentInput} ${op}`;
+      expressionEl.textContent = `${formatDisplayNumber(currentInput)} ${symbolMap[op] || op}`;
+      shouldResetDisplay = true;
+    }
+
+    function executeCalculation(addToHistoryList = true) {
+      if (!previousExpression) return;
+      const parts = previousExpression.trim().split(' ');
+      const op = parts[1];
+      const prevVal = parseFloat(parts[0]);
+      const currentVal = parseFloat(currentInput);
+
+      if (isNaN(prevVal) || isNaN(currentVal)) return;
+
+      let result = 0;
+      if (op === '+') result = prevVal + currentVal;
+      else if (op === '-') result = prevVal - currentVal;
+      else if (op === '*') result = prevVal * currentVal;
+      else if (op === '/') {
+        if (currentVal === 0) {
+          showToast("0으로 나눌 수 없습니다!");
+          return;
+        }
+        result = prevVal / currentVal;
+      }
+
+      // Clean floating point artifacts
+      result = Math.round(result * 100000000) / 100000000;
+
+      const symbolMap = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      const formulaStr = `${formatDisplayNumber(parts[0])} ${symbolMap[op] || op} ${formatDisplayNumber(currentInput)}`;
+
+      if (addToHistoryList) {
+        playSound('equals');
+        addHistoryItem(formulaStr, result);
+      }
+
+      expressionEl.textContent = formulaStr + " =";
+      currentInput = result.toString();
+      previousExpression = "";
+      shouldResetDisplay = true;
+      updateDisplay();
+    }
+
+    function clearAll() {
+      playSound('clear');
+      currentInput = "0";
+      previousExpression = "";
+      expressionEl.textContent = "";
+      shouldResetDisplay = false;
+      updateDisplay();
+    }
+
+    function backspace() {
+      playSound('tap');
+      if (shouldResetDisplay) return;
+      if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+      } else {
+        currentInput = "0";
+      }
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      playSound('tap');
+      const val = parseFloat(currentInput);
+      if (val !== 0) {
+        currentInput = (-val).toString();
+        updateDisplay();
+      }
+    }
+
+    function applyPercent() {
+      playSound('operator');
+      const val = parseFloat(currentInput);
+      if (!isNaN(val)) {
+        currentInput = (val / 100).toString();
+        updateDisplay();
+      }
+    }
+
+    // Keypad Event Delegation
+    document.querySelectorAll('#tab-standard button[data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const val = btn.dataset.val;
+
+        if (action === 'num') {
+          if (val === '.') inputDecimal();
+          else inputDigit(val);
+        } else if (action === 'op') {
+          inputOperator(val);
+        } else if (action === 'calculate') {
+          executeCalculation(true);
+        } else if (action === 'clear') {
+          clearAll();
+        } else if (action === 'backspace') {
+          backspace();
+        } else if (action === 'negate') {
+          toggleSign();
+        } else if (action === 'percent') {
+          applyPercent();
+        }
+      });
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      // Only trigger if focus is not on input tags
+      if (e.target.tagName === 'INPUT') return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        inputDigit(e.key);
+      } else if (e.key === '.') {
+        inputDecimal();
+      } else if (e.key === '+') {
+        inputOperator('+');
+      } else if (e.key === '-') {
+        inputOperator('-');
+      } else if (e.key === '*') {
+        inputOperator('*');
+      } else if (e.key === '/') {
+        e.preventDefault();
+        inputOperator('/');
+      } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        executeCalculation(true);
+      } else if (e.key === 'Backspace') {
+        backspace();
+      } else if (e.key === 'Escape') {
+        clearAll();
+      } else if (e.key === '%') {
+        applyPercent();
+      }
+    });
+
+    // Copy Result to Clipboard
+    document.getElementById('btn-copy-result').addEventListener('click', () => {
+      playSound('tap');
+      const text = currentInput;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`결과값 (${formatDisplayNumber(text)})이 복사되었습니다! ✨`);
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    });
+
+    function fallbackCopy(text) {
+      const tempInput = document.createElement('input');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      showToast(`결과값 (${formatDisplayNumber(text)})이 복사되었습니다! ✨`);
+    }
+
+    /* ============================================================
+     * 7. CALCULATION HISTORY DRAWER
+     * ============================================================ */
+    const historyDrawer = document.getElementById('history-drawer');
+    const btnHistoryToggle = document.getElementById('btn-history-toggle');
+    const btnCloseHistory = document.getElementById('btn-close-history');
+    const btnClearHistory = document.getElementById('btn-clear-history');
+    const historyListEl = document.getElementById('history-list');
+    const historyBadge = document.getElementById('history-badge');
+
+    function toggleHistory(show) {
+      playSound('tap');
+      if (show) {
+        historyDrawer.classList.remove('translate-x-full');
+      } else {
+        historyDrawer.classList.add('translate-x-full');
+      }
+    }
+
+    btnHistoryToggle.addEventListener('click', () => toggleHistory(true));
+    btnCloseHistory.addEventListener('click', () => toggleHistory(false));
+
+    function addHistoryItem(formula, result) {
+      calculationHistory.unshift({ formula, result, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) });
+      renderHistory();
+      historyBadge.classList.remove('hidden');
+    }
+
+    function renderHistory() {
+      if (calculationHistory.length === 0) {
+        historyListEl.innerHTML = '<div class="text-center text-slate-500 text-xs py-10">아직 계산된 기록이 없습니다.</div>';
+        historyBadge.classList.add('hidden');
+        return;
+      }
+
+      historyListEl.innerHTML = calculationHistory.map((item, idx) => `
+        <div class="group p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer flex flex-col gap-1" data-history-idx="${idx}">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+            <span>${item.formula}</span>
+            <span class="text-[10px] text-slate-500">${item.time}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-base font-mono text-emerald-300">
+              = ${Number(item.result).toLocaleString()}
+            </span>
+            <button class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30">
+              불러오기
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      // Add click to reload value
+      historyListEl.querySelectorAll('[data-history-idx]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const idx = el.dataset.historyIdx;
+          const item = calculationHistory[idx];
+          currentInput = item.result.toString();
+          shouldResetDisplay = true;
+          updateDisplay();
+          toggleHistory(false);
+          playSound('tap');
+          showToast(`기록값 ${Number(item.result).toLocaleString()}을 불러왔습니다.`);
+        });
+      });
+    }
+
+    btnClearHistory.addEventListener('click', () => {
+      playSound('clear');
+      calculationHistory = [];
+      renderHistory();
+      showToast("모든 계산 기록이 삭제되었습니다.");
+    });
+
+    /* ============================================================
+     * 8. PIGGY BANK SAVINGS & COMPOUND SIMULATOR ENGINE
+     * ============================================================ */
+    let isCompoundMode = true;
+    let isNormalTax = true; // 15.4% vs 0%
+
+    const inDeposit = document.getElementById('savings-deposit');
+    const inRate = document.getElementById('savings-rate');
+    const inPeriod = document.getElementById('savings-period');
+    const lblDeposit = document.getElementById('savings-deposit-label');
+
+    const btnCompound = document.getElementById('btn-calc-compound');
+    const btnSimple = document.getElementById('btn-calc-simple');
+    const btnTaxNormal = document.getElementById('btn-tax-normal');
+    const btnTaxFree = document.getElementById('btn-tax-free');
+
+    const outSavingsTotal = document.getElementById('savings-total-result');
+    const outSavingsTotalKorean = document.getElementById('savings-total-korean');
+    const outSavingsPrincipal = document.getElementById('savings-principal-val');
+    const outSavingsInterest = document.getElementById('savings-interest-val');
+    const barPrincipal = document.getElementById('savings-bar-principal');
+    const barInterest = document.getElementById('savings-bar-interest');
+    const savingsTagMode = document.getElementById('savings-tag-mode');
+
+    function calculateSavings() {
+      const deposit = parseFloat(inDeposit.value) || 0;
+      const annualRate = (parseFloat(inRate.value) || 0) / 100;
+      const months = parseInt(inPeriod.value) || 0;
+
+      lblDeposit.textContent = `${deposit.toLocaleString()}원`;
+
+      if (months <= 0 || deposit <= 0) {
+        outSavingsTotal.textContent = "0 원";
+        outSavingsTotalKorean.textContent = "0원";
+        return;
+      }
+
+      const totalPrincipal = deposit * months;
+      let interestBeforeTax = 0;
+
+      if (!isCompoundMode) {
+        // 단리 적금 공식: Sum of deposit * annualRate * (months - i + 1) / 12
+        for (let i = 1; i <= months; i++) {
+          interestBeforeTax += deposit * annualRate * ((months - i + 1) / 12);
+        }
+      } else {
+        // 월복리 적금 공식: deposit * [ (1 + r) * ((1 + r)^n - 1) / r ]
+        const monthlyRate = annualRate / 12;
+        if (monthlyRate > 0) {
+          const futureValue = deposit * ((1 + monthlyRate) * (Math.pow(1 + monthlyRate, months) - 1)) / monthlyRate;
+          interestBeforeTax = futureValue - totalPrincipal;
+        } else {
+          interestBeforeTax = 0;
+        }
+      }
+
+      const taxRate = isNormalTax ? 0.154 : 0.0;
+      const taxAmount = interestBeforeTax * taxRate;
+      const interestAfterTax = Math.max(0, interestBeforeTax - taxAmount);
+      const totalMaturity = totalPrincipal + interestAfterTax;
+
+      // Update UI
+      outSavingsTotal.textContent = `${Math.round(totalMaturity).toLocaleString()} 원`;
+      outSavingsTotalKorean.textContent = formatKoreanMoney(Math.round(totalMaturity));
+      outSavingsPrincipal.textContent = `${Math.round(totalPrincipal).toLocaleString()}원`;
+      outSavingsInterest.textContent = `+${Math.round(interestAfterTax).toLocaleString()}원`;
+
+      // Update progress bar ratio
+      const principalPct = Math.round((totalPrincipal / totalMaturity) * 100);
+      const interestPct = 100 - principalPct;
+      barPrincipal.style.width = `${principalPct}%`;
+      barInterest.style.width = `${interestPct}%`;
+
+      savingsTagMode.textContent = `${isCompoundMode ? "월복리" : "단리"} · ${isNormalTax ? "일반과세(15.4%)" : "비과세(0%)"}`;
+    }
+
+    [inDeposit, inRate, inPeriod].forEach((input) => {
+      input.addEventListener('input', calculateSavings);
+    });
+
+    // Quick chips for savings
+    document.querySelectorAll('[data-add-deposit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playSound('tap');
+        const addVal = parseInt(btn.dataset.addDeposit);
+        inDeposit.value = (parseInt(inDeposit.value) || 0) + addVal;
+        calculateSavings();
+      });
+    });
+
+    btnCompound.addEventListener('click', () => {
+      playSound('tap');
+      isCompoundMode = true;
+      btnCompound.className = "py-1.5 rounded-lg text-center font-bold bg-pink-500/40 text-pink-200 border border-pink-400/40 shadow";
+      btnSimple.className = "py-1.5 rounded-lg text-center font-medium text-slate-400 hover:text-white";
+      calculateSavings();
+    });
+
+    btnSimple.addEventListener('click', () => {
+      playSound('tap');
+      isCompoundMode = false;
+      btnSimple.className = "py-1.5 rounded-lg text-center font-bold bg-pink-500/40 text-pink-200 border border-pink-400/40 shadow";
+      btnCompound.className = "py-1.5 rounded-lg text-center font-medium text-slate-400 hover:text-white";
+      calculateSavings();
+    });
+
+    btnTaxNormal.addEventListener('click', () => {
+      playSound('tap');
+      isNormalTax = true;
+      btnTaxNormal.className = "py-1.5 rounded-lg text-center font-bold bg-pink-500/40 text-pink-200 border border-pink-400/40 shadow";
+      btnTaxFree.className = "py-1.5 rounded-lg text-center font-medium text-slate-400 hover:text-white";
+      calculateSavings();
+    });
+
+    btnTaxFree.addEventListener('click', () => {
+      playSound('tap');
+      isNormalTax = false;
+      btnTaxFree.className = "py-1.5 rounded-lg text-center font-bold bg-pink-500/40 text-pink-200 border border-pink-400/40 shadow";
+      btnTaxNormal.className = "py-1.5 rounded-lg text-center font-medium text-slate-400 hover:text-white";
+      calculateSavings();
+    });
+
+    /* ============================================================
+     * 9. LOAN & MORTGAGE REPAYMENT ENGINE
+     * ============================================================ */
+    let loanRepayType = 'amort'; // 'amort' (원리금균등), 'principal' (원금균등), 'bullet' (만기일시)
+
+    const inLoanAmount = document.getElementById('loan-amount');
+    const inLoanRate = document.getElementById('loan-rate');
+    const inLoanYears = document.getElementById('loan-term-years');
+    const lblLoanKorean = document.getElementById('loan-amount-korean');
+
+    const btnRepayAmort = document.getElementById('btn-repay-amort');
+    const btnRepayPrincipal = document.getElementById('btn-repay-principal');
+    const btnRepayBullet = document.getElementById('btn-repay-bullet');
+
+    const outLoanFirstPayment = document.getElementById('loan-first-payment');
+    const outLoanFirstPaymentKorean = document.getElementById('loan-first-payment-korean');
+    const outLoanTotalInterest = document.getElementById('loan-total-interest');
+    const outLoanTotalPayment = document.getElementById('loan-total-payment');
+    const outLoanMonthsCount = document.getElementById('loan-months-count');
+
+    function calculateLoan() {
+      const principal = parseFloat(inLoanAmount.value) || 0;
+      const annualRate = (parseFloat(inLoanRate.value) || 0) / 100;
+      const years = parseFloat(inLoanYears.value) || 0;
+      const months = Math.round(years * 12);
+
+      lblLoanKorean.textContent = formatKoreanMoney(principal);
+      outLoanMonthsCount.textContent = `${months}회 납입 (${years}년)`;
+
+      if (principal <= 0 || months <= 0) {
+        outLoanFirstPayment.textContent = "0 원";
+        outLoanFirstPaymentKorean.textContent = "0원";
+        outLoanTotalInterest.textContent = "0원";
+        outLoanTotalPayment.textContent = "0원";
+        return;
+      }
+
+      const monthlyRate = annualRate / 12;
+      let firstMonthPayment = 0;
+      let totalInterest = 0;
+
+      if (loanRepayType === 'amort') {
+        // 원리금균등상환: PMT = P * r * (1+r)^n / ((1+r)^n - 1)
+        if (monthlyRate > 0) {
+          const factor = Math.pow(1 + monthlyRate, months);
+          firstMonthPayment = (principal * monthlyRate * factor) / (factor - 1);
+          totalInterest = (firstMonthPayment * months) - principal;
+        } else {
+          firstMonthPayment = principal / months;
+          totalInterest = 0;
+        }
+      } else if (loanRepayType === 'principal') {
+        // 원금균등상환: 월 상환액 = (원금/n) + 잔여원금*r
+        const monthlyPrincipal = principal / months;
+        firstMonthPayment = monthlyPrincipal + (principal * monthlyRate);
+        // 총이자: (n+1)/2 * principal * monthlyRate
+        totalInterest = ((months + 1) / 2) * principal * monthlyRate;
+      } else if (loanRepayType === 'bullet') {
+        // 만기일시상환: 매월 이자만 납부 후 마지막 달에 원금 일시상환
+        firstMonthPayment = principal * monthlyRate;
+        totalInterest = principal * monthlyRate * months;
+      }
+
+      const totalPayment = principal + totalInterest;
+
+      outLoanFirstPayment.textContent = `${Math.round(firstMonthPayment).toLocaleString()} 원`;
+      outLoanFirstPaymentKorean.textContent = formatKoreanMoney(Math.round(firstMonthPayment));
+      outLoanTotalInterest.textContent = `${Math.round(totalInterest).toLocaleString()}원`;
+      outLoanTotalPayment.textContent = `${Math.round(totalPayment).toLocaleString()}원`;
+    }
+
+    [inLoanAmount, inLoanRate, inLoanYears].forEach((input) => {
+      input.addEventListener('input', calculateLoan);
+    });
+
+    // Quick chips for loan
+    document.querySelectorAll('[data-add-loan]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playSound('tap');
+        const addVal = parseInt(btn.dataset.addLoan);
+        inLoanAmount.value = (parseInt(inLoanAmount.value) || 0) + addVal;
+        calculateLoan();
+      });
+    });
+
+    function setLoanRepayButtons(activeType) {
+      loanRepayType = activeType;
+      const activeClasses = "py-1.5 rounded-lg text-xs font-bold bg-cyan-500/40 text-cyan-200 border border-cyan-400/40 shadow";
+      const inactiveClasses = "py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white";
+
+      btnRepayAmort.className = activeType === 'amort' ? activeClasses : inactiveClasses;
+      btnRepayPrincipal.className = activeType === 'principal' ? activeClasses : inactiveClasses;
+      btnRepayBullet.className = activeType === 'bullet' ? activeClasses : inactiveClasses;
+      calculateLoan();
+    }
+
+    btnRepayAmort.addEventListener('click', () => { playSound('tap'); setLoanRepayButtons('amort'); });
+    btnRepayPrincipal.addEventListener('click', () => { playSound('tap'); setLoanRepayButtons('principal'); });
+    btnRepayBullet.addEventListener('click', () => { playSound('tap'); setLoanRepayButtons('bullet'); });
+
+    /* ============================================================
+     * 10. DISCOUNT & PERCENT RATIO ENGINE
+     * ============================================================ */
+    const inDiscountOriginal = document.getElementById('discount-original');
+    const inDiscountPercent = document.getElementById('discount-percent');
+    const outDiscountFinal = document.getElementById('discount-final-price');
+    const outDiscountSaved = document.getElementById('discount-saved-amount');
+
+    const inRateBefore = document.getElementById('rate-before');
+    const inRateAfter = document.getElementById('rate-after');
+    const outRateResultBadge = document.getElementById('rate-result-badge');
+
+    function calculateDiscount() {
+      const original = parseFloat(inDiscountOriginal.value) || 0;
+      const pct = parseFloat(inDiscountPercent.value) || 0;
+
+      const saved = original * (pct / 100);
+      const finalPrice = Math.max(0, original - saved);
+
+      outDiscountFinal.textContent = `${Math.round(finalPrice).toLocaleString()}원`;
+      outDiscountSaved.textContent = `-${Math.round(saved).toLocaleString()}원`;
+    }
+
+    function calculateRateOfChange() {
+      const before = parseFloat(inRateBefore.value) || 0;
+      const after = parseFloat(inRateAfter.value) || 0;
+
+      if (before === 0) {
+        outRateResultBadge.textContent = "기준값이 0입니다";
+        outRateResultBadge.className = "px-2.5 py-1 rounded-lg bg-slate-700/40 text-slate-300 font-mono text-xs";
+        return;
+      }
+
+      const changePct = ((after - before) / before) * 100;
+      const sign = changePct > 0 ? "+" : "";
+      const isUp = changePct > 0;
+      const isSame = changePct === 0;
+
+      outRateResultBadge.textContent = `${sign}${changePct.toFixed(2)}% ${isUp ? "증가 📈" : isSame ? "변동 없음 ➖" : "감소 📉"}`;
+
+      if (isUp) {
+        outRateResultBadge.className = "px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs";
+      } else if (isSame) {
+        outRateResultBadge.className = "px-2.5 py-1 rounded-lg bg-slate-700/40 text-slate-300 font-mono text-xs";
+      } else {
+        outRateResultBadge.className = "px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono font-bold text-xs";
+      }
+    }
+
+    [inDiscountOriginal, inDiscountPercent].forEach((i) => i.addEventListener('input', calculateDiscount));
+    [inRateBefore, inRateAfter].forEach((i) => i.addEventListener('input', calculateRateOfChange));
+
+    // Discount quick chip buttons
+    document.querySelectorAll('[data-rate-chip]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playSound('tap');
+        inDiscountPercent.value = btn.dataset.rateChip;
+        calculateDiscount();
+      });
+    });
+
+    /* ============================================================
+     * 11. TAB SWITCHING LOGIC
+     * ============================================================ */
+    const tabButtons = document.querySelectorAll('.nav-tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playSound('tap');
+        const targetTabId = btn.dataset.tab;
+
+        // Update button states
+        tabButtons.forEach((b) => {
+          b.classList.remove('bg-gradient-to-r', 'from-emerald-500/30', 'to-teal-500/20', 'text-emerald-300', 'border', 'border-emerald-400/40', 'shadow-sm');
+          b.classList.add('text-slate-400');
+        });
+
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('bg-gradient-to-r', 'from-emerald-500/30', 'to-teal-500/20', 'text-emerald-300', 'border', 'border-emerald-400/40', 'shadow-sm');
+
+        // Toggle Tab Panes
+        tabPanes.forEach((pane) => {
+          if (pane.id === targetTabId) {
+            pane.classList.remove('hidden');
+            pane.classList.add('flex');
+          } else {
+            pane.classList.add('hidden');
+            pane.classList.remove('flex');
+          }
+        });
+      });
+    });
+
+    // Initial Execution on Load
+    updateDisplay();
+    calculateSavings();
+    calculateLoan();
+    calculateDiscount();
+    calculateRateOfChange();
+  </script>
+</body>
+</html>

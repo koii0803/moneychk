@@ -22,6 +22,7 @@ const short = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
   <nav class="chips" aria-label="분류" data-filter>
     <button type="button" class="on" data-cat="all">전체</button>
     {cats.map(([key, c]) => <button type="button" data-cat={key} style={`--b:${c.badge}`}>{c.short}</button>)}
+    <a class="chip-link" href="/calc">계산기</a>
   </nav>
 
   <section class="group">
@@ -91,6 +92,7 @@ const short = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
   .chips::-webkit-scrollbar { display: none; }
   .chips button { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--hair); background: var(--surface); font-size: 14px; font-weight: 600; color: var(--ink-3); cursor: pointer; }
   .chips button:hover { color: var(--ink); }
+  .chips .chip-link { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--money); background: var(--money-soft); font-size: 14px; font-weight: 700; color: var(--money); }
   .chips button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .chips button[data-cat]:not([data-cat='all']).on { background: var(--b); border-color: var(--b); color: #0f1f1a; }
 

@@ -68,12 +68,7 @@ const jsonLd = JSON.stringify({
 
     <article class="post">
       {d.thumbnail && <img class="post-hero" src={d.thumbnail} alt={d.title} loading="eager" width="1280" height="720" />}
-      {d.description && (
-        <div class="answer">
-          <p class="answer-h">⚡ 3초 즉답 판정 요약</p>
-          <p>{d.description}</p>
-        </div>
-      )}
+      {/* 09-17 사용자 지시: "3초 즉답 판정 요약" 카드 삭제(PC·모바일). description은 meta·홈 요약에만 쓴다 */}
 
       <div class="prose">
         <Content />
