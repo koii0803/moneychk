@@ -349,9 +349,29 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   @media (max-width: 720px) {
     .hero { padding: 40px 0 20px; }
     .two { grid-template-columns: 1fr; gap: 48px; margin-top: 64px; }
-    .feed-list a { grid-template-columns: 1fr 120px; gap: 16px; }
+    /* 피드: 썸네일 100px 오른쪽, 제목 16px, 요약 1줄 */
+    .feed-list a { grid-template-columns: 1fr 100px; gap: 14px; padding: 18px 0; }
+    .feed-text h3 { font-size: 16px; margin-bottom: 4px; }
+    .feed-text p { font-size: 13px; -webkit-line-clamp: 1; margin-bottom: 8px; }
     .feed-list .thumb-fallback img { width: 50%; }
-    .feat-top { min-height: 224px; padding: 24px; }
-    .feat-top .feat-icon { width: 48px; height: 48px; }
+    /* 대표 카드: 아이콘은 제목과 안 겹치게 오른쪽 위로 */
+    .feat-top { min-height: 224px; padding: 20px; }
+    .feat-top .feat-icon { width: 48px; height: 48px; right: 16px; bottom: auto; top: 16px; }
+    .feat-title { max-width: none; }
+    .feat-bottom { padding: 16px 20px; }
+    .recent, .series { margin-top: 64px; }
+  }
+  @media (max-width: 560px) {
+    /* 시리즈: 2열 세로카드 → 1열 가로카드(그림 왼쪽 96px) */
+    .series-list { grid-template-columns: 1fr; gap: 10px; }
+    .series-card { flex-direction: row; align-items: center; }
+    .series-art { flex: 0 0 96px; aspect-ratio: 1 / 1; align-self: stretch; }
+    .series-art img { width: 64%; }
+    .series-body { padding: 12px 14px; gap: 4px; }
+    .series-body h3 { font-size: 15.5px; }
+    .series-body p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; }
+    .series-body .chip { display: none; }
+    .recent-grid { gap: 20px 12px; }
+    .recent-grid h3 { font-size: 14px; }
   }
 </style>
