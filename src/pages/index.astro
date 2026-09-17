@@ -258,6 +258,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   }
   .feed-list .thumb { border-radius: 14px; }
   .feed-list .thumb-fallback img { width: 46%; height: auto; }
+  .feed-list .thumb img { transition: transform .3s; }
+  .feed-list a:hover .thumb img { transform: scale(1.06); }
 
   /* 오리지널 시리즈 */
   .series { margin-top: 96px; }
@@ -268,7 +270,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .series-art img { width: 62%; height: auto; filter: drop-shadow(0 14px 24px rgba(0,0,0,.4)); transition: transform .3s; }
   .series-card:hover .series-art img { transform: scale(1.06); }
   .series-body { display: flex; flex-direction: column; gap: 8px; padding: 18px 18px 20px; flex: 1; }
-  .series-body h3 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .series-body h3 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; transition: color .15s; }
+  .series-card:hover .series-body h3 { color: var(--money); }
   .series-body p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-3); flex: 1; }
   .series-body .chip { align-self: flex-start; }
 
@@ -277,7 +280,9 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .recent-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px 20px; }
   .recent-grid a { display: flex; flex-direction: column; gap: 8px; }
   .recent-grid .thumb { border-radius: 12px; }
-  .recent-grid .thumb-fallback img { width: 46%; height: auto; }
+  .recent-grid .thumb-fallback img { width: 46%; height: auto; transition: transform .3s; }
+  .recent-grid .thumb img { transition: transform .3s; }
+  .recent-grid a:hover .thumb img { transform: scale(1.06); }
   .recent-grid h3 { margin: 4px 0 0; font-size: 15px; font-weight: 700; line-height: 1.45; letter-spacing: -0.01em; }
   .recent-grid a:hover h3 { color: var(--money); }
   .recent-date { font-size: 12.5px; color: var(--ink-3); }
