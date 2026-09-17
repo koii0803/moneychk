@@ -234,7 +234,7 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   /* 두 줄 높이를 고정해서 문구가 바뀌어도 아래가 안 움직인다 */
   .hero h1 { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: calc(2 * 1.25em + 8px); margin: 0 0 14px; font-weight: 800; font-size: clamp(30px, 4.6vw, 48px); line-height: 1.25; letter-spacing: -0.03em; }
   .hero .l1, .hero .l2 { display: block; transition: opacity .45s ease, transform .45s ease; }
-  .hero .l1 { font-weight: 600; font-size: .78em; color: var(--ink-3); letter-spacing: -0.02em; }
+  .hero .l1 { font-weight: 600; font-size: .78em; color: color-mix(in srgb, var(--ink) 65%, var(--ink-3)); letter-spacing: -0.02em; } /* 09-17 윗줄 진하게: 본문색 65% + 회색 35% (어두운 화면 #c5cad0쯤, 밝은 화면 #3f4855쯤) */
   .hero .l2 { background: linear-gradient(90deg, var(--ink) 0%, var(--ink) 55%, var(--money) 140%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .hero h1.out .l1 { opacity: 0; transform: translateY(-6px); }
   .hero h1.out .l2 { opacity: 0; transform: translateY(8px); transition-delay: .05s; }

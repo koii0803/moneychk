@@ -39,7 +39,7 @@ const pageHref = (n: number) => (n === 1 ? `/${category}` : `/${category}/${n}`)
     ))}
   </nav>
 
-  {posts.length > 0 ? (<>
+  {posts.length > 0 ? (<div class="cat-body" data-cat-body data-next={page.url.next ?? ''} data-m-step="10">
     {top.length > 0 && <h2 class="sec-h">인기글</h2>}
     {top.length > 0 && <ul class="card-grid" style={`--c:${cat.color}`}>
       {top.map((p) => (
@@ -78,6 +78,7 @@ const pageHref = (n: number) => (n === 1 ? `/${category}` : `/${category}/${n}`)
         ))}
       </ul>
     )}
+    <div class="m-sentinel" data-m-sentinel aria-hidden="true"></div>
     {page.lastPage > 1 && (
       <nav class="pager" aria-label="페이지">
         {page.url.prev ? <a href={page.url.prev} aria-label="이전">‹</a> : <span class="off">‹</span>}
@@ -85,9 +86,51 @@ const pageHref = (n: number) => (n === 1 ? `/${category}` : `/${category}/${n}`)
         {page.url.next ? <a href={page.url.next} aria-label="다음">›</a> : <span class="off">›</span>}
       </nav>
     )}
-  </>) : (
+  </div>) : (
     <p class="empty">이 영역은 데이터 구축 중입니다. 검증이 끝난 분석부터 순서대로 공개됩니다.</p>
   )}
+  <script is:inline>
+    // 모바일 무한 스크롤: 처음 10칸, 바닥 근처 오면 10칸씩 더, 다 보이면 다음 쪽 HTML 가져와 이어붙임. PC(>720)는 안 돈다.
+    document.addEventListener('astro:page-load', () => {
+      const body = document.querySelector('[data-cat-body]');
+      if (!body || body.dataset.on || !matchMedia('(max-width: 720px)').matches) return;
+      body.dataset.on = '1';
+      const step = Number(body.dataset.mStep) || 10;
+      let next = body.dataset.next || '';
+      let busy = false;
+      const items = () => [...body.querySelectorAll('.card-grid > li, .list > li')];
+      const hidden = () => items().filter((li) => li.classList.contains('m-hid'));
+      items().slice(step).forEach((li) => li.classList.add('m-hid'));
+      const list = () => body.querySelector('.list') || (() => { const u = document.createElement('ul'); u.className = 'list first'; body.querySelector('[data-m-sentinel]').before(u); return u; })();
+      const reveal = () => hidden().slice(0, step).forEach((li) => li.classList.remove('m-hid'));
+      const fetchNext = async () => {
+        if (!next) return;
+        try {
+          const html = await (await fetch(next)).text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          const got = [...doc.querySelectorAll('[data-cat-body] .card-grid > li, [data-cat-body] .list > li')];
+          got.forEach((li) => { li.classList.add('m-hid'); list().appendChild(li); });
+          next = doc.querySelector('[data-cat-body]')?.dataset.next || '';
+        } catch (e) { next = ''; }
+      };
+      const sentinel = body.querySelector('[data-m-sentinel]');
+      const inView = () => sentinel.getBoundingClientRect().top < innerHeight + 400;
+      // 바닥 표식이 화면 근처에 있는 동안 계속 채운다(한 번 드러내도 표식이 그대로 보이면 IO가 다시 안 울리므로 루프)
+      const pump = async () => {
+        if (busy) return; busy = true;
+        try {
+          for (let guard = 0; guard < 6 && inView(); guard++) {
+            if (hidden().length === 0) { if (!next) break; await fetchNext(); if (hidden().length === 0) break; }
+            reveal();
+            await new Promise((r) => setTimeout(r, 0));
+          }
+        } finally { busy = false; }
+        if (!next && hidden().length === 0) io.disconnect();
+      };
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) pump(); }, { rootMargin: '400px 0px' });
+      io.observe(sentinel);
+    });
+  </script>
 </Base>
 
 <style>
@@ -136,5 +179,22 @@ const pageHref = (n: number) => (n === 1 ? `/${category}` : `/${category}/${n}`)
   .row:hover .row-thumb img { transform: scale(1.06); }
 
   @media (max-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 560px) { .card-grid { grid-template-columns: 1fr; } .row { gap: 16px; padding: 20px 0; } .row-title { font-size: 16.5px; } .row-desc { display: none; } .row-thumb { flex-basis: 110px; } }
+  /* 모바일(≤720): '인기글' 카드·목록 구분 없이 전부 한 줄 목록(첨부 티스토리식). 10칸 보이고 내리면 10칸씩 + 다음 쪽 자동 이어붙임. 쪽 번호는 숨김 */
+  @media (max-width: 720px) {
+    .sec-h, .pager { display: none; }
+    .card-grid { grid-template-columns: 1fr; gap: 0; }
+    .card { display: grid; grid-template-columns: minmax(0, 1fr) 150px; grid-template-areas: 'title thumb' 'desc thumb' 'date thumb'; column-gap: 16px; row-gap: 6px; align-items: start; padding: 20px 0; border-bottom: 1px solid var(--hair); }
+    .card .thumb { grid-area: thumb; margin: 0; width: 150px; aspect-ratio: 16 / 9; align-self: center; }
+    .card-title { grid-area: title; font-size: 16.5px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-desc { grid-area: desc; font-size: 13.5px; }
+    .card-date { grid-area: date; }
+    .list { margin-top: 0; border-top: 0; }
+    .row { gap: 16px; padding: 20px 0; align-items: start; }
+    .row-kicker { display: none; }
+    .row-title { font-size: 16.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .row-desc { font-size: 13.5px; }
+    .row-thumb { flex-basis: 150px; aspect-ratio: 16 / 9; align-self: center; }
+    .card-grid > li.m-hid, .list > li.m-hid { display: none; }
+    .m-sentinel { height: 1px; }
+  }
 </style>
