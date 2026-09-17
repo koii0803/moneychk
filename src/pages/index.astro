@@ -6,9 +6,10 @@ import { CATEGORIES, fmtDate } from '../config/site';
 const posts = await getPublished();
 const [lead, ...rest] = posts;
 const feed = rest.slice(0, 5); // '나를 위한 정책 알아두기' 고정 5개
-const ranked = posts.slice(0, 4);
-const recent = posts; // 8개만 보이고 나머지는 숨김 → '더 펼쳐보기'가 8개씩 아래로 펼친다
+const ranked = posts.slice(0, 3); // '지금 많이 보는 콘텐츠' 고정 3개
+const recent = posts; // 한 쪽 8개 고정, 아래 가운데 페이지 넘김(JS로 그 자리에서 바꿈)
 const RECENT_STEP = 8;
+const recentPages = Math.ceil(recent.length / RECENT_STEP);
 
 // 히어로 롤링 문구. "앞, 뒤" 두 토막 구조를 지켜야 두 줄 리듬이 맞는다
 const rolling = [
@@ -36,7 +37,7 @@ const rolling = [
 const countOf = (...keys: string[]) => posts.filter((p) => keys.includes(p.data.category)).length;
 
 // 오리지널 시리즈 4대 테마 (분류 묶음에 이름을 붙인 것. 글 수는 실측)
-const series = [
+const series = [ // '오리지널 시리즈' 고정 4개
   { icon: '🏠', name: '도시와 내 집의 설계도', desc: '전세사기 안 당하고, 정부 저금리 디딤돌·버팀목 대출로 서울·수도권에 내 집 마련하는 합법적 레버리지.', img: '/img/icons/home.webp', cats: ['home'], bg: 'linear-gradient(135deg, #0e7490, #164e63)' },
   { icon: '🛡️', name: '월급의 마지막 방어선', desc: '낸 세금 1원까지 돌려받는 숨은 환급금부터 공과금·교통비 깎아내는 직장인·자영업자 감면 공식.', img: '/img/icons/save.webp', cats: ['refund', 'save'], bg: 'linear-gradient(135deg, #1e3a2f, #0f2a1f)' },
   { icon: '🌱', name: '청년 자산 빌드업', desc: '청년도약계좌 연 6% 기여금과 청년주택드림 청약통장으로 종잣돈 5천만 원 만드는 가장 확실한 로드맵.', img: '/img/icons/future.webp', cats: ['future'], bg: 'linear-gradient(135deg, #1e1b4b, #0f172a)' },
@@ -61,7 +62,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
 
   {lead ? (
     <a class="feat" id="featured" href={`/posts/${lead.id}`}>
-      <div class="feat-top" style={lead.data.thumbnail ? `background-image:url(${lead.data.thumbnail})` : ''}>
+      <div class="feat-top">
+        <img class="feat-bg" src={lead.data.thumbnail ?? '/img/feat-default.webp'} alt="" width="1376" height="768" />
         <span class="feat-badge">최신 분석</span>
         <img class="feat-icon" src={CATEGORIES[lead.data.category].img} alt="" width="160" height="160" />
         <span class="feat-meta">{CATEGORIES[lead.data.category].name} · {fmtDate(lead.data.pubDate)}</span>
@@ -148,7 +150,7 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
         {recent.map((p, i) => {
           const c = CATEGORIES[p.data.category];
           return (
-            <li style={`--c:${c.color}`} class={i >= RECENT_STEP ? 'is-hid' : undefined}>
+            <li style={`--c:${c.color}`} class={i >= RECENT_STEP ? 'is-hid' : undefined} data-p={Math.floor(i / RECENT_STEP) + 1}>
               <a href={`/posts/${p.id}`}>
                 <div class="thumb">
                   {p.data.thumbnail
@@ -162,7 +164,15 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
           );
         })}
       </ul>
-      {recent.length > RECENT_STEP && <p class="more"><button type="button" data-more data-step={RECENT_STEP}>더 펼쳐보기</button></p>}
+      {recentPages > 1 && (
+        <nav class="pager" data-pager aria-label="페이지">
+          <button type="button" data-go="prev" aria-label="이전" disabled>‹</button>
+          {Array.from({ length: recentPages }, (_, i) => i + 1).map((n) => (
+            <button type="button" data-go={n} class:list={{ on: n === 1 }} aria-current={n === 1 ? 'page' : undefined}>{n}</button>
+          ))}
+          <button type="button" data-go="next" aria-label="다음">›</button>
+        </nav>
+      )}
     </section>
   )}
 
@@ -194,16 +204,26 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
       start();
     });
 
-    // 방금 올라온 콘텐츠: 누를 때마다 숨긴 카드 8개씩 아래로 펼친다. 다 펼치면 버튼 없앤다.
+    // 방금 올라온 콘텐츠: 쪽 번호 누르면 그 쪽 8개만 보인다(페이지 이동 없음).
     document.addEventListener('astro:page-load', () => {
-      const btn = document.querySelector('[data-more]');
-      if (!btn || btn.dataset.on) return;
-      btn.dataset.on = '1';
-      const step = Number(btn.dataset.step) || 8;
-      btn.addEventListener('click', () => {
-        const hid = [...document.querySelectorAll('.recent-grid .is-hid')];
-        hid.slice(0, step).forEach((li, k) => { li.style.animationDelay = `${k * 40}ms`; li.classList.remove('is-hid'); li.classList.add('is-in'); });
-        if (hid.length <= step) btn.parentElement.remove();
+      const nav = document.querySelector('[data-pager]');
+      if (!nav || nav.dataset.on) return;
+      nav.dataset.on = '1';
+      const items = [...document.querySelectorAll('.recent-grid [data-p]')];
+      const nums = [...nav.querySelectorAll('button')].filter((b) => /^\d+$/.test(b.dataset.go));
+      const last = nums.length;
+      let cur = 1;
+      const show = (n) => {
+        cur = Math.min(Math.max(1, n), last);
+        items.forEach((li, k) => { const on = Number(li.dataset.p) === cur; li.classList.toggle('is-hid', !on); li.classList.toggle('is-in', on); li.style.animationDelay = `${(k % 8) * 40}ms`; });
+        nums.forEach((b) => { const on = Number(b.dataset.go) === cur; b.classList.toggle('on', on); on ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'); });
+        nav.querySelector('[data-go=prev]').disabled = cur === 1;
+        nav.querySelector('[data-go=next]').disabled = cur === last;
+      };
+      nav.addEventListener('click', (e) => {
+        const b = e.target.closest('button[data-go]');
+        if (!b) return;
+        show(b.dataset.go === 'prev' ? cur - 1 : b.dataset.go === 'next' ? cur + 1 : Number(b.dataset.go));
       });
     });
   </script>
@@ -234,12 +254,17 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .feat:hover { border-color: color-mix(in srgb, var(--money) 50%, transparent); }
   .feat-top {
     position: relative; min-height: 288px; padding: 32px; display: flex; flex-direction: column; justify-content: flex-end;
-    background: linear-gradient(45deg, #0f172a, #1e293b, #334155); background-size: cover; background-position: center;
+    background: linear-gradient(45deg, #0f172a, #1e293b, #334155); overflow: hidden;
   }
-  .feat-top[style*='background-image']::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(16,16,19,.15), rgba(16,16,19,.85)); }
-  .feat-top > * { position: relative; }
+  /* 배경 사진: 올리면 1.05배 천천히 확대 */
+  .feat-top .feat-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; }
+  .feat:hover .feat-bg { transform: scale(1.05); }
+  /* 사진 위 덮개: 왼쪽 진하고 오른쪽 옅게 — 고정값. 글자는 왼쪽, 사진은 오른쪽에 보이게 */
+  .feat-top::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(16,16,19,.9) 0%, rgba(16,16,19,.6) 45%, rgba(16,16,19,.1) 100%); }
+  .feat-top > * { position: relative; z-index: 2; }
+  .feat-top > .feat-bg { z-index: 0; }
   .feat-top .feat-badge { position: absolute; top: 24px; left: 24px; padding: 4px 12px; border-radius: 999px; background: var(--money); color: #fff; font-size: 12px; font-weight: 700; }
-  .feat-top .feat-icon { position: absolute; right: 32px; bottom: 28px; width: 160px; height: 160px; object-fit: contain; opacity: .9; filter: drop-shadow(0 12px 24px rgba(0,0,0,.45)); transition: transform .3s; }
+  .feat-top .feat-icon { position: absolute; right: 32px; bottom: 28px; width: 80px; height: 80px; object-fit: contain; opacity: .9; filter: drop-shadow(0 12px 24px rgba(0,0,0,.45)); transition: transform .3s; }
   .feat:hover .feat-icon { transform: scale(1.1); }
   .feat-meta { font-size: 12.5px; font-weight: 500; color: #94a3b8; margin-bottom: 8px; }
   .feat-title { margin: 0; max-width: 20ch; font-weight: 700; font-size: clamp(22px, 3vw, 30px); line-height: 1.35; color: #fff; letter-spacing: -0.02em; }
@@ -307,9 +332,12 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .recent-grid h3 { margin: 4px 0 0; font-size: 15px; font-weight: 700; line-height: 1.45; letter-spacing: -0.01em; }
   .recent-grid a:hover h3 { color: var(--money); }
   .recent-date { font-size: 12.5px; color: var(--ink-3); }
-  .more { margin: 36px 0 0; text-align: center; }
-  .more button { display: inline-block; padding: 10px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--hair); font-size: 13.5px; font-weight: 600; color: var(--ink-2); cursor: pointer; font-family: inherit; }
-  .more button:hover { color: var(--ink); border-color: var(--ink-3); }
+  /* 가운데 페이지 넘김(분류 페이지와 같은 모양) */
+  .pager { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 40px 0 0; }
+  .pager button { min-width: 36px; height: 36px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: transparent; font-size: 14px; font-weight: 600; color: var(--ink-2); cursor: pointer; font-family: inherit; }
+  .pager button:hover:not(:disabled) { background: var(--surface); color: var(--ink); }
+  .pager button.on { background: var(--money); color: #fff; }
+  .pager button:disabled { opacity: .3; cursor: default; }
   .recent-grid .is-hid { display: none; }
   .recent-grid .is-in { animation: unfold .35s ease both; }
   @keyframes unfold { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -324,6 +352,6 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
     .feed-list a { grid-template-columns: 1fr 120px; gap: 16px; }
     .feed-list .thumb-fallback img { width: 50%; }
     .feat-top { min-height: 224px; padding: 24px; }
-    .feat-top .feat-icon { width: 96px; height: 96px; }
+    .feat-top .feat-icon { width: 48px; height: 48px; }
   }
 </style>

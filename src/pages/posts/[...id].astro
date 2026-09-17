@@ -37,6 +37,8 @@ const jsonLd = JSON.stringify({
 <Base title={d.title} description={d.description} article ogImage={d.thumbnail} pubDate={d.pubDate} updatedDate={d.updatedDate}>
   <script type="application/ld+json" set:html={jsonLd} slot="head" />
 
+  {/* 글 페이지 강조색 = 분류 기준색. 어두운 화면은 밝은 badge, 밝은 화면은 진한 color */}
+  <div class="post-page" style={`--cat:${cat.badge};--cat-dark:${cat.color}`}>
   <div class="progress" aria-hidden="true"><i></i></div>
 
   <p class="back"><a href={`/${d.category}`}>← {cat.name} 목록으로</a></p>
@@ -58,7 +60,7 @@ const jsonLd = JSON.stringify({
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
         <span>공유</span>
       </button>
-      <a class="rail-btn" href="#top" aria-label="맨 위로">
+      <a class="rail-btn" href="#top" data-top aria-label="맨 위로">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         <span>위로</span>
       </a>
@@ -140,6 +142,7 @@ const jsonLd = JSON.stringify({
       </ul>
     </section>
   )}
+  </div>
 
   <script is:inline>
     document.addEventListener('astro:page-load', () => {
@@ -190,6 +193,8 @@ const jsonLd = JSON.stringify({
           else { await navigator.clipboard.writeText(location.href); say('링크가 클립보드에 복사되었습니다.'); }
         } catch (e) {}
       });
+      // 위로: #top이 sticky 헤더라 앵커로는 안 올라감 → 직접 스크롤
+      document.querySelector('[data-top]')?.addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
       // 바닥 바: 어느 정도 읽으면 나오고, 닫으면 이 페이지에선 다시 안 뜸
       const foot = document.querySelector('[data-bar]');
       if (foot) {
@@ -203,6 +208,9 @@ const jsonLd = JSON.stringify({
 </Base>
 
 <style is:global>
+  /* 분류 기준색을 이 페이지의 --money로 덮어씀 → 알약·즉답 카드·표 머리·✓·계산기 박스·하단 바·목차·링크 전부 분류색 */
+  .post-page { --money: var(--cat); --money-soft: color-mix(in srgb, var(--cat) 14%, transparent); }
+  :root[data-theme='light'] .post-page { --money: var(--cat-dark); --money-soft: color-mix(in srgb, var(--cat-dark) 10%, transparent); }
   .post-head { max-width: 760px; margin: 0 auto; padding: 96px 0 120px; text-align: center; }
   .back { max-width: 1300px; margin: 28px auto 0; padding: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
   .back a:hover { color: var(--ink); }

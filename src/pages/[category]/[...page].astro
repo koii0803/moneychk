@@ -1,0 +1,140 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getPublished } from '../../lib/posts';
+import Base from '../../layouts/Base.astro';
+import { CATEGORIES, fmtDate, type CategoryKey } from '../../config/site';
+
+// 분류마다 15편씩 나눠 /benefit, /benefit/2, /benefit/3 … (1쪽 주소는 그대로 /benefit)
+export const getStaticPaths = (async ({ paginate }) => {
+  const all = await getPublished();
+  return Object.keys(CATEGORIES).flatMap((category) =>
+    paginate(all.filter((p) => p.data.category === category), { params: { category }, pageSize: 15 }),
+  );
+}) satisfies GetStaticPaths;
+
+const { category } = Astro.params as { category: CategoryKey; page?: string };
+const { page } = Astro.props;
+const cat = CATEGORIES[category];
+const posts = page.data;
+const total = page.total;
+const TOP = page.currentPage === 1 ? 6 : 0; // 1쪽만 '인기글' 카드 6개(조회수 없어 최신순), 나머지는 목록형
+const top = posts.slice(0, TOP);
+const rest = posts.slice(TOP);
+const pages = Array.from({ length: page.lastPage }, (_, i) => i + 1);
+const pageHref = (n: number) => (n === 1 ? `/${category}` : `/${category}/${n}`);
+---
+
+<Base title={`${cat.name} 팩트체크`} description={`${cat.desc} — ${cat.name} 카테고리의 생활경제 팩트체크 모음.`}>
+  <header class="cat-head" style={`--c:${cat.color}`}>
+    <img class="cat-swatch" src={cat.img} alt="" width="72" height="72" />
+    <div>
+      <h1>{cat.name}</h1>
+      <p class="cat-desc">{cat.desc} · {total > 0 ? `분석 ${total}건` : '데이터 구축 중'}</p>
+    </div>
+  </header>
+
+  <nav class="cat-switch" aria-label="다른 분류">
+    {Object.entries(CATEGORIES).map(([key, c]) => (
+      <a href={`/${key}`} class:list={{ on: key === category }} style={`--c:${c.color}`}>{c.name}</a>
+    ))}
+  </nav>
+
+  {posts.length > 0 ? (<>
+    {top.length > 0 && <h2 class="sec-h">인기글</h2>}
+    {top.length > 0 && <ul class="card-grid" style={`--c:${cat.color}`}>
+      {top.map((p) => (
+        <li>
+          <a class="card" href={`/posts/${p.id}`}>
+            <div class="thumb">
+              {p.data.thumbnail
+                ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
+                : <div class="thumb-fallback"><img src={CATEGORIES[p.data.category].img} alt="" width="120" height="120" loading="lazy" /></div>}
+            </div>
+            <span class="card-title">{p.data.title}</span>
+            <span class="card-desc">{p.data.description}</span>
+            <span class="card-date">{fmtDate(p.data.pubDate)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>}
+    {rest.length > 0 && (
+      <ul class:list={['list', { first: top.length === 0 }]}>
+        {rest.map((p) => (
+          <li>
+            <a class="row" href={`/posts/${p.id}`}>
+              <div class="row-text">
+                <span class="row-kicker">{p.data.tags?.[0] ?? cat.name}</span>
+                <span class="row-title">{p.data.title}</span>
+                <span class="row-desc">{p.data.description}</span>
+                <span class="row-date">{fmtDate(p.data.pubDate)}</span>
+              </div>
+              <div class="thumb row-thumb">
+                {p.data.thumbnail
+                  ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
+                  : <div class="thumb-fallback"><img src={CATEGORIES[p.data.category].img} alt="" width="120" height="120" loading="lazy" /></div>}
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+    {page.lastPage > 1 && (
+      <nav class="pager" aria-label="페이지">
+        {page.url.prev ? <a href={page.url.prev} aria-label="이전">‹</a> : <span class="off">‹</span>}
+        {pages.map((n) => (n === page.currentPage ? <span class="on" aria-current="page">{n}</span> : <a href={pageHref(n)}>{n}</a>))}
+        {page.url.next ? <a href={page.url.next} aria-label="다음">›</a> : <span class="off">›</span>}
+      </nav>
+    )}
+  </>) : (
+    <p class="empty">이 영역은 데이터 구축 중입니다. 검증이 끝난 분석부터 순서대로 공개됩니다.</p>
+  )}
+</Base>
+
+<style>
+  .cat-head { display: flex; align-items: center; gap: 18px; padding: 52px 0 24px; }
+  .cat-swatch { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0,0,0,.35)); }
+  .cat-head h1 { margin: 0; font-weight: 800; font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.025em; }
+  .cat-desc { margin: 4px 0 0; color: var(--ink-2); }
+
+  .cat-switch { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px; margin-bottom: 32px; border-bottom: 1px solid var(--hair); }
+  .cat-switch::-webkit-scrollbar { display: none; }
+  .cat-switch a { flex: 0 0 auto; padding: 7px 13px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-2); background: var(--surface); }
+  .cat-switch a:hover { color: var(--ink); }
+  .cat-switch a.on { background: var(--c); color: #fff; }
+
+  .sec-h { margin: 0 0 18px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .card-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 20px; }
+  .card { display: flex; flex-direction: column; gap: 6px; }
+  .card .thumb { margin-bottom: 6px; }
+  .card .thumb img { transition: transform .3s; }
+  .card:hover .thumb img { transform: scale(1.06); }
+  .card-title { font-weight: 700; font-size: 16.5px; line-height: 1.45; letter-spacing: -0.01em; }
+  .card:hover .card-title { color: var(--money); }
+  .card-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; color: var(--ink-2); }
+  .card-date { font-size: 13px; color: var(--ink-3); }
+  .empty { color: var(--ink-2); padding: 32px 0; }
+
+  /* 7번째부터: 왼쪽 글 · 오른쪽 썸네일 목록형 */
+  .list { list-style: none; margin: 48px 0 0; padding: 0; border-top: 1px solid var(--hair); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 28px 0; border-bottom: 1px solid var(--hair); }
+  .row-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .row-kicker { font-size: 13px; color: var(--ink-3); }
+  .row-title { font-size: 20px; font-weight: 700; line-height: 1.4; letter-spacing: -0.015em; }
+  .row:hover .row-title { color: var(--money); }
+  .row-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14.5px; color: var(--ink-2); }
+  .row-date { font-size: 13px; color: var(--ink-3); }
+  .row-thumb { flex: 0 0 240px; aspect-ratio: 3 / 2; }
+  .list.first { margin-top: 0; border-top: 0; }
+
+  /* 가운데 페이지 넘김 */
+  .pager { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 40px 0 8px; }
+  .pager a, .pager span { min-width: 36px; height: 36px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+  .pager a:hover { background: var(--surface); color: var(--ink); }
+  .pager .on { background: var(--money); color: #fff; }
+  .pager .off { opacity: .3; }
+  .row-thumb img { transition: transform .3s; }
+  .row:hover .row-thumb img { transform: scale(1.06); }
+
+  @media (max-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .card-grid { grid-template-columns: 1fr; } .row { gap: 16px; padding: 20px 0; } .row-title { font-size: 16.5px; } .row-desc { display: none; } .row-thumb { flex-basis: 110px; } }
+</style>
