@@ -22,7 +22,7 @@ const short = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
   <nav class="chips" aria-label="분류" data-filter>
     <button type="button" class="on" data-cat="all">전체</button>
     {cats.map(([key, c]) => <button type="button" data-cat={key} style={`--b:${c.badge}`}>{c.short}</button>)}
-    <a class="chip-link" href="/calc">계산기</a>
+    <a class="chip-link" href="/calc" target="_blank" rel="noopener">계산기</a>
   </nav>
 
   <section class="group">
@@ -34,7 +34,7 @@ const short = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
         const Tag = t.href ? 'a' : 'div';
         return (
           <li data-cat={t.cat}>
-            <Tag class="row" href={t.href || undefined} style={`--c:${c.color};--b:${c.badge}`}>
+            <Tag class="row" href={t.href || undefined} target={t.href ? '_blank' : undefined} rel={t.href ? 'noopener' : undefined} style={`--c:${c.color};--b:${c.badge}`}>
               <span class="row-name">{short(t.name)}</span>
               <span class="row-thumb" aria-hidden="true"><img src={c.img} alt="" width="60" height="60" loading="lazy" /></span>
               <span class="row-desc">{t.input} → {t.output}</span>
