@@ -217,8 +217,13 @@ const series = [ // '오리지널 시리즈' 고정 4개
       fetch('/api/top?n=3').then((r) => r.json()).then((top) => {
         const rows = (Array.isArray(top) ? top : []).filter((t) => titles[t.id]); // 워커가 조회 1 이상만 준다
         if (rows.length < 3) return;
-        const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-        ol.innerHTML = rows.map((t, i) => `<li><a href="/posts/${esc(t.id)}"><span>${esc(titles[t.id])}</span>${i === 0 ? '<span class="chip new">NEW</span>' : ''}</a></li>`).join('');
+        // 새로 만들지 않고 있는 줄(번호·구분선 스타일 붙은 것)을 그대로 두고 링크·제목만 바꾼다
+        const lis = [...ol.querySelectorAll('li')];
+        rows.slice(0, lis.length).forEach((t, i) => {
+          const a = lis[i].querySelector('a');
+          a.setAttribute('href', '/posts/' + t.id);
+          a.querySelector('span').textContent = titles[t.id];
+        });
       }).catch(() => {});
     });
 
