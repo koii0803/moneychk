@@ -58,7 +58,7 @@ const series = [ // '오리지널 시리즈' 고정 4개
     <p class="sub" set:html={rolling[0][1].split('|').join('<br class="m-br">')}></p>
   </section>
 
-  <nav class="chips" aria-label="정책 영역">
+  <nav class="chips" aria-label="정책 영역" data-chips-auto>
     <a class="on" href="/">전체</a>
     {Object.entries(CATEGORIES).map(([key, c]) => LINKED.includes(key) ? <a href={`/${key}`}>{c.name}</a> : <span class="off">{c.name}</span>)}
   </nav>
@@ -236,6 +236,30 @@ const series = [ // '오리지널 시리즈' 고정 4개
           if (ok) shown++;
         });
       }).catch(() => {});
+    });
+
+    // 모바일 칩 줄: 넘치면 페이지 열리고 0.6초 뒤 끝까지 스르륵 갔다가 돌아온다(뒤에 더 있다는 표시). 손대면 즉시 멈춤
+    document.addEventListener('astro:page-load', () => {
+      const el = document.querySelector('[data-chips-auto]');
+      if (!el || el.dataset.on || !matchMedia('(max-width: 720px)').matches) return;
+      el.dataset.on = '1';
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max < 24) return;
+      let stop = false;
+      ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => el.addEventListener(ev, () => { stop = true; }, { passive: true, once: true }));
+      const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+      const run = (from, to, ms) => new Promise((done) => {
+        const t0 = performance.now();
+        const step = (now) => {
+          if (stop) return done();
+          const k = Math.min(1, (now - t0) / ms);
+          el.scrollLeft = from + (to - from) * ease(k);
+          k < 1 ? requestAnimationFrame(step) : done();
+        };
+        requestAnimationFrame(step);
+      });
+      setTimeout(async () => { await run(0, max, 1400); await new Promise((r) => setTimeout(r, 500)); await run(max, 0, 1200); }, 600);
     });
 
     // 방금 올라온 콘텐츠: 쪽 번호 누르면 그 쪽 8개만 보인다(페이지 이동 없음).

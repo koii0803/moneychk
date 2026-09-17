@@ -181,6 +181,7 @@ const pageHref = (n: number) => (n === 1 ? `/${category}` : `/${category}/${n}`)
   @media (max-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
   /* 모바일(≤720): '인기글' 카드·목록 구분 없이 전부 한 줄 목록(첨부 티스토리식). 10칸 보이고 내리면 10칸씩 + 다음 쪽 자동 이어붙임. 쪽 번호는 숨김 */
   @media (max-width: 720px) {
+    .cat-desc { font-size: 13px; } /* 모바일: 2단계 작게 */
     .sec-h, .pager { display: none; }
     .card-grid { grid-template-columns: 1fr; gap: 0; }
     .card { display: grid; grid-template-columns: minmax(0, 1fr) 150px; grid-template-areas: 'title thumb' 'desc thumb' 'date thumb'; column-gap: 16px; row-gap: 6px; align-items: start; padding: 20px 0; border-bottom: 1px solid var(--hair); }
