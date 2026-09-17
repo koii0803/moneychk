@@ -84,11 +84,13 @@ const series = [ // '오리지널 시리즈' 고정 4개
       <div class="rank">
         <h2 class="section-h">지금 많이 보는 콘텐츠</h2>
         <p class="section-sub">지금 주목받는 정책</p>
-        <ol class="rank-list">
+        <ol class="rank-list" data-rank>
           {ranked.map((p, i) => (
             <li><a href={`/posts/${p.id}`}><span>{p.data.title}</span>{i === 0 && <span class="chip new">NEW</span>}</a></li>
           ))}
         </ol>
+        {/* 조회수 순위용: 전체 글 id→제목. /api/top 결과로 위 3개를 바꿔 끼운다(조회수 전부 0이면 최신순 그대로) */}
+        <script type="application/json" data-rank-data set:html={JSON.stringify(Object.fromEntries(posts.map((p) => [p.id, p.data.title])))} />
       </div>
       <div class="feed">
         <h2 class="section-h">나를 위한 정책 알아두기</h2>
@@ -202,6 +204,22 @@ const series = [ // '오리지널 시리즈' 고정 4개
       const stop = () => { if (t) clearInterval(t); t = null; };
       document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
       start();
+    });
+
+    // 지금 많이 보는 콘텐츠: 워커 /api/top 에서 조회수 순 3개 받아 교체. 실패하거나 전부 0이면 최신순 그대로
+    document.addEventListener('astro:page-load', () => {
+      const ol = document.querySelector('[data-rank]');
+      const raw = document.querySelector('[data-rank-data]');
+      if (!ol || !raw || ol.dataset.on) return;
+      ol.dataset.on = '1';
+      let titles = {};
+      try { titles = JSON.parse(raw.textContent); } catch (e) { return; }
+      fetch('/api/top?n=3').then((r) => r.json()).then((top) => {
+        const rows = (Array.isArray(top) ? top : []).filter((t) => t.views > 0 && titles[t.id]);
+        if (rows.length < 3) return;
+        const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        ol.innerHTML = rows.map((t, i) => `<li><a href="/posts/${esc(t.id)}"><span>${esc(titles[t.id])}</span>${i === 0 ? '<span class="chip new">NEW</span>' : ''}</a></li>`).join('');
+      }).catch(() => {});
     });
 
     // 방금 올라온 콘텐츠: 쪽 번호 누르면 그 쪽 8개만 보인다(페이지 이동 없음).

@@ -2,8 +2,14 @@
   "name": "moneychk",
   "account_id": "483a48f9c76d80012303cb3f6260c1bb",
   "compatibility_date": "2026-09-01",
+  "main": "worker/index.js",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
-  }
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  // 조회수 저장소. 배포하면 자동 생성(대시보드 작업 없음)
+  "durable_objects": { "bindings": [{ "name": "COUNTER", "class_name": "Counter" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Counter"] }]
 }

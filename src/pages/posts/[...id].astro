@@ -50,6 +50,7 @@ const jsonLd = JSON.stringify({
       <time datetime={d.pubDate.toISOString()}>{fmtDate(d.pubDate)}</time>
       <span>•</span><span class="who wordmark-mark"><i class="glow"></i><img src="/img/icons/logo.webp" alt={SITE.name} width="20" height="20" /></span>
       <span>•</span><span>{minutes}분 완독</span>
+      <span class="views" data-views={post.id} hidden><span>•</span> 조회 <b>0</b></span>
       {d.updatedDate && <><span>•</span><span>수정 {fmtDate(d.updatedDate)}</span></>}
     </p>
   </header>
@@ -189,6 +190,14 @@ const jsonLd = JSON.stringify({
           else { await navigator.clipboard.writeText(location.href); say('링크가 클립보드에 복사되었습니다.'); }
         } catch (e) {}
       });
+      // 조회수: 글 열리면 +1 하고 숫자 표시(워커 /api/view). 실패하면 그냥 숨긴 채로 둔다
+      const v = document.querySelector('[data-views]');
+      if (v && !v.dataset.on) {
+        v.dataset.on = '1';
+        fetch('/api/view/' + encodeURIComponent(v.dataset.views), { method: 'POST' })
+          .then((r) => r.json()).then((d) => { if (typeof d.views === 'number') { v.querySelector('b').textContent = d.views.toLocaleString('ko-KR'); v.hidden = false; } })
+          .catch(() => {});
+      }
       // 위로: #top이 sticky 헤더라 앵커로는 안 올라감 → 직접 스크롤
       document.querySelectorAll('[data-top]').forEach((el) => el.addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }));
       // 모바일 위로 버튼: 600px 넘게 내려가면 보임
@@ -217,6 +226,8 @@ const jsonLd = JSON.stringify({
     display: inline-block; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
     color: var(--money); background: var(--money-soft); border: 1px solid color-mix(in srgb, var(--money) 25%, transparent);
   }
+  .post-meta .views b { font-weight: 600; color: var(--ink); }
+  .post-meta .views > span { margin-right: 8px; }
   .post-meta .who { width: 22px; height: 22px; } /* 헤더 .wordmark-mark + .glow 재사용, 크기만 축소 */
   .post-meta .who img { width: 20px; height: 20px; }
   .post-meta .who .glow { inset: -4px; }

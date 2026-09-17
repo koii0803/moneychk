@@ -4,3 +4,4 @@ dist/
 .env
 .env.*
 기획/
+.wrangler/
