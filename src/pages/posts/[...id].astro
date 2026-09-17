@@ -104,7 +104,7 @@ const jsonLd = JSON.stringify({
         <>
           <p class="toc-h">목차 바로가기</p>
           <ol>
-            {toc.map((h, i) => <li><a href={`#${h.slug}`}>{i + 1}. {h.text.replace(/^d+[.)]s*/, '')}</a></li>)}
+            {toc.map((h, i) => <li><a href={`#${h.slug}`}>{i + 1}. {h.text.replace(/^\d+[.)]\s*/, '')}</a></li>)}
           </ol>
         </>
       )}
