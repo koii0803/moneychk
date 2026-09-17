@@ -5,3 +5,4 @@ dist/
 .env.*
 기획/
 .wrangler/
+.dev.vars

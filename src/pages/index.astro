@@ -206,7 +206,7 @@ const series = [ // '오리지널 시리즈' 고정 4개
       start();
     });
 
-    // 지금 많이 보는 콘텐츠: 워커 /api/top 에서 조회수 순 3개 받아 교체. 실패하거나 전부 0이면 최신순 그대로
+    // 지금 많이 보는 콘텐츠: 워커 /api/top 에서 조회수 순 id 3개 받아 교체(숫자는 안 옴). 3개 안 되면 최신순 그대로
     document.addEventListener('astro:page-load', () => {
       const ol = document.querySelector('[data-rank]');
       const raw = document.querySelector('[data-rank-data]');
@@ -215,7 +215,7 @@ const series = [ // '오리지널 시리즈' 고정 4개
       let titles = {};
       try { titles = JSON.parse(raw.textContent); } catch (e) { return; }
       fetch('/api/top?n=3').then((r) => r.json()).then((top) => {
-        const rows = (Array.isArray(top) ? top : []).filter((t) => t.views > 0 && titles[t.id]);
+        const rows = (Array.isArray(top) ? top : []).filter((t) => titles[t.id]); // 워커가 조회 1 이상만 준다
         if (rows.length < 3) return;
         const esc = (x) => String(x).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         ol.innerHTML = rows.map((t, i) => `<li><a href="/posts/${esc(t.id)}"><span>${esc(titles[t.id])}</span>${i === 0 ? '<span class="chip new">NEW</span>' : ''}</a></li>`).join('');

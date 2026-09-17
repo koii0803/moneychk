@@ -1,8 +1,8 @@
 // 머니첵 조회수 카운터. 정적 파일은 Cloudflare Assets가 내주고, /api/* 만 이 코드가 받는다(wrangler.jsonc run_worker_first).
 // 저장소 = Durable Object(SQLite). 대시보드에서 만들 것 없이 배포하면 생긴다.
-//   POST /api/view/<글id>        → 사람 브라우저가 글 열 때 +1 (봇 UA 제외, 같은 IP+글은 하루 1번) → { views }
-//   GET  /api/views?ids=a,b,c    → { a: n, b: n, ... }
-//   GET  /api/top?n=3            → [{ id, views }, ...] 많이 본 순
+//   POST /api/view/<글id>        → 사람 브라우저가 글 열 때 +1 (봇 UA 제외, 같은 IP+글은 하루 1번) → { ok }  ※ 숫자 안 줌(비공개)
+//   GET  /api/top?n=3            → [{ id }, ...] 많이 본 순, 조회 1 이상만. 숫자 없음(홈 순위용)
+//   GET  /api/stats?key=…        → [{ id, views }, ...] 상위 50. 비공개: 환경변수 STATS_KEY(Cloudflare 대시보드 Settings→Variables, Secret)와 같아야 함
 import { DurableObject } from 'cloudflare:workers';
 
 const BOT = /bot|crawl|spider|slurp|preview|fetch|monitor|headless|lighthouse|facebookexternalhit|whatsapp|telegram|curl|wget|python|java\b|go-http|okhttp|axios/i;
@@ -68,15 +68,18 @@ export default {
       const day = new Date().toISOString().slice(0, 10);
       // 봇이거나 IP 없으면 세지 않고 현재 값만 돌려준다
       const key = !ua || BOT.test(ua) || !ip ? null : await sha(`${ip}|${day}|${id}`);
-      return json({ views: await stub.view(id, key) });
-    }
-    if (req.method === 'GET' && url.pathname === '/api/views') {
-      const ids = (url.searchParams.get('ids') || '').split(',').filter((s) => ID.test(s)).slice(0, 100);
-      return json(await stub.get(ids));
+      await stub.view(id, key);
+      return json({ ok: true });
     }
     if (req.method === 'GET' && url.pathname === '/api/top') {
       const n = Math.min(20, Math.max(1, Number(url.searchParams.get('n')) || 3));
-      return json(await stub.top(n));
+      const rows = await stub.top(n);
+      return json(rows.filter((r) => r.views > 0).map((r) => ({ id: r.id })));
+    }
+    if (req.method === 'GET' && url.pathname === '/api/stats') {
+      const k = url.searchParams.get('key') || req.headers.get('x-stats-key') || '';
+      if (!env.STATS_KEY || k !== env.STATS_KEY) return json({ error: 'forbidden' }, 403);
+      return json(await stub.top(50));
     }
     return json({ error: 'not found' }, 404);
   },
