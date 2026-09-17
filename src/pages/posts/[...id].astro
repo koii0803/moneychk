@@ -122,18 +122,22 @@ const jsonLd = JSON.stringify({
   <script is:inline>
     document.addEventListener('astro:page-load', () => {
       // 목차: 화면에 보이는 소제목에 표시
+      // 기준선을 지난 마지막 소제목이 현재 위치. 기준선은 맨 위에선 140px, 바닥에 가까울수록 화면 아래로 내려가
+      // 마지막 절이 짧아도 끝까지 내리면 마지막 항목에 닿는다.
       const links = [...document.querySelectorAll('.toc a')];
       if (links.length) {
-        const map = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
-        const io = new IntersectionObserver((es) => {
-          es.forEach((e) => {
-            if (e.isIntersecting) {
-              links.forEach((a) => a.classList.remove('on'));
-              map.get(e.target.id)?.classList.add('on');
-            }
-          });
-        }, { rootMargin: '-80px 0px -70% 0px' });
-        map.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+        const heads = links.map((a) => document.getElementById(a.getAttribute('href').slice(1)));
+        const mark = () => {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          const p = max > 0 ? Math.min(1, window.scrollY / max) : 1;
+          const line = 140 + p * (window.innerHeight - 140);
+          let idx = 0;
+          heads.forEach((h, i) => { if (h && h.getBoundingClientRect().top <= line) idx = i; });
+          links.forEach((a, i) => a.classList.toggle('on', i === idx));
+        };
+        mark();
+        window.addEventListener('scroll', mark, { passive: true });
+        window.addEventListener('resize', mark);
       }
       // 읽은 만큼 진행 바
       const bar = document.querySelector('.progress i');
