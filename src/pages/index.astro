@@ -34,6 +34,8 @@ const rolling = [
   ['실업급여와 구직촉진수당, 감액 없는 안전 수령 공식', '주 15시간 미만 알바해도 될까?|억울한 부정수급 100% 방어법.'],
   ['당신의 월급을 지키는, 가장 확실한 정책 방어선', '물가와 세금에 깎이는 내 소득,|정부 제도로 틀어막는 최종 해법.'],
 ];
+// 09-17 사용자 지시: 홈에서 분류 링크는 정부 지원금·정책 대출·주거·청약 셋만. 나머지는 글자만 보이고 안 눌림
+const LINKED: string[] = ['benefit', 'loan', 'home'];
 const countOf = (...keys: string[]) => posts.filter((p) => keys.includes(p.data.category)).length;
 
 // 오리지널 시리즈 4대 테마 (분류 묶음에 이름을 붙인 것. 글 수는 실측)
@@ -56,7 +58,7 @@ const series = [ // '오리지널 시리즈' 고정 4개
 
   <nav class="chips" aria-label="정책 영역">
     <a class="on" href="/">전체</a>
-    {Object.entries(CATEGORIES).map(([key, c]) => <a href={`/${key}`}>{c.name}</a>)}
+    {Object.entries(CATEGORIES).map(([key, c]) => LINKED.includes(key) ? <a href={`/${key}`}>{c.name}</a> : <span class="off">{c.name}</span>)}
   </nav>
 
   {lead ? (
@@ -126,7 +128,7 @@ const series = [ // '오리지널 시리즈' 고정 4개
         const n = countOf(...sr.cats);
         return (
           <li>
-            <a class="series-card" href={`/${sr.cats[0]}`}>
+            <a class="series-card" href={LINKED.includes(sr.cats[0]) ? `/${sr.cats[0]}` : undefined} class:list={{ 'no-link': !LINKED.includes(sr.cats[0]) }}>
               <div class="series-art" style={`background:${sr.bg}`}><img src={sr.img} alt="" width="200" height="200" loading="lazy" /></div>
               <div class="series-body">
                 <h3>{sr.name}</h3>
@@ -247,6 +249,11 @@ const series = [ // '오리지널 시리즈' 고정 4개
   .chips::-webkit-scrollbar { display: none; }
   .chips a { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-3); background: var(--surface); border: 1px solid var(--hair); }
   .chips a:hover { color: var(--ink); }
+  .chips .off { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-3); background: var(--surface); border: 1px solid var(--hair); opacity: .55; cursor: default; }
+  .series-card.no-link { cursor: default; }
+  .series-card.no-link:hover { border-color: var(--hair); transform: none; }
+  .series-card.no-link:hover .series-body h3 { color: inherit; }
+  .series-card.no-link:hover .series-art img { transform: none; }
   .chips a.on { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: var(--shadow); }
 
   /* 대표 글 */
