@@ -221,9 +221,10 @@ const jsonLd = JSON.stringify({
   .progress i { display: block; height: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left; }
 
   /* 토스피드 배치: 레일 64 · 본문 700 · 목차 220, 사이 110/150. 가운데 정렬, .wrap(1080)보다 넓어 밖으로 뺀다 */
-  .post-grid { display: grid; grid-template-columns: 1fr minmax(0, 700px) 1fr; column-gap: 0; align-items: start; width: min(1300px, 100vw - 40px); margin-left: 50%; transform: translateX(-50%); }
-  .rail { justify-self: end; margin-right: 110px; }
-  .toc { justify-self: start; margin-left: 110px; width: 220px; }
+  /* 양옆 칸은 minmax(0,1fr)라 항상 같은 폭 → 본문이 제목과 같은 중심선. 옆 칸이 좁으면 레일·목차 여백이 줄어든다 */
+  .post-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 700px) minmax(0, 1fr); column-gap: 0; align-items: start; width: min(1300px, 100vw - 40px); margin-left: 50%; transform: translateX(-50%); }
+  .rail { justify-self: end; margin-right: min(110px, 30%); }
+  .toc { justify-self: start; margin-left: min(110px, 28%); width: min(220px, 70%); }
   .post { min-width: 0; }
 
   .rail { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 8px; }
@@ -274,12 +275,12 @@ const jsonLd = JSON.stringify({
   .calc:hover .calc-btn { filter: brightness(1.08); }
   .prose blockquote { margin: 28px 0; padding: 16px 20px; border-left: 3px solid var(--money); background: var(--surface); border-radius: 0 12px 12px 0; font-size: 15.5px; }
   .prose blockquote p { margin: 0; }
-  .prose table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 14.5px; line-height: 1.55; border: 1px solid var(--hair); border-radius: 12px; background: var(--surface-2); }
+  .prose table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 28px 0; font-size: 14.5px; line-height: 1.55; border: 1px solid var(--hair); border-radius: 12px; overflow: hidden; background: var(--surface-2); }
   .prose thead th { font-size: 13.5px; color: var(--ink); background: var(--surface); padding: 13px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--hair); }
   .prose tbody td { border-bottom: 1px solid var(--hair); padding: 13px 14px; vertical-align: top; color: var(--ink-2); }
   .prose tbody td:first-child { color: var(--ink); font-weight: 500; }
   .prose tbody tr:last-child td { border-bottom: 0; }
-  .prose td:not(:first-child), .prose th:not(:first-child) { text-align: right; }
+  .prose em { display: block; margin: -12px 0 24px; font-size: 13px; color: var(--ink-3); font-style: italic; }
   .prose hr { border: 0; border-top: 1px solid var(--hair); margin: 44px 0; }
   .prose a { color: var(--money); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--money) 40%, transparent); }
   .prose a:hover { text-decoration-color: var(--money); }
@@ -321,6 +322,7 @@ const jsonLd = JSON.stringify({
     .rail { display: none; }
   }
   @media (max-width: 900px) {
+    .prose table { display: block; overflow-x: auto; }
     .post-grid { grid-template-columns: minmax(0, 1fr); }
     .toc { display: none; }
     .bar { bottom: 12px; padding: 10px 10px 10px 14px; }
