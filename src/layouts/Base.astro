@@ -77,11 +77,10 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
     <header class="top" id="top">
       <div class="wrap top-in">
         <a class="wordmark" href="/" aria-label="머니첵 홈">
-          <span class="wordmark-mark" aria-hidden="true"><i class="glow"></i><img src="/img/icons/logo.webp" alt="" width="30" height="30" /></span>
+          <span class="wordmark-mark" aria-hidden="true"><i class="glow"></i><img src="/img/icons/logo.webp" alt="" width="34" height="34" /></span>
           <span class="wordmark-type">
             <span class="wordmark-text">Moneycheck</span>
-            <span class="wordmark-div">/</span>
-            <span class="wordmark-sub">datalab</span>
+            <span class="wordmark-sub">POLICY DATA LAB</span>
           </span>
         </a>
         <nav class="top-nav" aria-label="사이트">
@@ -201,18 +200,18 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   .wordmark { display: flex; align-items: center; gap: 8px; }
   /* 프리미엄 뉴스룸 제호: 슬레이트 팟 + 숨쉬는 초록 불 / 베이스라인 정렬 / 1px 세로 디바이더 / 명도 계층 */
   .wordmark { gap: 12px; }
-  .wordmark-mark { position: relative; width: 32px; height: 32px; display: grid; place-items: center; }
-  .wordmark-mark img { position: relative; width: 30px; height: 30px; object-fit: contain; }
+  .wordmark-mark { position: relative; width: 36px; height: 36px; display: grid; place-items: center; }
+  .wordmark-mark img { position: relative; width: 34px; height: 34px; object-fit: contain; }
   /* 로고 뒤에서 초록 빛이 숨쉬듯 흐려졌다 진해진다 */
   .glow { position: absolute; inset: -6px; border-radius: 999px; background: radial-gradient(circle, color-mix(in srgb, var(--mint) 55%, transparent) 0%, transparent 70%); filter: blur(4px); animation: breathe 2.4s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { opacity: .25; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.15); } }
   @media (prefers-reduced-motion: reduce) { .glow { animation: none; opacity: .6; } }
-  .wordmark-type { display: flex; align-items: baseline; gap: 10px; }
-  .wordmark-text { font-weight: 800; font-size: 20px; letter-spacing: -0.025em; line-height: 1; color: var(--ink); transition: color .2s; }
+  /* 2단 제호: 이름 위, 작은 영문 태그 아래 */
+  .wordmark-type { display: flex; flex-direction: column; gap: 4px; line-height: 1; }
+  .wordmark-text { font-weight: 800; font-size: 19px; letter-spacing: -0.025em; color: var(--ink); transition: color .2s; }
   .wordmark:hover .wordmark-text { color: var(--mint); }
-  .wordmark-div { font-size: 14px; font-weight: 400; color: color-mix(in srgb, var(--ink) 35%, transparent); }
-  .wordmark-sub { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--mint); }
-  @media (max-width: 480px) { .wordmark-sub, .wordmark-div { display: none; } }
+  .wordmark-sub { font-size: 8.5px; font-weight: 700; letter-spacing: 0.18em; color: var(--mint); }
+  @media (max-width: 480px) { .wordmark-sub { display: none; } }
   .top-nav { display: flex; align-items: center; gap: 2px; }
   .top-nav a {
     padding: 7px 11px; border-radius: 999px; font-size: 14.5px; font-weight: 600; color: var(--ink-2);
