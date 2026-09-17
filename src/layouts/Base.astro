@@ -200,15 +200,16 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   .top-in { display: flex; align-items: center; justify-content: space-between; height: 60px; }
   .wordmark { display: flex; align-items: center; gap: 8px; }
   /* 프리미엄 뉴스룸 제호: 슬레이트 팟 + 숨쉬는 초록 불 / 베이스라인 정렬 / 1px 세로 디바이더 / 명도 계층 */
-  .wordmark { gap: 12px; }
-  .wordmark-mark { position: relative; width: 32px; height: 32px; display: grid; place-items: center; }
-  .wordmark-mark img { position: relative; width: 30px; height: 30px; object-fit: contain; }
+  /* 이미지대로: 제호 전체를 어두운 알약 안에 */
+  .wordmark { gap: 10px; padding: 6px 14px 6px 8px; border-radius: 999px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
+  .wordmark-mark { position: relative; width: 26px; height: 26px; display: grid; place-items: center; }
+  .wordmark-mark img { position: relative; width: 24px; height: 24px; object-fit: contain; }
   /* 로고 뒤에서 초록 빛이 숨쉬듯 흐려졌다 진해진다 */
   .glow { position: absolute; inset: -6px; border-radius: 999px; background: radial-gradient(circle, color-mix(in srgb, var(--mint) 55%, transparent) 0%, transparent 70%); filter: blur(4px); animation: breathe 2.4s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { opacity: .25; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.15); } }
   @media (prefers-reduced-motion: reduce) { .glow { animation: none; opacity: .6; } }
   .wordmark-type { display: flex; align-items: baseline; gap: 10px; }
-  .wordmark-text { font-weight: 800; font-size: 20px; letter-spacing: -0.025em; line-height: 1; color: var(--ink); transition: color .2s; }
+  .wordmark-text { font-weight: 800; font-size: 18px; letter-spacing: -0.025em; line-height: 1; color: var(--ink); transition: color .2s; }
   .wordmark:hover .wordmark-text { color: var(--mint); }
   .wordmark-div { font-size: 14px; font-weight: 400; color: color-mix(in srgb, var(--ink) 35%, transparent); }
   .wordmark-sub { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-3); }
