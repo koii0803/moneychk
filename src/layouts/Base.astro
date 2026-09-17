@@ -83,6 +83,7 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
             <span class="wordmark-sub">POLICY DATA LAB</span>
           </span>
         </a>
+        <a class="top-pipe" href="/pipeline">파이프라인</a>
         <nav class="top-nav" aria-label="사이트">
           <a href="/">정책 피드</a>
           <a href="/#featured">추천 리포트</a>
@@ -203,6 +204,8 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
     border-bottom: 1px solid var(--hair);
   }
   .top-in { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .top-pipe { margin-left: 16px; margin-right: auto; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--ink-3); border: 1px dashed var(--hair); }
+  .top-pipe:hover { color: var(--money); border-color: var(--money); }
   .wordmark { display: flex; align-items: center; gap: 8px; }
   /* 프리미엄 뉴스룸 제호: 슬레이트 팟 + 숨쉬는 초록 불 / 베이스라인 정렬 / 1px 세로 디바이더 / 명도 계층 */
   .wordmark { gap: 12px; }
