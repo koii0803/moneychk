@@ -256,7 +256,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
     display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.2;
     color: var(--b); background: color-mix(in srgb, var(--b) 12%, transparent); border: 1px solid color-mix(in srgb, var(--b) 35%, transparent);
   }
-  .feed-list .thumb { border-radius: 14px; border: 2px solid var(--ring); }
+  .feed-list .thumb { border-radius: 14px; border: 2px solid transparent; transition: border-color .2s; }
+  .feed-list a:hover .thumb { border-color: var(--ring); }
   /* 썸네일 테두리 4색 순환: 주황 → 에메랄드 → 핑크 → 앰버 (60% 투명) */
   .feed-list li:nth-child(4n+1) { --ring: rgba(249, 115, 22, .6); }
   .feed-list li:nth-child(4n+2) { --ring: rgba(16, 185, 129, .6); }
