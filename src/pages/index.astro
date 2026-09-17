@@ -355,7 +355,11 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
     .feed-text p { font-size: 13px; -webkit-line-clamp: 1; margin-bottom: 8px; }
     .feed-list .thumb-fallback img { width: 50%; }
     /* 대표 카드: 아이콘은 제목과 안 겹치게 오른쪽 위로 */
-    .feat-top { min-height: 224px; padding: 20px; }
+    /* 사진이 잘리지 않게 카드 위쪽을 사진 비율(16:9) 그대로 — PC처럼 사진 전체가 들어감 */
+    .feat-top { min-height: 0; aspect-ratio: 16 / 9; padding: 16px; }
+    .feat-title { font-size: 19px; line-height: 1.3; }
+    .feat-meta { font-size: 11.5px; margin-bottom: 4px; }
+    .feat-top .feat-badge { top: 14px; left: 14px; font-size: 11px; padding: 3px 10px; }
     .feat-top .feat-icon { width: 48px; height: 48px; right: 16px; bottom: auto; top: 16px; }
     .feat-title { max-width: none; }
     .feat-bottom { padding: 16px 20px; }
