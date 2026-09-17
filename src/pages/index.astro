@@ -82,7 +82,7 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
         <p class="section-sub">사람들이 주목하는 정책 이야기</p>
         <ol class="rank-list">
           {ranked.map((p, i) => (
-            <li><a href={`/posts/${p.id}`}><span>{p.data.title}</span>{i === 0 && <span class="chip new">새로 나온</span>}</a></li>
+            <li><a href={`/posts/${p.id}`}><span>{p.data.title}</span>{i === 0 && <span class="chip new">NEW</span>}</a></li>
           ))}
         </ol>
       </div>
