@@ -350,7 +350,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
     .hero { padding: 40px 0 20px; }
     .two { grid-template-columns: 1fr; gap: 48px; margin-top: 64px; }
     /* 피드: 썸네일 100px 오른쪽, 제목 16px, 요약 1줄 */
-    .feed-list a { grid-template-columns: 1fr 100px; gap: 14px; padding: 18px 0; }
+    .feed-list a { grid-template-columns: 1fr 150px; gap: 16px; padding: 18px 0; align-items: start; } /* 썸네일 150px 16:9, 위를 제목 위에 맞춤 */
+    .feed-list .thumb { margin-top: 2px; }
     .feed-text h3 { font-size: 16px; margin-bottom: 4px; }
     .feed-text p { font-size: 13px; -webkit-line-clamp: 1; margin-bottom: 8px; }
     .feed-list .thumb-fallback img { width: 50%; }
