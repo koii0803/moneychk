@@ -80,8 +80,8 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
           <span class="wordmark-mark" aria-hidden="true"><i class="glow"></i><img src="/img/icons/logo.webp" alt="" width="30" height="30" /></span>
           <span class="wordmark-type">
             <span class="wordmark-text">Moneycheck</span>
-            <span class="wordmark-div"></span>
-            <span class="wordmark-sub">정책 데이터랩</span>
+            <span class="wordmark-div">/</span>
+            <span class="wordmark-sub">datalab</span>
           </span>
         </a>
         <nav class="top-nav" aria-label="사이트">
@@ -210,8 +210,8 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   .wordmark-type { display: flex; align-items: baseline; gap: 10px; }
   .wordmark-text { font-weight: 800; font-size: 20px; letter-spacing: -0.025em; line-height: 1; color: var(--ink); transition: color .2s; }
   .wordmark:hover .wordmark-text { color: var(--mint); }
-  .wordmark-div { width: 1px; height: 14px; background: color-mix(in srgb, var(--ink) 20%, transparent); align-self: center; }
-  .wordmark-sub { font-size: 12px; font-weight: 600; letter-spacing: -0.025em; color: var(--ink-3); }
+  .wordmark-div { font-size: 14px; font-weight: 400; color: color-mix(in srgb, var(--ink) 35%, transparent); }
+  .wordmark-sub { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink-3); }
   @media (max-width: 480px) { .wordmark-sub, .wordmark-div { display: none; } }
   .top-nav { display: flex; align-items: center; gap: 2px; }
   .top-nav a {
