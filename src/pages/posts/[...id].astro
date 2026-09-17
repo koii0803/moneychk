@@ -39,14 +39,16 @@ const jsonLd = JSON.stringify({
 
   <div class="progress" aria-hidden="true"><i></i></div>
 
+  <p class="back"><a href={`/${d.category}`}>← {cat.name} 목록으로</a></p>
+
   <header class="post-head" style={`--c:${cat.color}`}>
-    <a class="post-cat" href={`/${d.category}`}>{cat.name}</a>
+    <a class="post-cat" href={`/${d.category}`}>{cat.name} · {cat.desc}</a>
     <h1>{d.title}</h1>
     <p class="post-meta">
       <time datetime={d.pubDate.toISOString()}>{fmtDate(d.pubDate)}</time>
-      <span>·</span><span>{SITE.name}</span>
-      <span>·</span><span>{minutes}분</span>
-      {d.updatedDate && <><span>·</span><span>수정 {fmtDate(d.updatedDate)}</span></>}
+      <span>•</span><span class="who">{SITE.name} 정책분석팀</span>
+      <span>•</span><span>{minutes}분 완독</span>
+      {d.updatedDate && <><span>•</span><span>수정 {fmtDate(d.updatedDate)}</span></>}
     </p>
   </header>
 
@@ -64,7 +66,12 @@ const jsonLd = JSON.stringify({
 
     <article class="post">
       {d.thumbnail && <img class="post-hero" src={d.thumbnail} alt={d.title} loading="eager" width="1280" height="720" />}
-      <p class="post-desc">{d.description}</p>
+      {d.description && (
+        <div class="answer">
+          <p class="answer-h">⚡ 3초 즉답 판정 요약</p>
+          <p>{d.description}</p>
+        </div>
+      )}
 
       <div class="prose">
         <Content />
@@ -77,19 +84,24 @@ const jsonLd = JSON.stringify({
       )}
 
       <aside class="post-note">
-        이 글은 공식 자료를 근거로 한 일반 정보이며, 개인의 자격·금액 판정은 해당 기관의 최종 심사에 따릅니다.
-        제도·금액·기한은 발행일 기준이므로 신청 전 기관 공고에서 다시 확인하세요.
+        <p>본 콘텐츠는 공공데이터 행정 고시를 바탕으로 분석·제작한 일반 정보이며, 개인의 자격·금액 판정은 해당 기관의 최종 심사에 따릅니다.</p>
+        <p>제도·금액·기한은 발행일 기준이므로 신청 전 기관 공고에서 다시 확인하세요.</p>
       </aside>
     </article>
 
     <nav class="toc" aria-label="목차">
       {toc.length > 1 && (
-        <ol>
-          {toc.map((h, i) => <li><a href={`#${h.slug}`}>{i + 1}. {h.text}</a></li>)}
-        </ol>
+        <>
+          <p class="toc-h">목차 바로가기</p>
+          <ol>
+            {toc.map((h, i) => <li><a href={`#${h.slug}`}>{i + 1}. {h.text}</a></li>)}
+          </ol>
+        </>
       )}
     </nav>
   </div>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
 
   <div class="bar" data-bar>
     <p>발행일 {fmtDate(d.pubDate)} 기준 수치입니다. 신청 전 공식 공고를 다시 확인하세요.</p>
@@ -154,10 +166,16 @@ const jsonLd = JSON.stringify({
       }
       // 공유: 기기 공유창, 없으면 주소 복사
       const share = document.querySelector('[data-share]');
+      const toast = document.querySelector('[data-toast]');
+      const say = (msg) => {
+        if (!toast) return;
+        toast.textContent = msg; toast.classList.add('show');
+        clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('show'), 2400);
+      };
       share?.addEventListener('click', async () => {
         try {
           if (navigator.share) await navigator.share({ title: document.title, url: location.href });
-          else { await navigator.clipboard.writeText(location.href); share.querySelector('span').textContent = '복사됨'; }
+          else { await navigator.clipboard.writeText(location.href); say('링크가 클립보드에 복사되었습니다.'); }
         } catch (e) {}
       });
       // 바닥 바: 어느 정도 읽으면 나오고, 닫으면 이 페이지에선 다시 안 뜸
@@ -174,7 +192,13 @@ const jsonLd = JSON.stringify({
 
 <style is:global>
   .post-head { max-width: 760px; margin: 0 auto; padding: 96px 0 120px; text-align: center; }
-  .post-cat { font-size: 14px; font-weight: 700; color: var(--c); }
+  .back { max-width: 1300px; margin: 28px auto 0; padding: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+  .back a:hover { color: var(--ink); }
+  .post-cat {
+    display: inline-block; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+    color: var(--money); background: var(--money-soft); border: 1px solid color-mix(in srgb, var(--money) 25%, transparent);
+  }
+  .post-meta .who { color: var(--ink); }
   .post-head h1 {
     margin: 14px 0 16px; font-weight: 800;
     font-size: clamp(30px, 4.6vw, 48px); line-height: 1.28; letter-spacing: -0.03em;
@@ -210,7 +234,9 @@ const jsonLd = JSON.stringify({
   .bar-x { border: 0; background: transparent; font-size: 20px; color: var(--ink-3); cursor: pointer; padding: 0 4px; }
   @media (prefers-reduced-motion: reduce) { .bar { transition: none; } }
   .post-hero { border-radius: 8px; margin-bottom: 36px; aspect-ratio: 16 / 9; object-fit: cover; width: 100%; }
-  .post-desc { margin: 0 0 32px; padding: 18px 22px; border-radius: 14px; background: var(--surface); color: var(--ink-2); font-size: 16px; line-height: 1.7; }
+  .answer { margin: 0 0 36px; padding: 20px 24px; border-left: 4px solid var(--money); border-radius: 6px 16px 16px 6px; background: var(--surface); box-shadow: var(--shadow); }
+  .answer-h { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .answer p:last-child { margin: 0; color: var(--ink-2); font-size: 15.5px; line-height: 1.7; }
 
   .prose { font-size: 17px; line-height: 1.85; }
   .prose h2 { font-weight: 800; font-size: 24px; letter-spacing: -0.02em; margin: 60px 0 16px; scroll-margin-top: 80px; }
@@ -221,11 +247,11 @@ const jsonLd = JSON.stringify({
   .prose li { margin-bottom: 6px; }
   .prose blockquote { margin: 28px 0; padding: 16px 20px; border-left: 3px solid var(--money); background: var(--surface); border-radius: 0 12px 12px 0; font-size: 15.5px; }
   .prose blockquote p { margin: 0; }
-  .prose table { width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 14.5px; line-height: 1.55; }
-  .prose thead th { font-size: 13.5px; background: var(--surface); padding: 11px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--hair); }
-  .prose thead th:first-child { border-radius: 10px 0 0 0; }
-  .prose thead th:last-child { border-radius: 0 10px 0 0; }
-  .prose tbody td { border-bottom: 1px solid var(--hair); padding: 11px 12px; vertical-align: top; }
+  .prose table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 14.5px; line-height: 1.55; border: 1px solid var(--hair); border-radius: 12px; background: var(--surface-2); }
+  .prose thead th { font-size: 13.5px; color: var(--ink); background: var(--surface); padding: 13px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--hair); }
+  .prose tbody td { border-bottom: 1px solid var(--hair); padding: 13px 14px; vertical-align: top; color: var(--ink-2); }
+  .prose tbody td:first-child { color: var(--ink); font-weight: 500; }
+  .prose tbody tr:last-child td { border-bottom: 0; }
   .prose td:not(:first-child), .prose th:not(:first-child) { text-align: right; }
   .prose hr { border: 0; border-top: 1px solid var(--hair); margin: 44px 0; }
   .prose a { color: var(--money); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--money) 40%, transparent); }
@@ -235,14 +261,24 @@ const jsonLd = JSON.stringify({
   .post-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 40px 0 0; padding: 0; }
   .post-tags a { display: inline-block; padding: 5px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; color: var(--ink-2); }
   .post-tags a:hover { color: var(--money); }
-  .post-note { margin: 32px 0 0; padding: 16px 20px; border-radius: 12px; background: var(--surface); font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .post-note { margin: 40px 0 0; padding: 24px 0 0; border-top: 1px solid var(--hair); font-size: 13px; color: var(--ink-3); line-height: 1.7; }
+  .post-note p { margin: 0 0 4px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 20px); z-index: 50; opacity: 0; pointer-events: none;
+    padding: 10px 20px; border-radius: 999px; background: var(--money); color: #fff; font-size: 14px; font-weight: 600; box-shadow: var(--shadow);
+    transition: opacity .2s, transform .2s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   .toc { position: sticky; top: 110px; font-size: 13.5px; }
+  .toc-h { margin: 0 0 12px 14px; font-size: 12px; font-weight: 700; color: var(--ink-3); }
   .toc ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--hair); }
   .toc li { margin: 0; }
   .toc a { display: block; color: var(--ink-2); line-height: 1.45; padding: 8px 0 8px 14px; margin-left: -1px; border-left: 2px solid transparent; font-weight: 600; }
   .toc a:hover { color: var(--ink); }
-  .toc a.on { color: var(--money); border-left-color: var(--money); }
+  .toc a.on { color: var(--money); border-left-color: var(--money); transform: translateX(4px); }
+  .toc a { transition: transform .2s, color .2s; }
+  @media (prefers-reduced-motion: reduce) { .toc a { transition: none; } }
 
   .related { max-width: 760px; margin: 80px auto 0; }
   .related-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }

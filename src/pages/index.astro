@@ -46,6 +46,11 @@ const tagsOf = (k: string) => {
     </section>
   )}
 
+  <nav class="chips" aria-label="정책 영역 바로가기">
+    <a class="on" href="/">전체</a>
+    {Object.entries(CATEGORIES).map(([key, c]) => <a href={`/${key}`}>{c.name}</a>)}
+  </nav>
+
   <section class="cats">
     <h2 class="section-h">7개 정책 영역</h2>
     <p class="section-sub">내 상황에 맞는 영역부터 확인하세요</p>
@@ -92,7 +97,7 @@ const tagsOf = (k: string) => {
                 </div>
                 <span class="card-cat">{CATEGORIES[p.data.category].name}</span>
                 <span class="card-title">{p.data.title}</span>
-                <span class="card-date">{fmtDate(p.data.pubDate)}</span>
+                <span class="card-foot"><span class="card-date">{fmtDate(p.data.pubDate)}</span><span class="card-go">보러가기 →</span></span>
               </a>
             </li>
           ))}
@@ -139,8 +144,15 @@ const tagsOf = (k: string) => {
   }
   .btn:hover { filter: brightness(1.08); }
 
+  /* 영역 칩 */
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-top: 28px; padding-bottom: 4px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips a { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-3); background: var(--surface); border: 1px solid var(--hair); }
+  .chips a:hover { color: var(--ink); }
+  .chips a.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
   /* 분류 */
-  .cats { margin-top: 84px; }
+  .cats { margin-top: 72px; }
   .cat-grid {
     list-style: none; margin: 0; padding: 0;
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
@@ -174,7 +186,10 @@ const tagsOf = (k: string) => {
   .card-cat { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
   .card-title { font-weight: 700; font-size: 16.5px; line-height: 1.45; letter-spacing: -0.01em; }
   .card:hover .card-title { color: var(--money); }
+  .card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--hair); }
   .card-date { font-size: 13px; color: var(--ink-3); }
+  .card-go { font-size: 12.5px; font-weight: 600; color: var(--money); transition: transform .15s; }
+  .card:hover .card-go { transform: translateX(3px); }
 
   /* 읽는 순서 */
   .how { margin-top: 96px; }
