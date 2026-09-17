@@ -1,138 +1,201 @@
 ---
 import { getPublished } from '../lib/posts';
 import Base from '../layouts/Base.astro';
-import { CATEGORIES, SITE } from '../config/site';
+import { CATEGORIES, fmtDate, catColor } from '../config/site';
 
 const posts = await getPublished();
 const [lead, ...rest] = posts;
-const latest = rest.slice(0, 8);
+const grid = rest.slice(0, 8);
+const ranked = posts.slice(0, 5);
 
-const counts = Object.fromEntries(
-  Object.keys(CATEGORIES).map((k) => [k, posts.filter((p) => p.data.category === k).length])
-);
-
-const fmt = (d: Date) =>
-  d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+const countOf = (k: string) => posts.filter((p) => p.data.category === k).length;
+// 분류별 대표 태그: 그 분류 글들의 태그 중 많이 나온 순 3개
+const tagsOf = (k: string) => {
+  const m = new Map<string, number>();
+  posts.filter((p) => p.data.category === k).forEach((p) => p.data.tags.forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
+  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
+};
 ---
 
 <Base>
-  {
-    lead && (
-      <section class="lead">
-        <div class="lead-main">
-          <p class="lead-cat" style={`--c:${CATEGORIES[lead.data.category].color}`}>
-            {CATEGORIES[lead.data.category].name}
-          </p>
-          <h1 class="lead-title">
-            <a href={`/posts/${lead.id}`}>{lead.data.title}</a>
-          </h1>
-          <p class="lead-desc">{lead.data.description}</p>
-          <p class="lead-date">{fmt(lead.data.pubDate)}</p>
+  {lead ? (
+    <section class="feat" style={`--c:${catColor(lead.data.category)}`}>
+      <a class="feat-media" href={`/posts/${lead.id}`}>
+        <div class="thumb">
+          {lead.data.thumbnail
+            ? <img src={lead.data.thumbnail} alt={lead.data.title} width="1280" height="720" loading="eager" />
+            : <div class="thumb-fallback">₩</div>}
         </div>
-        <aside class="lead-side">
-          <p class="lead-side-h">돈의 일곱 방향</p>
-          <ol>
-            {Object.entries(CATEGORIES).map(([key, c]) => (
-              <li>
-                <a href={`/${key}`} style={`--c:${c.color}`}>
-                  <b>{c.no}</b>
-                  <span class="n">{c.name}</span>
-                  <span class="d">{c.desc}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      </section>
-    )
-  }
+      </a>
+      <div class="feat-body">
+        <p class="feat-cat">{CATEGORIES[lead.data.category].name} · 방금 올라온 글</p>
+        <h1 class="feat-title"><a href={`/posts/${lead.id}`}>{lead.data.title}</a></h1>
+        <p class="feat-desc">{lead.data.description}</p>
+        <div class="feat-foot">
+          <span class="feat-date">{fmtDate(lead.data.pubDate)}</span>
+          <a class="btn" href={`/posts/${lead.id}`}>이어서 보기</a>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <section class="feat feat-empty">
+      <div class="feat-body">
+        <h1 class="feat-title">지원금·환급·대출, 자격과 금액을 숫자로 확인한다</h1>
+        <p class="feat-desc">고시·공고의 숫자만 쓴다. 신청 전 체크표와 기한, 신청 창구까지 한 글에 담는다. 첫 글이 곧 올라온다.</p>
+      </div>
+    </section>
+  )}
 
-  <section class="latest">
-    <p class="kicker">Latest</p>
-    <h2 class="section-h">최신 팩트체크</h2>
-    <ol class="postlist">
-      {
-        latest.map((p, i) => (
+  <section class="cats">
+    <h2 class="section-h">돈의 일곱 방향</h2>
+    <p class="section-sub">내 상황에 맞는 방향부터 고른다</p>
+    <ul class="cat-grid">
+      {Object.entries(CATEGORIES).map(([key, c]) => {
+        const n = countOf(key);
+        const tags = tagsOf(key);
+        return (
           <li>
-            <a href={`/posts/${p.id}`}>
-              <span class="idx">{String(i + 1).padStart(2, '0')}</span>
-              <span class="body">
-                <span class="cat" style={`--c:${CATEGORIES[p.data.category].color}`}>
-                  {CATEGORIES[p.data.category].name}
-                </span>
-                <span class="t">{p.data.title}</span>
-                <span class="s">{p.data.description}</span>
-              </span>
-              <span class="date">{fmt(p.data.pubDate)}</span>
+            <a class="cat-card" href={`/${key}`} style={`--c:${c.color}`}>
+              <span class="cat-swatch"><b>₩</b></span>
+              <span class="cat-name">{c.name}</span>
+              <span class="cat-desc">{tags.length ? tags.join(' · ') : c.desc}</span>
+              <span class="chip">{n > 0 ? `글 ${n}편` : '준비 중'}</span>
             </a>
           </li>
-        ))
-      }
-    </ol>
-    {posts.length === 0 && <p class="empty">아직 발행된 글이 없다. 첫 글이 곧 올라온다.</p>}
+        );
+      })}
+    </ul>
+  </section>
+
+  {posts.length > 1 && (
+    <section class="two">
+      <div class="rank">
+        <h2 class="section-h">먼저 읽을 글</h2>
+        <p class="section-sub">최근에 확인한 순서</p>
+        <ol class="rank-list">
+          {ranked.map((p) => (
+            <li><a href={`/posts/${p.id}`}>{p.data.title}</a></li>
+          ))}
+        </ol>
+      </div>
+      <div class="recent">
+        <h2 class="section-h">방금 올라온 글</h2>
+        <p class="section-sub">발행일 기준 숫자, 신청 전 다시 확인</p>
+        <ul class="card-grid">
+          {grid.map((p) => (
+            <li style={`--c:${catColor(p.data.category)}`}>
+              <a class="card" href={`/posts/${p.id}`}>
+                <div class="thumb">
+                  {p.data.thumbnail
+                    ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
+                    : <div class="thumb-fallback">₩</div>}
+                </div>
+                <span class="card-cat">{CATEGORIES[p.data.category].name}</span>
+                <span class="card-title">{p.data.title}</span>
+                <span class="card-date">{fmtDate(p.data.pubDate)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <section class="how">
+    <div class="how-in">
+      <div>
+        <h2 class="section-h">글 하나로 끝내는 순서</h2>
+        <p class="section-sub">모든 글이 같은 뼈대로 간다. 어디를 봐야 하는지 미리 안다.</p>
+      </div>
+      <ol class="how-steps">
+        <li><b>즉답</b><span>첫 문단에서 되나·안 되나, 얼마인지부터</span></li>
+        <li><b>자격 체크표</b><span>나이·가구·소득·재산, 내가 해당되는지 표로</span></li>
+        <li><b>손해 보는 조건</b><span>중복 수혜·환수·기한 놓침 같은 함정</span></li>
+        <li><b>행동 블록</b><span>준비 서류 → 기한 → 공식 신청 링크</span></li>
+      </ol>
+    </div>
   </section>
 </Base>
 
 <style>
-  .lead {
-    display: grid; grid-template-columns: 1fr 300px; gap: 44px;
-    padding: 40px 0 48px;
-    border-bottom: 1px solid var(--hair);
+  /* 대표 글 */
+  .feat {
+    display: grid; grid-template-columns: 1.15fr 1fr; gap: 36px; align-items: center;
+    margin-top: 36px; padding: 28px; border-radius: 24px;
+    background: var(--surface); border: 1px solid var(--hair);
   }
-  .lead-cat {
-    margin: 0 0 12px; font-size: 13px; font-weight: 700; color: var(--c);
-    letter-spacing: 0.08em;
+  .feat-empty { grid-template-columns: 1fr; padding: 56px 40px; }
+  .feat-media .thumb { border-radius: 18px; box-shadow: var(--shadow); }
+  .feat-media .thumb-fallback { font-size: 96px; }
+  .feat-cat { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--money); }
+  .feat-title { margin: 0 0 14px; font-weight: 800; font-size: clamp(26px, 3.4vw, 36px); line-height: 1.3; letter-spacing: -0.025em; }
+  .feat-title a:hover { color: var(--money); }
+  .feat-desc { margin: 0 0 24px; color: var(--ink-2); font-size: 16.5px; max-width: 52ch; }
+  .feat-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .feat-date { color: var(--ink-3); font-size: 13.5px; }
+  .btn {
+    display: inline-block; padding: 11px 20px; border-radius: 12px;
+    background: var(--money); color: var(--money-ink); font-weight: 700; font-size: 15px;
   }
-  .lead-cat::before { content: '■ '; font-size: 9px; vertical-align: 2px; }
-  .lead-title {
-    margin: 0 0 16px;
-    font-family: var(--serif); font-weight: 900;
-    font-size: clamp(26px, 4vw, 40px); line-height: 1.32; letter-spacing: -0.02em;
-  }
-  .lead-title a:hover { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; text-decoration-color: var(--money); }
-  .lead-desc { margin: 0 0 14px; max-width: 560px; color: var(--ink-2); font-size: 16.5px; }
-  .lead-date { margin: 0; font-size: 13px; color: var(--ink-3); }
+  .btn:hover { filter: brightness(1.08); }
 
-  .lead-side { border-left: 1px solid var(--hair); padding-left: 28px; }
-  .lead-side-h {
-    margin: 4px 0 14px; font-family: var(--serif); font-weight: 700; font-size: 16px;
+  /* 분류 */
+  .cats { margin-top: 84px; }
+  .cat-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
   }
-  .lead-side ol { list-style: none; margin: 0; padding: 0; }
-  .lead-side li + li { border-top: 1px solid var(--hair); }
-  .lead-side a { display: grid; grid-template-columns: 28px 1fr; align-items: baseline; padding: 9px 0; }
-  .lead-side b { font-family: var(--serif); font-size: 12px; color: var(--c); grid-row: span 2; }
-  .lead-side .n { font-weight: 700; font-size: 14.5px; }
-  .lead-side .d { grid-column: 2; font-size: 12px; color: var(--ink-3); }
-  .lead-side a:hover .n { color: var(--c); }
+  .cat-card {
+    display: flex; flex-direction: column; gap: 6px; height: 100%;
+    padding: 20px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair);
+    transition: transform .15s, border-color .15s;
+  }
+  .cat-card:hover { transform: translateY(-2px); border-color: var(--c); }
+  .cat-swatch {
+    width: 40px; height: 40px; border-radius: 12px; margin-bottom: 8px;
+    display: grid; place-items: center; color: #fff; font-size: 18px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
+  }
+  .cat-name { font-weight: 800; font-size: 18px; letter-spacing: -0.01em; }
+  .cat-desc { color: var(--ink-2); font-size: 13.5px; flex: 1; }
+  .cat-card .chip { align-self: flex-start; margin-top: 8px; }
 
-  .latest { padding-top: 44px; }
-  .postlist { list-style: none; margin: 0; padding: 0; }
-  .postlist li { border-bottom: 1px solid var(--hair); }
-  .postlist a {
-    display: grid; grid-template-columns: 52px 1fr 90px; gap: 18px;
-    align-items: baseline; padding: 20px 0;
-  }
-  .postlist .idx {
-    font-family: var(--serif); font-weight: 700; font-size: 21px; color: var(--hair);
-    transition: color 0.15s;
-  }
-  .postlist a:hover .idx { color: var(--money); }
-  .postlist .cat { display: block; font-size: 12px; font-weight: 700; color: var(--c); margin-bottom: 3px; }
-  .postlist .t {
-    display: block; font-family: var(--serif); font-weight: 700; font-size: 19px; line-height: 1.45;
-  }
-  .postlist a:hover .t { text-decoration: underline; text-underline-offset: 4px; }
-  .postlist .s {
-    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
-    font-size: 13.5px; color: var(--ink-2); margin-top: 4px;
-  }
-  .postlist .date { font-size: 12.5px; color: var(--ink-3); text-align: right; }
-  .empty { color: var(--ink-2); padding: 28px 0; }
+  /* 두 단 */
+  .two { margin-top: 84px; display: grid; grid-template-columns: 340px 1fr; gap: 48px; }
+  .rank-list { list-style: none; margin: 0; padding: 0; counter-reset: r; }
+  .rank-list li { counter-increment: r; border-bottom: 1px solid var(--hair); }
+  .rank-list a { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 16px 0; font-weight: 600; font-size: 15.5px; line-height: 1.5; }
+  .rank-list a::before { content: counter(r); color: var(--money); font-weight: 800; font-size: 17px; }
+  .rank-list a:hover { color: var(--money); }
 
-  @media (max-width: 800px) {
-    .lead { grid-template-columns: 1fr; gap: 28px; }
-    .lead-side { border-left: 0; padding-left: 0; border-top: 1px solid var(--hair); padding-top: 20px; }
-    .postlist a { grid-template-columns: 40px 1fr; }
-    .postlist .date { display: none; }
+  .card-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 20px; }
+  .card { display: flex; flex-direction: column; gap: 6px; }
+  .card .thumb { margin-bottom: 6px; }
+  .card-cat { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+  .card-title { font-weight: 700; font-size: 16.5px; line-height: 1.45; letter-spacing: -0.01em; }
+  .card:hover .card-title { color: var(--money); }
+  .card-date { font-size: 13px; color: var(--ink-3); }
+
+  /* 읽는 순서 */
+  .how { margin-top: 96px; }
+  .how-in { display: grid; grid-template-columns: 1fr 1.4fr; gap: 40px; padding: 36px; border-radius: 24px; background: var(--surface); border: 1px solid var(--hair); }
+  .how-steps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; gap: 4px; }
+  .how-steps li { counter-increment: s; display: grid; grid-template-columns: 34px 150px 1fr; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--hair); }
+  .how-steps li:last-child { border-bottom: 0; }
+  .how-steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--money-soft); color: var(--money); font-weight: 800; font-size: 13px; }
+  .how-steps b { font-weight: 700; font-size: 15.5px; }
+  .how-steps span { color: var(--ink-2); font-size: 14.5px; }
+
+  @media (max-width: 900px) {
+    .cat-grid { grid-template-columns: repeat(2, 1fr); }
+    .two { grid-template-columns: 1fr; gap: 56px; }
+    .how-in { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .feat { grid-template-columns: 1fr; gap: 20px; padding: 16px; border-radius: 18px; margin-top: 20px; }
+    .feat-empty { padding: 36px 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .how-steps li { grid-template-columns: 34px 1fr; }
+    .how-steps span { grid-column: 2; }
   }
 </style>

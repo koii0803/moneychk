@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getPublished } from '../../lib/posts';
-import { catColor, fmtDate } from '../../config/site';
+import { CATEGORIES, catColor, fmtDate } from '../../config/site';
 
 export async function getStaticPaths() {
   const posts = await getPublished();
@@ -13,44 +13,41 @@ const { posts } = Astro.props;
 ---
 
 <Base title={`#${tag}`} description={`${tag} 관련 글 ${posts.length}편`}>
-  <header class="cat-head">
-    <p class="kicker">Tag</p>
+  <header class="tag-head">
+    <p class="kicker">태그</p>
     <h1>#{tag}</h1>
-    <p class="cat-desc">{posts.length}편</p>
+    <p class="tag-sub">{posts.length}편</p>
   </header>
 
-  <ol class="catlist">
-    {
-      posts.map((p) => (
-        <li style={`--c:${catColor(p.data.category)}`}>
-          <a href={`/posts/${p.id}`}>
-            <span class="date">{fmtDate(p.data.pubDate)}</span>
-            <span class="t">{p.data.title}</span>
-            <span class="s">{p.data.description}</span>
-          </a>
-        </li>
-      ))
-    }
-  </ol>
+  <ul class="card-grid">
+    {posts.map((p) => (
+      <li style={`--c:${catColor(p.data.category)}`}>
+        <a class="card" href={`/posts/${p.id}`}>
+          <div class="thumb">
+            {p.data.thumbnail
+              ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
+              : <div class="thumb-fallback">₩</div>}
+          </div>
+          <span class="card-cat">{CATEGORIES[p.data.category].name}</span>
+          <span class="card-title">{p.data.title}</span>
+          <span class="card-date">{fmtDate(p.data.pubDate)}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
 </Base>
 
 <style>
-  .cat-head { padding: 44px 0 28px; border-bottom: 3px solid var(--ink); }
-  .cat-head h1 {
-    margin: 6px 0 8px;
-    font-family: var(--serif); font-weight: 900; font-size: clamp(30px, 5vw, 44px);
-    letter-spacing: -0.02em;
-  }
-  .cat-desc { margin: 0; color: var(--ink-2); }
-  .catlist { list-style: none; margin: 0; padding: 0; }
-  .catlist li { border-bottom: 1px solid var(--hair); }
-  .catlist a { display: grid; grid-template-columns: 96px 1fr; gap: 4px 20px; padding: 22px 0; }
-  .catlist .date { font-size: 12.5px; color: var(--ink-3); padding-top: 5px; grid-row: span 2; }
-  .catlist .t { font-family: var(--serif); font-weight: 700; font-size: 19.5px; line-height: 1.45; }
-  .catlist a:hover .t { color: var(--c); text-decoration: underline; text-underline-offset: 4px; }
-  .catlist .s { grid-column: 2; font-size: 14px; color: var(--ink-2); }
-  @media (max-width: 640px) {
-    .catlist a { grid-template-columns: 1fr; }
-    .catlist .date { grid-row: auto; order: 3; }
-  }
+  .tag-head { padding: 52px 0 28px; }
+  .tag-head h1 { margin: 0; font-weight: 800; font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.025em; }
+  .tag-sub { margin: 4px 0 0; color: var(--ink-2); }
+  .card-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 20px; }
+  .card { display: flex; flex-direction: column; gap: 6px; }
+  .card .thumb { margin-bottom: 6px; }
+  .card-cat { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+  .card-title { font-weight: 700; font-size: 16.5px; line-height: 1.45; }
+  .card:hover .card-title { color: var(--money); }
+  .card-date { font-size: 13px; color: var(--ink-3); }
+  @media (max-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .card-grid { grid-template-columns: 1fr; } }
 </style>
