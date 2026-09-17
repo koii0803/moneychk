@@ -1,110 +1,68 @@
 ---
 import Base from '../layouts/Base.astro';
-import { CATEGORIES } from '../config/site';
-import { getPublished } from '../lib/posts';
-import tools from '../data/tools.json';
-
-// 사이트 구조도: 상위 → 하위 페이지 연결. 숫자는 실측(발행 글 수·도구 수).
-const posts = await getPublished();
-const cats = Object.entries(CATEGORIES).map(([key, c]) => ({
-  key, ...c,
-  n: posts.filter((p) => p.data.category === key).length,
-  t: (tools as { cat: string }[]).filter((x) => x.cat === key).length,
-  ex: posts.filter((p) => p.data.category === key).slice(0, 2).map((p) => p.data.title),
-}));
-const tags = new Set(posts.flatMap((p) => p.data.tags)).size;
+// 홈페이지 구성도: 대주제(홈페이지) → 구역 8 → 구역 안 요소
+const parts = [
+  { no: '①', name: '헤더', color: '#8b95a1', sum: '고정 상단', items: ['3D ₩ 로고 + 숨쉬는 초록 빛', 'Moneycheck / POLICY DATA LAB (2.5초 빛 훑기, 올리면 연녹색)', '사이트 구조 배지', 'GNB: 정책 피드 · 추천 리포트 · 모의계산기 · 분석 원칙 (올리면 파랑)', '밝기 토글(달/해)'] },
+  { no: '②', name: '히어로 롤링', color: '#3182f6', sum: '20쌍 문구', items: ['윗줄 회색 (상황)', '아랫줄 흰→파랑 그라데이션 (답)', '서브 한 줄 (제목과 세트)', '3.4초마다 페이드, 높이 고정'] },
+  { no: '③', name: '영역 칩', color: '#35c48a', sum: '전체 + 7', items: ['전체(검정)', '정부 지원금 · 숨은 환급금 · 정책 대출 · 주거·청약 · 생활비 감면 · 구직·일자리 · 자산 형성', '가운데 정렬, 각 분류 페이지로'] },
+  { no: '④', name: '대표 카드', color: '#f5b544', sum: '최신 글 1', items: ['남색 그라데이션 판(썸네일 있으면 사진 + 어둡게)', '최신 분석 파란 배지', '분류 · 날짜, 제목(올리면 파랑)', '오른쪽 아래 분류 3D 아이콘', '요약 1줄 + 긴 화살표 →'] },
+  { no: '⑤', name: '두 단', color: '#ff7a5c', sum: '순위 4 + 피드 8', items: ['왼쪽 "지금 많이 보는 콘텐츠": 번호 1~4, 1번 NEW', '오른쪽 "나를 위한 정책 알아두기": 제목 · 요약 2줄 · ⏳N분 · 분류 배지(7색)', '오른쪽 썸네일 220px, 올리면 1.06배 + 4색 테두리(주황·에메랄드·핑크·앰버)'] },
+  { no: '⑥', name: '오리지널 시리즈', color: '#a78bfa', sum: '세로 카드 4', items: ['🏠 도시와 내 집의 설계도 → 주거·청약', '🛡️ 월급의 마지막 방어선 → 환급금·생활비', '🌱 청년 자산 빌드업 → 자산 형성', '🚨 비상금과 출구 전략 → 정책 대출', '색 판 + 3D 아이콘, 제목 올리면 파랑, 콘텐츠 N개 실측'] },
+  { no: '⑦', name: '방금 올라온 콘텐츠', color: '#f472b6', sum: '4열 × 2', items: ['썸네일(없으면 분류 아이콘, 올리면 확대)', '제목(올리면 파랑) · 날짜', '더 펼쳐보기 → /posts 전체 목록'] },
+  { no: '⑧', name: '푸터', color: '#8b95a1', sum: '하단', items: ['로고 묶음(헤더와 동일)', '공공데이터 고시 기반 민생정책·금융 데이터랩 + 고지 2줄', '분류 7 링크', '소개 · 개인정보처리방침 · 책임의 한계와 법적 고지 · 문의 · RSS', '© moneychk'] },
+];
 ---
-<Base title="사이트 구조" description="머니첵 페이지가 상위 → 하위로 어떻게 연결되는지.">
+<Base title="홈페이지 구성" description="머니첵 홈페이지가 어떤 구역과 요소로 짜였는지.">
   <div class="tree">
-    <h1>머니첵 사이트 구조 — 상위 → 하위 페이지 연결</h1>
-    <p class="sub">공공데이터 팩트체크 & 지원금·대출 애드센스 결합형 3단계 정보 구조. 숫자는 지금 빌드 실측.</p>
+    <h1>머니첵 홈페이지 구성도</h1>
+    <p class="sub">대주제(홈페이지) → 구역 8 → 구역 안 요소. 위에서 아래 순서가 실제 화면 순서.</p>
 
-    <!-- TIER 1 -->
     <section class="t1">
-      <span class="tag mint">TIER 1 · 허브</span>
-      <h2><a href="/">홈 /</a></h2>
-      <p>히어로 롤링 20쌍 · 영역 칩 7 · 대표 카드 · 지금 많이 보는 콘텐츠 · 나를 위한 정책 · 오리지널 시리즈 4 · 방금 올라온 콘텐츠 8</p>
-      <p class="side">같은 층: <a href="/tools">모의계산기 /tools</a> ({tools.length}개 · 인기 26) · <a href="/posts">전체 콘텐츠 /posts</a> ({posts.length}편) · <a href="/about">분석 원칙 /about</a></p>
+      <span class="tag">대주제</span>
+      <h2>머니첵 홈페이지 <small>/</small></h2>
+      <p>토스피드 구조 · 다크 #101013 · SUIT Variable · 강조 토스 블루 #3182f6 · 민트 #00d287 · 분류 7색 배지 · 폭 1080 · 모바일 1열</p>
     </section>
     <div class="down"></div>
 
-    <!-- TIER 2 -->
-    <p class="lbl">TIER 2 · 분류 7 (카테고리별 전문 권위)</p>
+    <p class="lbl">구역 8 (화면 순서)</p>
     <ul class="t2">
-      {cats.map((c, i) => (
-        <li style={`--b:${c.badge}`}>
-          <a href={`/${c.key}`}>
-            <span class="pill">{['①','②','③','④','⑤','⑥','⑦'][i]} {c.short}</span>
-            <b>{c.n}편</b>
-            <small>{c.name} · 도구 {c.t}</small>
-            <em>{c.desc}</em>
-          </a>
+      {parts.map((p) => (
+        <li style={`--b:${p.color}`}>
+          <div class="box">
+            <span class="pill">{p.no} {p.name}</span>
+            <b>{p.sum}</b>
+          </div>
           <div class="drop"></div>
+          <ul class="t3">
+            {p.items.map((it) => <li>{it}</li>)}
+          </ul>
         </li>
       ))}
-    </ul>
-
-    <!-- TIER 3 -->
-    <p class="lbl">TIER 3 · 롱테일 글 /posts/slug (55 → G1 경제 모드 → G2)</p>
-    <ul class="t3">
-      {cats.map((c) => (
-        <li style={`--b:${c.badge}`}>
-          {c.ex.length ? c.ex.map((t) => <span>{t}</span>) : <span class="dim">데이터 구축 중</span>}
-        </li>
-      ))}
-    </ul>
-    <p class="note">글 형식: 3초 즉답 → 자격 체크표 → 감액·환수 리스크 → 원스톱 실행 가이드 + 계산기 박스 + 내부 링크 3 + 관련 글 3 + 태그(/tag/…, 지금 {tags}개)</p>
-
-    <!-- 공통 -->
-    <p class="lbl">공통 페이지</p>
-    <ul class="common">
-      <li><a href="/about">분석 원칙</a></li>
-      <li><a href="/privacy">개인정보처리방침</a></li>
-      <li><a href="/disclaimer">책임의 한계와 법적 고지</a></li>
-      <li><a href="/contact">문의</a></li>
-      <li><a href="/rss.xml">RSS</a></li>
-      <li><span>sitemap-index.xml · robots.txt · ads.txt · 404</span></li>
     </ul>
   </div>
 </Base>
 
 <style>
-  .tree { max-width: 1080px; margin: 0 auto; padding-top: 44px; }
+  .tree { max-width: 1120px; margin: 0 auto; padding-top: 44px; }
   .tree h1 { margin: 0 0 6px; font-size: 24px; font-weight: 800; letter-spacing: -0.03em; }
   .sub { margin: 0 0 28px; color: var(--ink-3); font-size: 14px; }
   .lbl { margin: 0 0 12px; font-size: 12.5px; font-weight: 700; color: var(--ink-3); letter-spacing: .02em; }
-  .tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; }
-  .tag.mint { background: var(--mint); color: #0f1f1a; }
-
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; background: var(--mint); color: #0f1f1a; }
   .t1 { border: 2px solid var(--mint); border-radius: 16px; padding: 18px 22px; background: color-mix(in srgb, var(--surface) 80%, var(--mint) 4%); }
-  .t1 h2 { margin: 10px 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-  .t1 h2 a:hover { color: var(--mint); }
+  .t1 h2 { margin: 10px 0 6px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+  .t1 h2 small { font-size: 14px; color: var(--ink-3); font-weight: 600; margin-left: 6px; }
   .t1 p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
-  .t1 .side { margin-top: 8px; color: var(--ink-3); }
-  .t1 .side a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
   .down { width: 2px; height: 40px; margin: 0 auto; background: var(--mint); position: relative; }
   .down::after { content: ''; position: absolute; left: -5px; bottom: -2px; border: 6px solid transparent; border-top: 8px solid var(--mint); }
 
-  .t2 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-  .t2 li { position: relative; }
-  .t2 a { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 14px 8px 12px; border-radius: 12px; border: 2px solid var(--b); background: var(--surface); height: 100%; transition: background .15s; }
-  .t2 a:hover { background: color-mix(in srgb, var(--b) 10%, var(--surface)); }
+  .t2 { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; align-items: start; }
+  .box { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 14px 8px 12px; border-radius: 12px; border: 2px solid var(--b); background: var(--surface); }
   .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #0f1f1a; background: var(--b); white-space: nowrap; }
-  .t2 b { font-size: 16px; font-weight: 800; margin-top: 2px; }
-  .t2 small { font-size: 11px; color: var(--ink-3); }
-  .t2 em { font-style: normal; font-size: 11px; color: var(--ink-2); line-height: 1.4; margin-top: 4px; }
-  .drop { width: 0; height: 36px; margin: 0 auto; border-left: 2px dashed color-mix(in srgb, var(--b) 60%, transparent); }
+  .box b { font-size: 13px; font-weight: 800; }
+  .drop { width: 0; height: 28px; margin: 0 auto; border-left: 2px dashed color-mix(in srgb, var(--b) 60%, transparent); }
+  .t3 { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .t3 li { padding: 8px 9px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--b); font-size: 11px; line-height: 1.45; color: var(--ink-2); }
 
-  .t3 { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-  .t3 li { display: grid; gap: 6px; }
-  .t3 span { display: block; padding: 8px 9px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--b); font-size: 11px; line-height: 1.4; color: var(--ink-2); }
-  .t3 .dim { color: var(--ink-3); border-left-color: var(--hair); }
-  .note { margin: 0 0 36px; font-size: 12.5px; color: var(--ink-3); }
-
-  .common { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-  .common li { padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--hair); font-size: 13px; }
-  .common a:hover { color: var(--money); }
-  .common span { color: var(--ink-3); }
-
-  @media (max-width: 900px) { .t2, .t3 { grid-template-columns: repeat(2, 1fr); } .drop { display: none; } }
+  @media (max-width: 1000px) { .t2 { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 640px) { .t2 { grid-template-columns: repeat(2, 1fr); } }
 </style>
