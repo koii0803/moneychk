@@ -5,9 +5,10 @@ import { CATEGORIES, fmtDate } from '../config/site';
 
 const posts = await getPublished();
 const [lead, ...rest] = posts;
-const feed = rest.slice(0, 8);
+const feed = rest.slice(0, 5); // '나를 위한 정책 알아두기' 고정 5개
 const ranked = posts.slice(0, 4);
-const recent = posts.slice(0, 8);
+const recent = posts; // 8개만 보이고 나머지는 숨김 → '더 펼쳐보기'가 8개씩 아래로 펼친다
+const RECENT_STEP = 8;
 
 // 히어로 롤링 문구. "앞, 뒤" 두 토막 구조를 지켜야 두 줄 리듬이 맞는다
 const rolling = [
@@ -144,10 +145,10 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
       <h2 class="section-h">방금 올라온 콘텐츠</h2>
       <p class="section-sub">실시간 업데이트 소식 살펴보기</p>
       <ul class="recent-grid">
-        {recent.map((p) => {
+        {recent.map((p, i) => {
           const c = CATEGORIES[p.data.category];
           return (
-            <li style={`--c:${c.color}`}>
+            <li style={`--c:${c.color}`} class={i >= RECENT_STEP ? 'is-hid' : undefined}>
               <a href={`/posts/${p.id}`}>
                 <div class="thumb">
                   {p.data.thumbnail
@@ -161,7 +162,7 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
           );
         })}
       </ul>
-      <p class="more"><a href="/posts">더 펼쳐보기</a></p>
+      {recent.length > RECENT_STEP && <p class="more"><button type="button" data-more data-step={RECENT_STEP}>더 펼쳐보기</button></p>}
     </section>
   )}
 
@@ -191,6 +192,19 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
       const stop = () => { if (t) clearInterval(t); t = null; };
       document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
       start();
+    });
+
+    // 방금 올라온 콘텐츠: 누를 때마다 숨긴 카드 8개씩 아래로 펼친다. 다 펼치면 버튼 없앤다.
+    document.addEventListener('astro:page-load', () => {
+      const btn = document.querySelector('[data-more]');
+      if (!btn || btn.dataset.on) return;
+      btn.dataset.on = '1';
+      const step = Number(btn.dataset.step) || 8;
+      btn.addEventListener('click', () => {
+        const hid = [...document.querySelectorAll('.recent-grid .is-hid')];
+        hid.slice(0, step).forEach((li, k) => { li.style.animationDelay = `${k * 40}ms`; li.classList.remove('is-hid'); li.classList.add('is-in'); });
+        if (hid.length <= step) btn.parentElement.remove();
+      });
     });
   </script>
 </Base>
@@ -294,8 +308,12 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .recent-grid a:hover h3 { color: var(--money); }
   .recent-date { font-size: 12.5px; color: var(--ink-3); }
   .more { margin: 36px 0 0; text-align: center; }
-  .more a { display: inline-block; padding: 10px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--hair); font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
-  .more a:hover { color: var(--ink); border-color: var(--ink-3); }
+  .more button { display: inline-block; padding: 10px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--hair); font-size: 13.5px; font-weight: 600; color: var(--ink-2); cursor: pointer; font-family: inherit; }
+  .more button:hover { color: var(--ink); border-color: var(--ink-3); }
+  .recent-grid .is-hid { display: none; }
+  .recent-grid .is-in { animation: unfold .35s ease both; }
+  @keyframes unfold { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .recent-grid .is-in { animation: none; } }
 
   .empty { padding: 48px 24px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); text-align: center; color: var(--ink-3); }
 

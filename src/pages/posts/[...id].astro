@@ -46,7 +46,7 @@ const jsonLd = JSON.stringify({
     <h1>{d.title}</h1>
     <p class="post-meta">
       <time datetime={d.pubDate.toISOString()}>{fmtDate(d.pubDate)}</time>
-      <span>•</span><span class="who">{SITE.name} 정책분석팀</span>
+      <span>•</span><span class="who wordmark-mark"><i class="glow"></i><img src="/img/icons/logo.webp" alt={SITE.name} width="20" height="20" /></span>
       <span>•</span><span>{minutes}분 완독</span>
       {d.updatedDate && <><span>•</span><span>수정 {fmtDate(d.updatedDate)}</span></>}
     </p>
@@ -210,12 +210,14 @@ const jsonLd = JSON.stringify({
     display: inline-block; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
     color: var(--money); background: var(--money-soft); border: 1px solid color-mix(in srgb, var(--money) 25%, transparent);
   }
-  .post-meta .who { color: var(--ink); }
+  .post-meta .who { width: 22px; height: 22px; } /* 헤더 .wordmark-mark + .glow 재사용, 크기만 축소 */
+  .post-meta .who img { width: 20px; height: 20px; }
+  .post-meta .who .glow { inset: -4px; }
   .post-head h1 {
     margin: 14px 0 16px; font-weight: 800;
     font-size: clamp(30px, 4.6vw, 48px); line-height: 1.28; letter-spacing: -0.03em;
   }
-  .post-meta { margin: 0; display: flex; justify-content: center; gap: 8px; font-size: 15px; color: var(--ink-2); }
+  .post-meta { margin: 0; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 15px; color: var(--ink-2); }
 
   .progress { position: fixed; top: 59px; left: 0; right: 0; height: 3px; z-index: 41; }
   .progress i { display: block; height: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left; }
@@ -224,7 +226,7 @@ const jsonLd = JSON.stringify({
   /* 양옆 칸은 minmax(0,1fr)라 항상 같은 폭 → 본문이 제목과 같은 중심선. 옆 칸이 좁으면 레일·목차 여백이 줄어든다 */
   .post-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 700px) minmax(0, 1fr); column-gap: 0; align-items: start; width: min(1300px, 100vw - 40px); margin-left: 50%; transform: translateX(-50%); }
   .rail { justify-self: end; margin-right: min(110px, 30%); }
-  .toc { justify-self: start; margin-left: min(110px, 28%); width: min(220px, 70%); }
+  .toc { justify-self: start; margin-left: calc(min(110px, 30%) + 64px); width: min(220px, 70%); } /* 본문이 32px 오른쪽으로 밀려 있어(.post) 공유 버튼과 간격을 맞추려면 rail 여백 + 64px */
   .post { min-width: 0; transform: translateX(32px); } /* 오른쪽 목차 무게 때문에 눈에는 왼쪽으로 보여 살짝 오른쪽으로 */
 
   .rail { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 8px; }
@@ -236,7 +238,7 @@ const jsonLd = JSON.stringify({
   .rail-btn:hover { color: var(--ink); border-color: var(--ink-3); }
 
   .bar {
-    position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 140%); z-index: 38;
+    position: fixed; left: calc(50% + 32px); bottom: 20px; transform: translate(-50%, 140%); z-index: 38; /* 본문(.post)이 32px 오른쪽으로 밀려 있어 그 중앙에 맞춤 */
     width: min(720px, calc(100% - 32px)); display: flex; align-items: center; gap: 14px;
     padding: 12px 12px 12px 20px; border-radius: 16px;
     background: color-mix(in srgb, var(--surface) 90%, var(--money)); border: 1px solid var(--hair); box-shadow: var(--shadow);
@@ -320,6 +322,11 @@ const jsonLd = JSON.stringify({
   .related-list a:hover .t { color: var(--money); }
   .related-list .s { font-size: 12.5px; color: var(--ink-3); }
 
+  @media (max-width: 1400px) { /* 좁으면 +64px 목차가 화면 밖으로 나가 가로 스크롤 생김 → 본문 밀기 끄고 좌우 여백 그대로 대칭 */
+    .post { transform: none; }
+    .toc { margin-left: min(110px, 30%); }
+    .bar { left: 50%; }
+  }
   @media (max-width: 1100px) {
     .post-grid { grid-template-columns: minmax(0, 720px) 200px; column-gap: 56px; width: auto; margin-left: 0; transform: none; }
     .toc { margin-left: 0; width: auto; }

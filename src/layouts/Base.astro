@@ -251,7 +251,7 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   .foot-wm { display: inline-flex; margin: 0 0 10px; }
   .foot-tag { margin: 0 0 10px; font-size: 13px; color: var(--ink-3); }
   .foot-note { margin: 0; max-width: 460px; line-height: 1.7; }
-  .foot-cats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+  .foot-cats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: auto auto; gap: 6px 48px; justify-self: end; } /* 오른쪽 끝단(wrap)에 붙임 */
   .foot-cats a { display: flex; align-items: center; gap: 8px; }
   .foot-cats i { width: 8px; height: 8px; border-radius: 2px; }
   .foot-cats a:hover { color: var(--ink); }

@@ -45,3 +45,6 @@ draft: false
 - 잔금일 기준 최소 40일 전 취급 수탁은행(국민, 신한, 우리, 하나, 농협) 서류 접수
 
 출처: 국토교통부 주택도시기금 운용 규정 고시, 한국주택금융공사(HF) 여신업무지침
+
+
+함께 읽기: [취업성공수당 얼마고 6개월 근속 뒤 어디에 어떻게 신청하나](/posts/job-success-allowance-apply) / [서울 청년수당 자격 되나, 월 50만원 6개월 어떻게 받나](/posts/seoul-youth-allowance-eligibility)
