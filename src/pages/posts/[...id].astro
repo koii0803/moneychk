@@ -279,6 +279,10 @@ const jsonLd = JSON.stringify({
   .prose thead th { font-size: 13.5px; color: var(--ink); background: var(--surface); padding: 13px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--hair); }
   .prose tbody td { border-bottom: 1px solid var(--hair); padding: 13px 14px; vertical-align: top; color: var(--ink-2); }
   .prose tbody td:first-child { color: var(--ink); font-weight: 500; }
+  /* 표 안 강조 규칙: 머리칸 **굵게** = 파랑, 본문 **굵게** = 흰색, <mark> = 주황(주의 값) */
+  .prose th strong { color: var(--money); }
+  .prose td strong { color: var(--ink); font-weight: 700; }
+  .prose mark { background: none; color: #fb923c; font-weight: 600; }
   .prose tbody tr:last-child td { border-bottom: 0; }
   .prose em { display: block; margin: -12px 0 24px; font-size: 13px; color: var(--ink-3); font-style: italic; }
   .prose hr { border: 0; border-top: 1px solid var(--hair); margin: 44px 0; }
