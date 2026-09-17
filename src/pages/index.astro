@@ -68,7 +68,7 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
       </div>
       <div class="feat-bottom">
         <p>{lead.data.description}</p>
-        <span class="feat-go">읽기 →</span>
+        <svg class="feat-go" viewBox="0 0 40 24" width="40" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h34M26 3l10 9-10 9"/></svg>
       </div>
     </a>
   ) : (
@@ -228,7 +228,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   .feat:hover .feat-title { color: var(--money); }
   .feat-bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px; }
   .feat-bottom p { margin: 0; font-size: 14px; color: var(--ink-3); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
-  .feat-go { flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--money); }
+  .feat-go { flex: 0 0 auto; color: var(--money); transition: transform .2s; }
+  .feat:hover .feat-go { transform: translateX(6px); }
 
   /* 두 단: 왼쪽 순위 / 오른쪽 피드 */
   .two { margin-top: 96px; display: grid; grid-template-columns: 320px 1fr; gap: 56px; align-items: start; }
