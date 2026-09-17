@@ -30,8 +30,7 @@ const tools = [
             <span class="row-thumb" aria-hidden="true"><i>{c.icon}</i></span>
             <span class="row-desc">{t.desc}</span>
             <span class="row-end">
-              {!t.href && <span class="row-soon">준비 중</span>}
-              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
             </span>
           </Tag>
         </li>
@@ -62,7 +61,6 @@ const tools = [
   .row-thumb i { font-style: normal; font-size: 30px; }
   .row-desc { font-size: 14px; color: transparent; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; transition: color .18s; }
   .row-end { display: flex; align-items: center; gap: 14px; color: transparent; transition: color .18s; }
-  .row-soon { font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid currentColor; }
 
   .row:hover, .row:focus-visible { background: var(--ink); color: var(--bg); }
   .row:hover .row-thumb, .row:focus-visible .row-thumb { width: 120px; opacity: 1; }
