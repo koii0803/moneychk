@@ -78,8 +78,8 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
   {posts.length > 1 && (
     <section class="two">
       <div class="rank">
-        <h2 class="section-h">지금 많이 보는 분석</h2>
-        <p class="section-sub">사람들이 주목하는 정책 이야기</p>
+        <h2 class="section-h">지금 많이 보는 콘텐츠</h2>
+        <p class="section-sub">지금 주목받는 정책</p>
         <ol class="rank-list">
           {ranked.map((p, i) => (
             <li><a href={`/posts/${p.id}`}><span>{p.data.title}</span>{i === 0 && <span class="chip new">NEW</span>}</a></li>
@@ -88,7 +88,7 @@ const minutes = (p: (typeof posts)[number]) => Math.max(1, Math.round((p.body ??
       </div>
       <div class="feed">
         <h2 class="section-h">나를 위한 정책 알아두기</h2>
-        <p class="section-sub">알뜰하고 쏠쏠한 정책 활용법</p>
+        <p class="section-sub">알아두면 남는 돈의 공식</p>
         <ul class="feed-list">
           {feed.map((p) => {
             const c = CATEGORIES[p.data.category];
