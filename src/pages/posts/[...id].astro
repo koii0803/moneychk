@@ -205,8 +205,8 @@ const jsonLd = JSON.stringify({
   }
   .post-meta { margin: 0; display: flex; justify-content: center; gap: 8px; font-size: 15px; color: var(--ink-2); }
 
-  .progress { position: fixed; top: 60px; left: 0; right: 0; height: 2px; z-index: 39; }
-  .progress i { display: block; height: 100%; background: var(--money); transform: scaleX(0); transform-origin: left; }
+  .progress { position: fixed; top: 59px; left: 0; right: 0; height: 3px; z-index: 41; }
+  .progress i { display: block; height: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left; }
 
   /* 토스피드 배치: 레일 64 · 본문 700 · 목차 220, 사이 110/150. 가운데 정렬, .wrap(1080)보다 넓어 밖으로 뺀다 */
   .post-grid { display: grid; grid-template-columns: 64px minmax(0, 700px) 220px; column-gap: 110px; justify-content: center; align-items: start; width: min(1300px, 100vw - 40px); margin-left: 50%; transform: translateX(-50%); }
