@@ -1,201 +1,118 @@
 ---
 import { getPublished } from '../lib/posts';
 import Base from '../layouts/Base.astro';
-import { CATEGORIES, fmtDate, catColor } from '../config/site';
+import { CATEGORIES, fmtDate } from '../config/site';
 
 const posts = await getPublished();
 const [lead, ...rest] = posts;
 const grid = rest.slice(0, 8);
-const ranked = posts.slice(0, 5);
-
-const countOf = (k: string) => posts.filter((p) => p.data.category === k).length;
-// 분류별 대표 태그: 그 분류 글들의 태그 중 많이 나온 순 3개
-const tagsOf = (k: string) => {
-  const m = new Map<string, number>();
-  posts.filter((p) => p.data.category === k).forEach((p) => p.data.tags.forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
-  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
-};
 ---
 
 <Base>
+  <section class="hero">
+    <h1>지원금·환급·대출,<br />숫자로 확인하는 정책 데이터</h1>
+    <p>수백 장의 행정 고시를 단 1장의 자격 체크표와 계산기로 압축했습니다.</p>
+  </section>
+
+  <nav class="chips" aria-label="정책 영역">
+    <a class="on" href="/">전체</a>
+    {Object.entries(CATEGORIES).map(([key, c]) => <a href={`/${key}`}>{c.name}</a>)}
+  </nav>
+
   {lead ? (
-    <section class="feat" style={`--c:${catColor(lead.data.category)}`}>
-      <a class="feat-media" href={`/posts/${lead.id}`}>
-        <div class="thumb">
-          {lead.data.thumbnail
-            ? <img src={lead.data.thumbnail} alt={lead.data.title} width="1280" height="720" loading="eager" />
-            : <div class="thumb-fallback">₩</div>}
-        </div>
-      </a>
-      <div class="feat-body">
-        <p class="feat-cat">{CATEGORIES[lead.data.category].name} · 최신 분석</p>
-        <h1 class="feat-title"><a href={`/posts/${lead.id}`}>{lead.data.title}</a></h1>
-        <p class="feat-desc">{lead.data.description}</p>
-        <div class="feat-foot">
-          <span class="feat-date">{fmtDate(lead.data.pubDate)}</span>
-          <a class="btn" href={`/posts/${lead.id}`}>이어서 보기</a>
-        </div>
+    <a class="feat" href={`/posts/${lead.id}`}>
+      <div class="feat-top" style={lead.data.thumbnail ? `background-image:url(${lead.data.thumbnail})` : ''}>
+        <span class="feat-badge">최신 분석</span>
+        <span class="feat-icon" aria-hidden="true">{CATEGORIES[lead.data.category].icon}</span>
+        <span class="feat-meta">{CATEGORIES[lead.data.category].name} · {fmtDate(lead.data.pubDate)}</span>
+        <h2 class="feat-title">{lead.data.title}</h2>
       </div>
-    </section>
+      <div class="feat-bottom">
+        <p>{lead.data.description}</p>
+        <span class="feat-go">읽기 →</span>
+      </div>
+    </a>
   ) : (
-    <section class="feat feat-empty">
-      <div class="feat-body">
-        <h1 class="feat-title">복잡한 정부 정책 지원금, 내 조건의 정확한 숫자로 확인합니다</h1>
-        <p class="feat-desc">수백 장의 행정 고시를 단 1장의 자격 체크표와 계산기로 압축했습니다. 대상 판정부터 마감 기한, 공식 접수처까지 한눈에 확인하세요.</p>
-      </div>
-    </section>
+    <p class="empty">데이터 구축 중입니다. 검증이 끝난 분석부터 순서대로 공개됩니다.</p>
   )}
 
-  <section class="cats">
-    <h2 class="section-h">7개 정책 영역</h2>
-    <p class="section-sub">내 상황에 맞는 영역부터 확인하세요</p>
-    <ul class="cat-grid">
-      {Object.entries(CATEGORIES).map(([key, c]) => {
-        const n = countOf(key);
-        const tags = tagsOf(key);
+  {grid.length > 0 && (
+    <ul class="grid">
+      {grid.map((p) => {
+        const c = CATEGORIES[p.data.category];
         return (
           <li>
-            <a class="cat-card" href={`/${key}`} style={`--c:${c.color}`}>
-              <span class="cat-swatch"><b>₩</b></span>
-              <span class="cat-name">{c.name}</span>
-              <span class="cat-desc">{tags.length ? tags.join(' · ') : c.desc}</span>
-              <span class="chip">{n > 0 ? `분석 ${n}건` : '데이터 구축 중'}</span>
+            <a class="card" href={`/posts/${p.id}`}>
+              <div>
+                <div class="card-head">
+                  <span class="chip">{c.name}</span>
+                  <span class="card-icon" aria-hidden="true">{c.icon}</span>
+                </div>
+                <h3 class="card-title">{p.data.title}</h3>
+                <p class="card-sum">{p.data.description}</p>
+              </div>
+              <div class="card-foot">
+                <span>{fmtDate(p.data.pubDate)}</span>
+                <span class="card-go">보러가기 →</span>
+              </div>
             </a>
           </li>
         );
       })}
     </ul>
-  </section>
-
-  {posts.length > 1 && (
-    <section class="two">
-      <div class="rank">
-        <h2 class="section-h">지금 확인할 분석</h2>
-        <p class="section-sub">최근 검증 순</p>
-        <ol class="rank-list">
-          {ranked.map((p) => (
-            <li><a href={`/posts/${p.id}`}>{p.data.title}</a></li>
-          ))}
-        </ol>
-      </div>
-      <div class="recent">
-        <h2 class="section-h">최신 업데이트</h2>
-        <p class="section-sub">발행일 기준 수치입니다. 신청 전 공식 공고를 다시 확인하세요.</p>
-        <ul class="card-grid">
-          {grid.map((p) => (
-            <li style={`--c:${catColor(p.data.category)}`}>
-              <a class="card" href={`/posts/${p.id}`}>
-                <div class="thumb">
-                  {p.data.thumbnail
-                    ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
-                    : <div class="thumb-fallback">₩</div>}
-                </div>
-                <span class="card-cat">{CATEGORIES[p.data.category].name}</span>
-                <span class="card-title">{p.data.title}</span>
-                <span class="card-date">{fmtDate(p.data.pubDate)}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
   )}
-
-  <section class="how">
-    <div class="how-in">
-      <div>
-        <h2 class="section-h">모든 분석은 같은 4단계로 갑니다</h2>
-        <p class="section-sub">어느 글을 열어도 같은 자리에서 같은 답을 찾을 수 있습니다.</p>
-      </div>
-      <ol class="how-steps">
-        <li><b>3초 즉답 판정</b><span>서론 없이 내 수급 대상 여부와 예상 지원 금액부터 먼저 확인</span></li>
-        <li><b>조건 대조 매트릭스</b><span>나이·가구원·중위소득·보유재산 기준을 단 1개의 표로 즉시 대조</span></li>
-        <li><b>감액·환수 리스크 방어</b><span>중복 수혜 불가 조항, 부적격 환수, 신청 기한 누락 등 필수 예외 통제</span></li>
-        <li><b>원스톱 실행 가이드</b><span>주민센터·정부24 발급 서류 리스트와 공식 접수 창구 직통 링크 제공</span></li>
-      </ol>
-    </div>
-  </section>
 </Base>
 
 <style>
+  .hero { text-align: center; padding: 64px 0 28px; }
+  .hero h1 { margin: 0 0 12px; font-weight: 800; font-size: clamp(30px, 4.6vw, 48px); line-height: 1.25; letter-spacing: -0.03em; }
+  .hero p { margin: 0 auto; max-width: 560px; color: var(--ink-3); font-size: 16px; }
+
+  .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 28px 0 32px; padding-bottom: 4px; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips a { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-3); background: var(--surface); border: 1px solid var(--hair); }
+  .chips a:hover { color: var(--ink); }
+  .chips a.on { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: var(--shadow); }
+
   /* 대표 글 */
-  .feat {
-    display: grid; grid-template-columns: 1.15fr 1fr; gap: 36px; align-items: center;
-    margin-top: 36px; padding: 28px; border-radius: 24px;
-    background: var(--surface); border: 1px solid var(--hair);
+  .feat { display: block; border-radius: 24px; overflow: hidden; background: var(--surface); border: 1px solid var(--hair); box-shadow: var(--shadow); transition: border-color .2s; }
+  .feat:hover { border-color: color-mix(in srgb, var(--money) 50%, transparent); }
+  .feat-top {
+    position: relative; min-height: 288px; padding: 32px; display: flex; flex-direction: column; justify-content: flex-end;
+    background: linear-gradient(45deg, #0f172a, #1e293b, #334155); background-size: cover; background-position: center;
   }
-  .feat-empty { grid-template-columns: 1fr; padding: 56px 40px; }
-  .feat-media .thumb { border-radius: 18px; box-shadow: var(--shadow); }
-  .feat-media .thumb-fallback { font-size: 96px; }
-  .feat-cat { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--money); }
-  .feat-title { margin: 0 0 14px; font-weight: 800; font-size: clamp(26px, 3.4vw, 36px); line-height: 1.3; letter-spacing: -0.025em; }
-  .feat-title a:hover { color: var(--money); }
-  .feat-desc { margin: 0 0 24px; color: var(--ink-2); font-size: 16.5px; max-width: 52ch; }
-  .feat-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .feat-date { color: var(--ink-3); font-size: 13.5px; }
-  .btn {
-    display: inline-block; padding: 11px 20px; border-radius: 12px;
-    background: var(--money); color: var(--money-ink); font-weight: 700; font-size: 15px;
-  }
-  .btn:hover { filter: brightness(1.08); }
+  .feat-top[style*='background-image']::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(16,16,19,.15), rgba(16,16,19,.85)); }
+  .feat-top > * { position: relative; }
+  .feat-top .feat-badge { position: absolute; top: 24px; left: 24px; padding: 4px 12px; border-radius: 999px; background: var(--money); color: #fff; font-size: 12px; font-weight: 700; }
+  .feat-top .feat-icon { position: absolute; right: 32px; bottom: 32px; font-size: 60px; opacity: .3; transition: transform .3s; }
+  .feat:hover .feat-icon { transform: scale(1.1); }
+  .feat-meta { font-size: 12.5px; font-weight: 500; color: #94a3b8; margin-bottom: 8px; }
+  .feat-title { margin: 0; max-width: 20ch; font-weight: 700; font-size: clamp(22px, 3vw, 30px); line-height: 1.35; color: #fff; letter-spacing: -0.02em; }
+  .feat:hover .feat-title { color: var(--money); }
+  .feat-bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px; }
+  .feat-bottom p { margin: 0; font-size: 14px; color: var(--ink-3); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .feat-go { flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--money); }
 
-  /* 분류 */
-  .cats { margin-top: 84px; }
-  .cat-grid {
-    list-style: none; margin: 0; padding: 0;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-  }
-  .cat-card {
-    display: flex; flex-direction: column; gap: 6px; height: 100%;
-    padding: 20px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair);
-    transition: transform .15s, border-color .15s;
-  }
-  .cat-card:hover { transform: translateY(-2px); border-color: var(--c); }
-  .cat-swatch {
-    width: 40px; height: 40px; border-radius: 12px; margin-bottom: 8px;
-    display: grid; place-items: center; color: #fff; font-size: 18px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
-  }
-  .cat-name { font-weight: 800; font-size: 18px; letter-spacing: -0.01em; }
-  .cat-desc { color: var(--ink-2); font-size: 13.5px; flex: 1; }
-  .cat-card .chip { align-self: flex-start; margin-top: 8px; }
-
-  /* 두 단 */
-  .two { margin-top: 84px; display: grid; grid-template-columns: 340px 1fr; gap: 48px; }
-  .rank-list { list-style: none; margin: 0; padding: 0; counter-reset: r; }
-  .rank-list li { counter-increment: r; border-bottom: 1px solid var(--hair); }
-  .rank-list a { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 16px 0; font-weight: 600; font-size: 15.5px; line-height: 1.5; }
-  .rank-list a::before { content: counter(r); color: var(--money); font-weight: 800; font-size: 17px; }
-  .rank-list a:hover { color: var(--money); }
-
-  .card-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 20px; }
-  .card { display: flex; flex-direction: column; gap: 6px; }
-  .card .thumb { margin-bottom: 6px; }
-  .card-cat { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
-  .card-title { font-weight: 700; font-size: 16.5px; line-height: 1.45; letter-spacing: -0.01em; }
+  /* 글 카드 */
+  .grid { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .card { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 24px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); transition: border-color .2s; }
+  .card:hover { border-color: color-mix(in srgb, var(--money) 40%, transparent); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card .chip { background: var(--surface-2); border: 1px solid var(--hair); color: var(--ink-3); }
+  .card-icon { font-size: 24px; }
+  .card-title { margin: 0 0 8px; font-weight: 700; font-size: 18px; line-height: 1.4; letter-spacing: -0.01em; }
   .card:hover .card-title { color: var(--money); }
-  .card-date { font-size: 13px; color: var(--ink-3); }
+  .card-sum { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-3); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--ink-3); }
+  .card-go { font-weight: 600; color: var(--money); transition: transform .15s; }
+  .card:hover .card-go { transform: translateX(4px); }
 
-  /* 읽는 순서 */
-  .how { margin-top: 96px; }
-  .how-in { display: grid; grid-template-columns: 1fr 1.4fr; gap: 40px; padding: 36px; border-radius: 24px; background: var(--surface); border: 1px solid var(--hair); }
-  .how-steps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; gap: 4px; }
-  .how-steps li { counter-increment: s; display: grid; grid-template-columns: 34px 180px 1fr; gap: 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--hair); }
-  .how-steps li:last-child { border-bottom: 0; }
-  .how-steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--money-soft); color: var(--money); font-weight: 800; font-size: 13px; }
-  .how-steps b { font-weight: 700; font-size: 15.5px; }
-  .how-steps span { color: var(--ink-2); font-size: 14.5px; }
+  .empty { padding: 48px 24px; border-radius: 18px; background: var(--surface); border: 1px solid var(--hair); text-align: center; color: var(--ink-3); }
 
-  @media (max-width: 900px) {
-    .cat-grid { grid-template-columns: repeat(2, 1fr); }
-    .two { grid-template-columns: 1fr; gap: 56px; }
-    .how-in { grid-template-columns: 1fr; }
-  }
   @media (max-width: 720px) {
-    .feat { grid-template-columns: 1fr; gap: 20px; padding: 16px; border-radius: 18px; margin-top: 20px; }
-    .feat-empty { padding: 36px 20px; }
-    .card-grid { grid-template-columns: 1fr; }
-    .how-steps li { grid-template-columns: 34px 1fr; }
-    .how-steps span { grid-column: 2; }
+    .hero { padding: 40px 0 20px; }
+    .grid { grid-template-columns: 1fr; }
+    .feat-top { min-height: 224px; padding: 24px; }
+    .feat-icon { font-size: 44px; }
   }
 </style>
