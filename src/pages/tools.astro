@@ -4,44 +4,82 @@ import { CATEGORIES } from '../config/site';
 
 // 1군 계산기(기획 엑셀 우선순위 1). 만들어지면 href를 채운다.
 const tools = [
-  { cat: 'future', name: '중위소득 % 계산기', desc: '가구원 수와 월 소득을 넣으면 기준 중위소득 몇 %인지 판정. 모든 지원금 자격의 출발점.' },
-  { cat: 'work', name: '실업급여 계산기', desc: '평균임금·나이·고용보험 가입 기간으로 일 지급액과 소정급여일수 계산.' },
-  { cat: 'benefit', name: '기초연금 계산기', desc: '소득인정액을 계산해 단독·부부 가구 선정 기준 통과 여부와 감액 판정.' },
-  { cat: 'home', name: '주거급여 계산기', desc: '지역·가구원 수 기준임대료와 실제 임차료로 월 지급액 계산.' },
-  { cat: 'future', name: '청년도약계좌 만기 수령액', desc: '월 납입액·소득 구간으로 정부 기여금과 5년 만기 수령액 계산.' },
+  { cat: 'future', name: '중위소득 % 계산기', desc: '가구원 수와 월 소득을 넣으면 기준 중위소득 몇 %인지 판정. 모든 지원금 자격의 출발점.', href: '' },
+  { cat: 'work', name: '실업급여 계산기', desc: '평균임금·나이·고용보험 가입 기간으로 일 지급액과 소정급여일수 계산.', href: '' },
+  { cat: 'benefit', name: '기초연금 계산기', desc: '소득인정액을 계산해 단독·부부 가구 선정 기준 통과 여부와 감액 판정.', href: '' },
+  { cat: 'home', name: '주거급여 계산기', desc: '지역·가구원 수 기준임대료와 실제 임차료로 월 지급액 계산.', href: '' },
+  { cat: 'future', name: '청년도약계좌 만기 수령액', desc: '월 납입액·소득 구간으로 정부 기여금과 5년 만기 수령액 계산.', href: '' },
+  { cat: 'save', name: 'K-패스 손익분기점', desc: '월 이용 횟수·요금으로 K-패스와 기후동행카드 중 어느 쪽이 더 남는지 비교.', href: '' },
 ];
 ---
 
 <Base title="모의계산기" description="지원금 자격·금액을 내 조건으로 바로 계산하는 도구 모음.">
-  <div class="page">
+  <header class="tools-head">
     <h1>모의계산기</h1>
-    <p>나이·가구원·소득·재산만 넣으면 자격과 예상 금액을 판정합니다. 산식과 기준값은 공식 고시를 그대로 쓰고, 기준값 확인일을 함께 표시합니다.</p>
+    <p>나이·가구원·소득·재산만 넣으면 자격과 예상 금액을 판정합니다. 산식과 기준값은 공식 고시를 그대로 쓰고, 확인일을 함께 표시합니다.</p>
+  </header>
 
-    <ul class="tool-list">
-      {tools.map((t) => {
-        const c = CATEGORIES[t.cat as keyof typeof CATEGORIES];
-        return (
-          <li class="tool">
-            <span class="tool-icon" aria-hidden="true">{c.icon}</span>
-            <div>
-              <p class="tool-cat">{c.name}</p>
-              <h2>{t.name}</h2>
-              <p class="tool-desc">{t.desc}</p>
-            </div>
-            <span class="chip">준비 중</span>
-          </li>
-        );
-      })}
-    </ul>
-  </div>
+  <ul class="index">
+    {tools.map((t) => {
+      const c = CATEGORIES[t.cat as keyof typeof CATEGORIES];
+      const Tag = t.href ? 'a' : 'div';
+      return (
+        <li>
+          <Tag class="row" href={t.href || undefined} style={`--c:${c.color}`} aria-disabled={t.href ? undefined : 'true'}>
+            <span class="row-name">{t.name}</span>
+            <span class="row-thumb" aria-hidden="true"><i>{c.icon}</i></span>
+            <span class="row-desc">{t.desc}</span>
+            <span class="row-end">
+              {!t.href && <span class="row-soon">준비 중</span>}
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </span>
+          </Tag>
+        </li>
+      );
+    })}
+  </ul>
 </Base>
 
 <style>
-  .tool-list { list-style: none; margin: 32px 0 0; padding: 0; display: grid; gap: 12px; }
-  .tool { display: grid; grid-template-columns: 48px 1fr auto; gap: 16px; align-items: center; padding: 20px; border-radius: 16px; background: var(--surface); border: 1px solid var(--hair); }
-  .tool-icon { font-size: 28px; text-align: center; }
-  .tool-cat { margin: 0 0 2px; font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
-  .tool h2 { margin: 0 0 4px; font-size: 17px; font-weight: 700; }
-  .tool-desc { margin: 0; font-size: 13.5px; color: var(--ink-2); }
-  @media (max-width: 560px) { .tool { grid-template-columns: 40px 1fr; } .tool .chip { grid-column: 2; justify-self: start; } }
+  .tools-head { max-width: 760px; padding: 56px 0 40px; }
+  .tools-head h1 { margin: 0 0 12px; font-weight: 800; font-size: clamp(30px, 4.6vw, 44px); letter-spacing: -0.03em; }
+  .tools-head p { margin: 0; color: var(--ink-2); font-size: 16px; }
+
+  /* 토스피드 에디션 목록: 큰 글씨 행, 올리면 행이 흰색으로 뒤집히며 썸네일·화살표 등장 */
+  .index { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink-3); }
+  .index li { border-bottom: 1px solid var(--ink-3); }
+  .row {
+    position: relative; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 0 20px;
+    padding: 22px 28px 22px 32px; margin: 0 -32px; color: var(--ink);
+    transition: background .18s, color .18s;
+  }
+  .row-name { font-weight: 700; font-size: clamp(26px, 3.6vw, 44px); letter-spacing: -0.03em; line-height: 1.2; white-space: nowrap; }
+  .row-thumb {
+    width: 0; height: 60px; border-radius: 10px; overflow: hidden; display: grid; place-items: center;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
+    opacity: 0; transition: width .22s ease, opacity .18s ease;
+  }
+  .row-thumb i { font-style: normal; font-size: 30px; }
+  .row-desc { font-size: 14px; color: transparent; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; transition: color .18s; }
+  .row-end { display: flex; align-items: center; gap: 14px; color: transparent; transition: color .18s; }
+  .row-soon { font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid currentColor; }
+
+  .row:hover, .row:focus-visible { background: var(--ink); color: var(--bg); }
+  .row:hover .row-thumb, .row:focus-visible .row-thumb { width: 120px; opacity: 1; }
+  .row:hover .row-desc, .row:focus-visible .row-desc { color: color-mix(in srgb, var(--bg) 70%, var(--ink)); }
+  .row:hover .row-end, .row:focus-visible .row-end { color: var(--bg); }
+  a.row { cursor: pointer; }
+  div.row { cursor: default; }
+
+  @media (prefers-reduced-motion: reduce) { .row, .row-thumb, .row-desc, .row-end { transition: none; } }
+  @media (max-width: 720px) {
+    .row { grid-template-columns: 1fr auto; padding: 18px 20px; margin: 0 -20px; gap: 6px 12px; }
+    .row-name { white-space: normal; }
+    .row-thumb { display: none; }
+    .row-desc { grid-column: 1 / -1; color: var(--ink-3); }
+    .row-end { color: var(--ink-3); }
+    .row:hover { background: transparent; color: var(--ink); }
+    .row:hover .row-end { color: var(--ink-3); }
+    .row:hover .row-desc { color: var(--ink-3); }
+  }
 </style>
