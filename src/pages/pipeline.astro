@@ -1,120 +1,69 @@
 ---
 import Base from '../layouts/Base.astro';
+// 홈 화면 구조도: 위에서 아래로 블록 순서, 각 블록이 어디서 데이터를 받는지
+const blocks = [
+  { n: '01', name: '헤더 (Base.astro)', what: '로고 묶음(3D ₩ + 숨쉬는 빛 · Moneycheck / POLICY DATA LAB) · 파이프라인 배지 · GNB 4개 · 밝기 토글', from: 'src/layouts/Base.astro', h: 60 },
+  { n: '02', name: '히어로 롤링', what: 'h1 두 줄(윗줄 회색·아랫줄 흰→파랑) + 서브 한 줄. 20쌍이 3.4초마다 페이드. 높이 고정', from: 'index.astro → rolling[20]', h: 200 },
+  { n: '03', name: '영역 칩', what: '전체 + 7분류, 가운데 정렬, 각 분류 페이지로', from: 'site.ts CATEGORIES', h: 44 },
+  { n: '04', name: '대표 카드 #featured', what: '최신 글 1편. 남색 그라데이션(썸네일 있으면 사진), 파란 배지, 분류 아이콘, 제목 / 요약 + 긴 화살표', from: 'getPublished()[0]', h: 360 },
+  { n: '05', name: '두 단', what: '왼쪽: 지금 많이 보는 콘텐츠(번호 4개, 1번 NEW) · 오른쪽: 나를 위한 정책 알아두기(제목·요약·⏳분·분류 배지 | 썸네일, 올리면 확대 + 4색 테두리)', from: 'posts[0..4] / posts[1..9]', h: 520 },
+  { n: '06', name: '오리지널 시리즈', what: '세로 카드 4개(도시와 내 집의 설계도 · 월급의 마지막 방어선 · 청년 자산 빌드업 · 비상금과 출구 전략). 색 판 + 3D 아이콘, 콘텐츠 N개 실측', from: 'index.astro → series[4]', h: 380 },
+  { n: '07', name: '방금 올라온 콘텐츠', what: '4열 × 2 = 8개(썸네일·제목·날짜, 올리면 확대) + 더 펼쳐보기 → /posts', from: 'posts[0..8]', h: 520 },
+  { n: '08', name: '푸터 (Base.astro)', what: '로고 묶음(헤더와 동일) · 태그라인 · 분류 7 · 소개/개인정보/법적 고지/문의/RSS · ©', from: 'src/layouts/Base.astro', h: 200 },
+];
 ---
-<Base title="파이프라인" description="머니첵 원고 → 발행 → 사이트 → 배포 흐름.">
-  <div class="pipe">
-  <h1>머니첵 파이프라인 — 원고에서 화면까지</h1>
-  <p class="sub">2026-09-17 기준. 지금 켜진 건 ③~⑤(사이트·배포)뿐이고 ①②(글 공급)는 G1 경제 모드가 생겨야 돈다.</p>
-  <div class="legend"><span><i style="background:var(--amber)"></i>너</span><span><i style="background:var(--mint)"></i>클로드·gpub.py</span><span><i style="background:var(--money)"></i>클라우드 자동</span></div>
+<Base title="홈 화면 구조" description="머니첵 홈 화면이 어떤 블록으로 짜였는지.">
+  <div class="map">
+    <h1>홈 화면 구조 — 위에서 아래로 8블록</h1>
+    <p class="sub">왼쪽은 화면 비율 그대로 줄인 와이어프레임, 오른쪽은 각 블록이 뭘 그리고 어디서 데이터를 받는지.</p>
 
-  <div class="lane">
-    <div class="lane-h"><b>① 원고</b><span>글 공급</span></div>
-    <div class="flow">
-      <div class="node you"><b>경제제목완료.csv</b><small>대기열 1,103행. 절차형 제목</small></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>55 경제 AEO 1차</b><small>팩트체크 끝난 1차 원고 → 노션 경제 원고</small></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>G1 경제 모드</b><small>2차 원고: 즉답 + 자격 체크표 + 손해 조건 + 행동 블록. 팩트시트는 1차 그대로</small><code>아직 없음 · 승인 사항</code></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>노션 "구글블로그 원고 → 머니첵"</b><small>날짜 페이지 밑에 2차 원고 쌓임</small><code>sites.json notion_root 비어 있음</code></div>
+    <div class="grid">
+      <div class="wire" aria-hidden="true">
+        {blocks.map((b) => <div class="w" style={`flex-basis:${b.h / 6}px`}><span>{b.n}</span></div>)}
+      </div>
+      <ol class="list">
+        {blocks.map((b) => (
+          <li>
+            <span class="no">{b.n}</span>
+            <div>
+              <b>{b.name}</b>
+              <p>{b.what}</p>
+              <code>{b.from}</code>
+            </div>
+          </li>
+        ))}
+      </ol>
     </div>
-  </div>
 
-  <div class="lane">
-    <div class="lane-h"><b>② 발행</b><span>G2 + gpub.py</span></div>
-    <div class="flow">
-      <div class="node bot"><b>--queue / --pull</b><small>노션 글 → <em>src/content/posts/slug.md</em><br/>머리말: title·description·pubDate·category·thumbnail·tags·notion_id</small></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>이미지 3장</b><small>Pexels → 없으면 Cloudflare AI(1→2→3번). 16:9 WebP 1280×720, 메타 삭제</small><code>R2: babcheck-img/moneychk/slug/</code></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>--link</b><small>글당 내부 링크 3개(문맥 → 함께 읽기)</small></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>--build → --mark → --push</b><small>빌드 확인 → 노션 제목 앞 ㅇ + 주소 → git push</small></div>
-    </div>
+    <h2>공통 규칙</h2>
+    <ul class="rules">
+      <li><b>색</b> — 배경 #101013 · 카드 #1c1d23 · 글자 #e5e8eb · 강조 토스 블루 #3182f6 · 민트 #00d287(로고·datalab) · 분류 배지 7색(민트·앰버·블루·코랄·틸·바이올렛·핑크)</li>
+      <li><b>서체</b> — SUIT Variable(대체 Pretendard), 숫자 고정폭. 제목 800 자간 -0.03em, 본문 400</li>
+      <li><b>호버</b> — 제목·메뉴 글씨 파랑, 썸네일 1.06배, 카드 테두리 파랑 40%</li>
+      <li><b>이미지</b> — 글 썸네일 없으면 분류 3D 아이콘(public/img/icons)으로 대체</li>
+      <li><b>테마</b> — 어두운 화면 기본, 헤더 달 버튼으로 밝은 화면(localStorage 기억)</li>
+    </ul>
   </div>
-
-  <div class="lane">
-    <div class="lane-h"><b>③ 사이트 코드</b><span>Astro · moneychk/</span></div>
-    <div class="flow">
-      <div class="node"><b>src/config/site.ts</b><small>사이트 이름·주소·메일, 분류 7개(이름·짧은 이름·색·배지색·아이콘 경로)</small></div>
-      <div class="arrow"></div>
-      <div class="node"><b>src/layouts/Base.astro</b><small>head(메타·애드센스·폰트·테마) · 헤더(로고 묶음) · 푸터 · 전역 CSS 토큰</small></div>
-      <div class="arrow"></div>
-      <div class="node"><b>src/pages/*</b><small>index(홈) · [category] · posts/[...id](글) · posts/index · tag · tools · about · privacy · disclaimer · contact · 404</small></div>
-      <div class="arrow"></div>
-      <div class="node"><b>src/data/tools.json</b><small>계산기 85개(엑셀에서 뽑음). href 채우면 링크</small></div>
-    </div>
-  </div>
-
-  <div class="lane">
-    <div class="lane-h"><b>④ 정적 파일</b><span>public/ → 그대로 복사</span></div>
-    <div class="flow">
-      <div class="node you"><b>Downloads/누끼제거/*.png</b><small>3D 아이콘 원본 1024px</small></div>
-      <div class="arrow"></div>
-      <div class="node bot"><b>Pillow 변환</b><small>여백 자르기 → 정사각 → 320px WebP q88</small></div>
-      <div class="arrow"></div>
-      <div class="node"><b>public/img/icons/&#123;key&#125;.webp</b><small>logo · benefit · refund · loan · home · save · work · future</small></div>
-      <div class="arrow"></div>
-      <div class="node"><b>HTML에서 참조</b><small>&lt;img src="/img/icons/logo.webp"&gt;<br/>site.ts의 img 경로로 분류 아이콘 자동</small></div>
-    </div>
-  </div>
-
-  <div class="lane">
-    <div class="lane-h"><b>⑤ 배포</b><span>git → Cloudflare</span></div>
-    <div class="flow">
-      <div class="node bot"><b>git commit</b><small>지금 로컬 45개 밀려 있음</small><code>푸시는 "푸시해" 할 때만</code></div>
-      <div class="arrow"></div>
-      <div class="node cloud"><b>GitHub koii0803/moneychk</b><small>비공개 저장소</small></div>
-      <div class="arrow"></div>
-      <div class="node cloud"><b>Cloudflare Workers 빌드</b><small>npm run build → dist/ → wrangler deploy. 새벽 6시 빈 커밋으로 예약 글 공개</small></div>
-      <div class="arrow"></div>
-      <div class="node cloud"><b>moneychk.bobomusic83.workers.dev</b><small>→ 도메인 붙으면 moneychk.com</small><code>도메인·GA4·서치콘솔 아직</code></div>
-    </div>
-  </div>
-
-  <div class="files"><b>moneychk/</b>
-├─ astro.config.mjs        사이트 주소·마크다운 규칙(외부 링크 새 창, ~ 취소선 방지)
-├─ wrangler.jsonc          Cloudflare 배포 설정
-├─ .github/workflows/      새벽 6시 빈 커밋(예약 글 공개)
-├─ public/                 ads.txt · robots.txt · og-default.png · <em>img/icons/*.webp</em>
-├─ src/config/site.ts      사이트 값·분류 7개
-├─ src/content.config.ts   글 머리말 규격
-├─ src/content/posts/      <em>gpub --pull이 여기 md 생성</em>  (지금 예시 1편)
-├─ src/data/tools.json     계산기 85개
-├─ src/layouts/Base.astro  뼈대·헤더·푸터·전역 CSS
-├─ src/lib/posts.ts        발행일 지난 글만 (예약 글 숨김)
-└─ src/pages/              화면들
-<b>../sites.json</b>            moneychk 값(url·r2_prefix·notion_root 비어 있음·active=false)
-<b>../.claude/tools/gpub.py</b>  노션→md→이미지→링크→빌드→푸시 기계</div>
-</div>
 </Base>
 
 <style>
-  .pipe { max-width: 1100px; margin: 0 auto; padding-top: 40px; }
-
-  h1 { font-size:26px; font-weight:800; letter-spacing:-.03em; margin:0 0 6px; }
-  .sub { color:var(--ink-3); margin:0 0 36px; font-size:14px; }
-  .lane { display:grid; grid-template-columns:150px 1fr; gap:20px; align-items:start; margin-bottom:28px; }
-  .lane-h { position:sticky; top:12px; }
-  .lane-h b { display:block; font-size:15px; font-weight:800; }
-  .lane-h span { font-size:12px; color:var(--ink-3); }
-  .flow { display:flex; flex-wrap:wrap; gap:0; align-items:stretch; }
-  .node { position:relative; background:var(--surface); border:1px solid var(--hair); border-radius:14px; padding:14px 16px; min-width:180px; max-width:230px; flex:1; }
-  .node b { display:block; font-size:14px; font-weight:800; margin-bottom:4px; }
-  .node small { display:block; font-size:12px; color:var(--ink-2); line-height:1.5; }
-  .node code { display:inline-block; margin-top:6px; font-size:11px; color:var(--mint); background:var(--surface-2); padding:2px 6px; border-radius:4px; font-family:ui-monospace,Consolas,monospace; }
-  .node.you { border-color:color-mix(in srgb,var(--amber) 50%,transparent); }
-  .node.you::before, .node.bot::before, .node.cloud::before { content:''; position:absolute; top:12px; right:12px; width:8px; height:8px; border-radius:99px; }
-  .node.you::before { background:var(--amber); }
-  .node.bot::before { background:var(--mint); }
-  .node.cloud::before { background:var(--money); }
-  .arrow { align-self:center; width:44px; flex:0 0 44px; height:2px; background:linear-gradient(90deg,var(--hair),var(--ink-3)); position:relative; }
-  .arrow::after { content:''; position:absolute; right:-1px; top:-4px; border:5px solid transparent; border-left:7px solid var(--ink-3); }
-  .legend { display:flex; gap:18px; font-size:12px; color:var(--ink-3); margin-bottom:28px; }
-  .legend i { display:inline-block; width:8px; height:8px; border-radius:99px; margin-right:6px; vertical-align:middle; }
-  .files { margin-top:36px; background:var(--surface-2); border:1px solid var(--hair); border-radius:14px; padding:18px 20px; font-family:ui-monospace,Consolas,monospace; font-size:12.5px; line-height:1.8; color:var(--ink-2); white-space:pre; overflow:auto; }
-  .files b { color:var(--ink); font-weight:700; }
-  .files em { color:var(--mint); font-style:normal; }
-
-  @media (max-width:760px){ .lane{grid-template-columns:1fr} .arrow{width:100%; flex-basis:100%; height:24px; background:none} .arrow::after{left:50%; top:8px; transform:rotate(90deg)} }
+  .map { max-width: 960px; margin: 0 auto; padding-top: 44px; }
+  .map h1 { margin: 0 0 6px; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+  .map h2 { margin: 56px 0 14px; font-size: 20px; font-weight: 800; }
+  .sub { margin: 0 0 32px; color: var(--ink-3); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 150px 1fr; gap: 32px; align-items: start; }
+  .wire { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--hair); border-radius: 10px; padding: 6px; background: var(--surface-2); }
+  .w { flex: 0 0 auto; border-radius: 4px; background: var(--surface); border: 1px solid var(--hair); display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--ink-3); }
+  .w:nth-child(4) { background: linear-gradient(45deg, #0f172a, #334155); }
+  .w:nth-child(1), .w:nth-child(8) { background: color-mix(in srgb, var(--surface) 60%, var(--bg)); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .no { font-weight: 800; color: var(--money); font-size: 15px; }
+  .list b { display: block; font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .list p { margin: 0 0 6px; font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+  .list code { font-size: 12px; color: var(--mint); background: var(--surface-2); padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, Consolas, monospace; }
+  .rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .rules li { padding: 12px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--hair); font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+  .rules b { color: var(--ink); margin-right: 8px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .wire { position: static; flex-direction: row; } .w { flex: 1 1 0; height: 40px; } }
 </style>
