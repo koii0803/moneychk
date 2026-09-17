@@ -76,7 +76,7 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
     <header class="top" id="top">
       <div class="wrap top-in">
         <a class="wordmark" href="/" aria-label="머니첵 홈">
-          <span class="wordmark-mark">₩</span>
+          <img class="wordmark-mark" src="/img/icons/logo.webp" alt="" width="30" height="30" />
           <span class="wordmark-text">머니첵</span>
           <span class="wordmark-sub">데이터랩</span>
         </a>
@@ -195,10 +195,7 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
   }
   .top-in { display: flex; align-items: center; justify-content: space-between; height: 60px; }
   .wordmark { display: flex; align-items: center; gap: 8px; }
-  .wordmark-mark {
-    display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
-    background: linear-gradient(45deg, var(--mint), var(--money)); color: #000; font-weight: 900; font-size: 15px;
-  }
+  .wordmark-mark { width: 30px; height: 30px; object-fit: contain; }
   .wordmark-text { font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
   .wordmark-sub { font-size: 12px; font-weight: 600; color: var(--ink-3); padding-left: 2px; }
   @media (max-width: 480px) { .wordmark-sub { display: none; } }
@@ -245,6 +242,7 @@ const canonical = new URL(Astro.url.pathname.replace(/index\.html$/, '').replace
     background: radial-gradient(120% 90% at 20% 10%, color-mix(in srgb, var(--c) 65%, #fff) 0%, var(--c) 55%, color-mix(in srgb, var(--c) 60%, #000) 100%);
     color: rgba(255,255,255,.92); font-weight: 800; font-size: 44px;
   }
+  .thumb-fallback img { width: 46%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,.4)); }
   /* 안내 페이지 공용 */
   .page { max-width: 720px; margin: 0 auto; padding-top: 52px; }
   .page h1 { font-weight: 800; font-size: 34px; letter-spacing: -0.02em; margin: 0 0 24px; padding-bottom: 18px; border-bottom: 1px solid var(--hair); }

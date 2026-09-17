@@ -130,7 +130,7 @@ const jsonLd = JSON.stringify({
               <div class="thumb">
                 {p.data.thumbnail
                   ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
-                  : <div class="thumb-fallback">₩</div>}
+                  : <div class="thumb-fallback"><img src={cat.img} alt="" width="120" height="120" loading="lazy" /></div>}
               </div>
               <span class="t">{p.data.title}</span>
               <span class="s">{fmtDate(p.data.pubDate)}</span>

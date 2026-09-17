@@ -21,15 +21,15 @@ export type CategoryKey =
 
 export const CATEGORIES: Record<
   CategoryKey,
-  { name: string; desc: string; color: string; no: string; icon: string }
+  { name: string; desc: string; color: string; no: string; icon: string; img: string }
 > = {
-  benefit: { no: '01', name: '정부 지원금', desc: '기초생활 · 청년수당 · 바우처', color: '#177a53', icon: '💰' },
-  refund: { no: '02', name: '숨은 환급금', desc: '연말정산 · 건보료 환급 · 세금 감면', color: '#b07a1e', icon: '💸' },
-  loan: { no: '03', name: '정책 대출', desc: '디딤돌 · 버팀목 · 햇살론', color: '#35509e', icon: '🏦' },
-  home: { no: '04', name: '주거 · 청약', desc: '공공임대 · 보증금 지원 · 특별공급', color: '#b5533c', icon: '🏠' },
-  save: { no: '05', name: '생활비 감면', desc: '공과금 할인 · K-패스 · 통신비 감면', color: '#0e7490', icon: '💡' },
-  work: { no: '06', name: '구직 · 일자리', desc: '국민취업지원제도 · 구직촉진 · 창업', color: '#5b5f97', icon: '💼' },
-  future: { no: '07', name: '자산 형성', desc: '청년도약계좌 · 매칭적금 · 청년드림', color: '#7c4a6e', icon: '🌱' },
+  benefit: { no: '01', name: '정부 지원금', desc: '기초생활 · 청년수당 · 바우처', color: '#177a53', icon: '💰', img: '/img/icons/benefit.webp' },
+  refund: { no: '02', name: '숨은 환급금', desc: '연말정산 · 건보료 환급 · 세금 감면', color: '#b07a1e', icon: '💸', img: '/img/icons/refund.webp' },
+  loan: { no: '03', name: '정책 대출', desc: '디딤돌 · 버팀목 · 햇살론', color: '#35509e', icon: '🏦', img: '/img/icons/loan.webp' },
+  home: { no: '04', name: '주거 · 청약', desc: '공공임대 · 보증금 지원 · 특별공급', color: '#b5533c', icon: '🏠', img: '/img/icons/home.webp' },
+  save: { no: '05', name: '생활비 감면', desc: '공과금 할인 · K-패스 · 통신비 감면', color: '#0e7490', icon: '💡', img: '/img/icons/save.webp' },
+  work: { no: '06', name: '구직 · 일자리', desc: '국민취업지원제도 · 구직촉진 · 창업', color: '#5b5f97', icon: '💼', img: '/img/icons/work.webp' },
+  future: { no: '07', name: '자산 형성', desc: '청년도약계좌 · 매칭적금 · 청년드림', color: '#7c4a6e', icon: '🌱', img: '/img/icons/future.webp' },
 };
 
 export const catName = (slug: string) => CATEGORIES[slug as CategoryKey]?.name ?? slug;

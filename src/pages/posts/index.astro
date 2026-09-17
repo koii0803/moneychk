@@ -19,7 +19,7 @@ const posts = await getPublished();
             <div class="thumb">
               {p.data.thumbnail
                 ? <img src={p.data.thumbnail} alt="" width="640" height="360" loading="lazy" />
-                : <div class="thumb-fallback"><span>{c.icon}</span></div>}
+                : <div class="thumb-fallback"><img src={c.img} alt="" width="120" height="120" loading="lazy" /></div>}
             </div>
             <span class="all-cat">{c.name}</span>
             <h2>{p.data.title}</h2>
@@ -38,7 +38,7 @@ const posts = await getPublished();
   .all-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px 20px; }
   .all-grid a { display: flex; flex-direction: column; gap: 6px; }
   .all-grid .thumb { border-radius: 12px; margin-bottom: 4px; }
-  .all-grid .thumb-fallback { font-size: 44px; }
+  .all-grid .thumb-fallback img { width: 46%; height: auto; }
   .all-cat { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
   .all-grid h2 { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.45; }
   .all-grid a:hover h2 { color: var(--money); }

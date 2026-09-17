@@ -14,7 +14,7 @@ const posts = (await getPublished()).filter((p) => p.data.category === category)
 
 <Base title={`${cat.name} 팩트체크`} description={`${cat.desc} — ${cat.name} 카테고리의 생활경제 팩트체크 모음.`}>
   <header class="cat-head" style={`--c:${cat.color}`}>
-    <span class="cat-swatch">₩</span>
+    <img class="cat-swatch" src={cat.img} alt="" width="72" height="72" />
     <div>
       <h1>{cat.name}</h1>
       <p class="cat-desc">{cat.desc} · {posts.length > 0 ? `분석 ${posts.length}건` : '데이터 구축 중'}</p>
@@ -35,7 +35,7 @@ const posts = (await getPublished()).filter((p) => p.data.category === category)
             <div class="thumb">
               {p.data.thumbnail
                 ? <img src={p.data.thumbnail} alt={p.data.title} width="640" height="360" loading="lazy" />
-                : <div class="thumb-fallback">₩</div>}
+                : <div class="thumb-fallback"><img src={CATEGORIES[p.data.category].img} alt="" width="120" height="120" loading="lazy" /></div>}
             </div>
             <span class="card-title">{p.data.title}</span>
             <span class="card-desc">{p.data.description}</span>
@@ -51,11 +51,7 @@ const posts = (await getPublished()).filter((p) => p.data.category === category)
 
 <style>
   .cat-head { display: flex; align-items: center; gap: 18px; padding: 52px 0 24px; }
-  .cat-swatch {
-    width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center;
-    color: #fff; font-weight: 800; font-size: 24px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c));
-  }
+  .cat-swatch { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0,0,0,.35)); }
   .cat-head h1 { margin: 0; font-weight: 800; font-size: clamp(28px, 4vw, 38px); letter-spacing: -0.025em; }
   .cat-desc { margin: 4px 0 0; color: var(--ink-2); }
 
