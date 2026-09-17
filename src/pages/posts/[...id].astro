@@ -225,7 +225,7 @@ const jsonLd = JSON.stringify({
   .post-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 700px) minmax(0, 1fr); column-gap: 0; align-items: start; width: min(1300px, 100vw - 40px); margin-left: 50%; transform: translateX(-50%); }
   .rail { justify-self: end; margin-right: min(110px, 30%); }
   .toc { justify-self: start; margin-left: min(110px, 28%); width: min(220px, 70%); }
-  .post { min-width: 0; }
+  .post { min-width: 0; transform: translateX(32px); } /* 오른쪽 목차 무게 때문에 눈에는 왼쪽으로 보여 살짝 오른쪽으로 */
 
   .rail { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 8px; }
   .rail-btn {
@@ -326,6 +326,7 @@ const jsonLd = JSON.stringify({
     .rail { display: none; }
   }
   @media (max-width: 900px) {
+    .post { transform: none; }
     .prose table { display: block; overflow-x: auto; }
     .post-grid { grid-template-columns: minmax(0, 1fr); }
     .toc { display: none; }
