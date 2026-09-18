@@ -239,8 +239,6 @@
   /* 오른쪽 따라다니는 계산기 (PC만) */
   .calcdock{display:none}
   @media (min-width:1380px){
-    :root{--dockw:372px}
-    main.wrap,.top .wrap,.dock .in{margin-left:calc((100% - var(--dockw) - 920px) / 2)}
     .calcdock{display:flex;flex-direction:column;position:fixed;top:74px;right:20px;width:340px;max-height:calc(100vh - 90px);z-index:25;border-radius:22px;border:1px solid var(--hair-2);background:var(--glass);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);box-shadow:var(--shadow);overflow:hidden;transition:width .25s,max-height .25s}
     .calcdock .bar{display:flex;align-items:center;gap:8px;padding:10px 12px 10px 16px;border-bottom:1px solid var(--hair);font-size:13px;font-weight:700;color:var(--ink-2);flex:none}
     .calcdock .bar .dot{width:8px;height:8px;border-radius:99px;background:var(--mint);box-shadow:0 0 10px var(--mint)}
@@ -969,7 +967,8 @@
   $('#themeBtn').addEventListener('click',()=>{ const cur=document.documentElement.getAttribute('data-theme')||'dark'; const next=cur==='light'?'dark':'light'; document.documentElement.setAttribute('data-theme',next); try{localStorage.setItem('theme',next);}catch(e){} render(); });
   // 오른쪽 계산기 접기(기억)
   const cd=$('#calcdock'), cm=$('#calcMin');
-  try{ if(localStorage.getItem('calcdock')==='min') cd.classList.add('min'); }catch(e){}
+  // 본문은 항상 가운데. 계산기가 본문과 겹치는 폭(1680px 미만)이면 처음엔 접어 둔다. 사용자가 편 기록이 있으면 그대로.
+  try{ const pref=localStorage.getItem('calcdock'); if(pref==='min' || (pref!=='open' && innerWidth<1680)) cd.classList.add('min'); }catch(e){}
   cm.textContent = cd.classList.contains('min') ? '+' : '−';
   cm.addEventListener('click',()=>{ const min=cd.classList.toggle('min'); cm.textContent=min?'+':'−'; cm.setAttribute('aria-label',min?'계산기 펼치기':'계산기 접기'); try{localStorage.setItem('calcdock',min?'min':'open');}catch(e){} });
   addEventListener('storage',e=>{ if(e.key==='theme'){ document.documentElement.setAttribute('data-theme', e.newValue==='light'?'light':'dark'); render(); } });
