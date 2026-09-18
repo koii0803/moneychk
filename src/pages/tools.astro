@@ -50,7 +50,7 @@ const short = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
     </ul>
   </section>
 
-  <section class="group">
+  {rest.length > 0 && <section class="group">
     <h2 class="section-h">전체 도구</h2>
     <p class="section-sub">각도별 계산기·판정기 {rest.length}개</p>
     <ul class="list">
@@ -65,7 +65,7 @@ const short = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, '');
         );
       })}
     </ul>
-  </section>
+  </section>}
 
   <script is:inline>
     // 분류 칩: 누르면 그 분류 도구만 남긴다
