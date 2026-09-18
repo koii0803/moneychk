@@ -235,6 +235,13 @@
   .cta:active{transform:translateY(2px) scale(.98)}
   @media (max-width:560px){.dock .l{display:none}}
   .spacer{height:96px}
+  /* 용어 물음표 */
+  .tip{display:inline-grid;place-items:center;width:16px;height:16px;margin-left:4px;border-radius:99px;border:1px solid var(--gold);color:var(--gold-ink);font-size:10.5px;font-weight:800;line-height:1;vertical-align:1px;cursor:help;background:var(--gold-soft);user-select:none;font-style:normal}
+  .tip:hover,.tip.open{background:var(--gold);color:#1a1206}
+  .tippop{position:fixed;z-index:60;max-width:300px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--bg) 92%,#000);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);box-shadow:0 18px 40px -14px rgba(0,0,0,.6);font-size:13px;line-height:1.55;color:var(--ink);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s}
+  :root[data-theme='light'] .tippop{background:#fff}
+  .tippop.on{opacity:1;transform:none}
+  .tippop b{display:block;color:var(--gold-ink);font-size:12px;margin-bottom:3px}
   .reveal{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
   .reveal.in{opacity:1;transform:none}
 </style>
@@ -261,7 +268,7 @@
     <h1>근로장려금·자녀장려금<br /><em>얼마 받는지</em> 조건대로 판정</h1>
     <p class="lede">가구유형 → 총급여액 등 → 총소득·재산 요건 → 산정표 → 감액 → 최소지급 규칙까지, 국세청이 심사하는 순서 그대로 계산합니다. 산식은 조세특례제한법 제100조의5·제100조의29, 요건은 국세청 신청자격 안내를 그대로 씁니다.</p>
     <div class="stamps">
-      <span class="stamp gold"><b>2025년 귀속 · 2026년 신청</b> 현행법 기준</span>
+      <span class="stamp gold"><b>2025년 귀속 · 2026년 신청</b> 현행법 기준<i class="tip" data-t="year">?</i></span>
       <span class="stamp">정기신청분 <b>8월 27일 지급 완료</b></span>
       <span class="stamp">기한 후 신청 <b>12월 1일까지</b> (5% 감액)</span>
       <span class="stamp">확인일 <b>2026.09.17</b></span>
@@ -286,7 +293,7 @@
           <button type="button" data-v="on" aria-pressed="true">정기 신청</button>
           <button type="button" data-v="late" aria-pressed="false">기한 후 신청</button>
         </div>
-        <p class="hint">정기 5.1~6.1 / 기한후 6.2~12.1 (산정액의 <b>95%</b>) — 조특법 §100조의7 ②</p>
+        <p class="hint">정기 5.1~6.1 / 기한후<i class="tip" data-t="late">?</i> 6.2~12.1 (산정액의 <b>95%</b>) — 조특법 §100조의7 ②</p>
       </div>
     </div>
   </section>
@@ -303,12 +310,12 @@
         </div>
       </div>
       <div class="field">
-        <label>부양자녀 수 <small>(18세 미만 = 2007.1.2 이후 출생)</small></label>
+        <label>부양자녀 수<i class="tip" data-t="child">?</i> <small>(18세 미만 = 2007.1.2 이후 출생)</small></label>
         <div class="stepper" data-step="kids"><button type="button" data-d="-1" aria-label="줄이기">−</button><output>0</output><button type="button" data-d="1" aria-label="늘리기">+</button></div>
         <p class="sub">연 소득금액 100만원 이하. 중증장애인 자녀는 나이 제한 없음.</p>
       </div>
       <div class="field">
-        <label>70세 이상 동거 직계존속 <small>(1955.12.31 이전 출생)</small></label>
+        <label>70세 이상 동거 직계존속<i class="tip" data-t="elder">?</i> <small>(1955.12.31 이전 출생)</small></label>
         <div class="stepper" data-step="elders"><button type="button" data-d="-1" aria-label="줄이기">−</button><output>0</output><button type="button" data-d="1" aria-label="늘리기">+</button></div>
         <p class="sub">주민등록 동거 + 생계 같이 + 연 소득금액 100만원 이하일 때만 셉니다.</p>
       </div>
@@ -321,48 +328,48 @@
     <div class="card-h"><span class="num">03</span><h2>2025년 소득</h2><p>단위: 만원</p></div>
     <div class="grid solo" id="persons">
       <div class="person" data-p="self">
-        <h3>본인 <span class="tot">총급여액 등 <span data-tot>0원</span></span></h3>
+        <h3>본인 <span class="tot">총급여액 등<i class="tip" data-t="x">?</i> <span data-tot>0원</span></span></h3>
         <div class="field"><label>근로소득 총급여 <small>(일용 포함, 비과세 제외)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="wage" /><span class="unit">만원</span></div></div>
-        <div class="field" style="margin-top:12px"><label>사업소득 <small>(총수입금액 × 업종별 조정률)</small></label>
+        <div class="field" style="margin-top:12px"><label>사업소득<i class="tip" data-t="rate">?</i> <small>(총수입금액 × 업종별 조정률)</small></label>
           <div class="rows" data-biz></div>
           <button type="button" class="btn-ghost" data-addbiz>+ 사업소득(업종) 추가</button>
         </div>
         <div class="field" style="margin-top:12px"><label>종교인소득 <small>(총수입금액)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="rel" /><span class="unit">만원</span></div></div>
-        <details class="fold" style="margin-top:8px"><summary>그 밖의 소득 — 총소득 요건에만 들어감</summary><div class="body grid">
+        <details class="fold" style="margin-top:8px"><summary>그 밖의 소득 — 총소득<i class="tip" data-t="total">?</i> 요건에만 들어감</summary><div class="body grid">
           <div class="field"><label>이자·배당·연금 <small>(총수입금액)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="fin" /><span class="unit">만원</span></div></div>
           <div class="field"><label>기타소득 <small>(총수입 − 필요경비)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="etc" /><span class="unit">만원</span></div></div>
         </div></details>
       </div>
       <div class="person" data-p="spouse" hidden>
-        <h3>배우자 <span class="tot">총급여액 등 <span data-tot>0원</span></span></h3>
+        <h3>배우자 <span class="tot">총급여액 등<i class="tip" data-t="x">?</i> <span data-tot>0원</span></span></h3>
         <div class="field"><label>근로소득 총급여</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="wage" /><span class="unit">만원</span></div></div>
         <div class="field" style="margin-top:12px"><label>사업소득</label>
           <div class="rows" data-biz></div>
           <button type="button" class="btn-ghost" data-addbiz>+ 사업소득(업종) 추가</button>
         </div>
         <div class="field" style="margin-top:12px"><label>종교인소득</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="rel" /><span class="unit">만원</span></div></div>
-        <details class="fold" style="margin-top:8px"><summary>그 밖의 소득 — 총소득 요건에만 들어감</summary><div class="body grid">
+        <details class="fold" style="margin-top:8px"><summary>그 밖의 소득 — 총소득<i class="tip" data-t="total">?</i> 요건에만 들어감</summary><div class="body grid">
           <div class="field"><label>이자·배당·연금</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="fin" /><span class="unit">만원</span></div></div>
           <div class="field"><label>기타소득</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-k="etc" /><span class="unit">만원</span></div></div>
         </div></details>
       </div>
     </div>
-    <p class="hint" style="margin-top:14px"><b>총급여액 등에서 빠지는 돈:</b> 직계존비속(부모·자녀 등)에게 받은 급여, 사업자등록 없는 사업자에게 받은 급여, 인정상여, 부동산임대소득. 이런 소득만 있으면 산정액이 0원이라 못 받습니다. 부동산임대업 수입은 총소득 요건에는 90%로 들어가므로 아래 업종에서 "부동산임대업"을 고르세요.</p>
+    <p class="hint" style="margin-top:14px"><b>총급여액 등에서 빠지는 돈:</b> 직계존비속(부모·자녀 등)에게 받은 급여, 사업자등록 없는 사업자에게 받은 급여, 인정상여<i class="tip" data-t="bonus">?</i>, 부동산임대소득. 이런 소득만 있으면 산정액이 0원이라 못 받습니다. 부동산임대업 수입은 총소득 요건에는 90%로 들어가므로 아래 업종에서 "부동산임대업"을 고르세요.</p>
   </section>
 
   <!-- 04 재산 -->
   <section class="card" id="s4">
     <div class="card-h"><span class="num">04</span><h2>가구원 전체 재산</h2><p>2025.6.1 기준 · 부채 차감 없음</p></div>
     <div class="grid">
-      <div class="field"><label>주택·토지·건축물 <small>(시가표준액)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="realty" /><span class="unit">만원</span></div><span class="sub">공시가격·시가표준액 기준. 시세가 아닙니다. 분양권·입주권은 6.1까지 불입한 금액(대출 차감 없음).</span></div>
+      <div class="field"><label>주택·토지·건축물<i class="tip" data-t="std">?</i> <small>(시가표준액)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="realty" /><span class="unit">만원</span></div><span class="sub">공시가격·시가표준액 기준. 시세가 아닙니다. 분양권·입주권은 6.1까지 불입한 금액(대출 차감 없음).</span></div>
       <div class="field"><label>승용자동차 <small>(비영업용, 시가표준액)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="car" /><span class="unit">만원</span></div><span class="sub">홈택스 → 근로·자녀장려금 → 승용차 가액 조회. 트럭·영업용·이륜차 제외.</span></div>
-      <div class="field"><label>예금·적금·주식 등 금융재산</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="fin" /><span class="unit">만원</span></div><span class="sub">정기예금·적금·저축성보험은 6.1 잔액, 보통예금은 3.2~6.1 평균잔액. 상장주식은 6.1 종가, 비상장은 액면가.</span></div>
+      <div class="field"><label>예금·적금·주식 등 금융재산<i class="tip" data-t="dep">?</i></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="fin" /><span class="unit">만원</span></div><span class="sub">정기예금·적금·저축성보험은 6.1 잔액, 보통예금은 3.2~6.1 평균잔액. 상장주식은 6.1 종가, 비상장은 액면가.</span></div>
       <div class="field"><label>회원권·상가 임차보증금·기타</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="misc" /><span class="unit">만원</span></div><span class="sub">상가 보증금은 계약서상 실제 금액.</span></div>
     </div>
     <div class="divider"></div>
-    <label class="toggle"><input type="checkbox" id="rentOn" /><span>전세·월세로 살고 있다 (주택·오피스텔) <small>임차 주택은 "간주전세금"으로 재산에 들어갑니다. 실제 보증금이 더 적으면 계약서 제출로 실제 금액 인정.</small></span></label>
+    <label class="toggle"><input type="checkbox" id="rentOn" /><span>전세·월세로 살고 있다 (주택·오피스텔)<i class="tip" data-t="deemed">?</i> <small>임차 주택은 "간주전세금"으로 재산에 들어갑니다. 실제 보증금이 더 적으면 계약서 제출로 실제 금액 인정.</small></span></label>
     <div class="grid three" id="rentBox" hidden style="margin-top:12px">
-      <div class="field"><label>임차 주택 기준시가 <small>(공시가격)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="rentBase" /><span class="unit">만원</span></div></div>
+      <div class="field"><label>임차 주택 기준시가<i class="tip" data-t="std">?</i> <small>(공시가격)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="rentBase" /><span class="unit">만원</span></div></div>
       <div class="field"><label>실제 전세(임차)보증금</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" data-a="rentReal" /><span class="unit">만원</span></div></div>
       <div class="field"><label>집주인</label><div class="inp"><select data-a="rentOwner"><option value="other">남 (기준시가 55% vs 실제 중 적은 값)</option><option value="family">부모·자녀 등 직계존비속 (기준시가 100%)</option></select><span class="caret">▾</span></div><span class="sub" id="rentCalc">간주전세금 0원</span></div>
     </div>
@@ -381,15 +388,15 @@
       <label class="toggle"><input type="checkbox" id="exNatOk" /><span>└ 한국 국적 배우자 또는 한국 국적 부양자녀가 있다</span></label>
       <label class="toggle"><input type="checkbox" id="exDep" /><span>2025년 중 다른 사람의 부양자녀였다 <small>부모가 나를 부양자녀로 넣은 경우</small></span></label>
       <label class="toggle"><input type="checkbox" id="exPro" /><span>본인 또는 배우자가 전문직 사업자 <small>변호사·세무사·의사·약사 등 전문직 사업소득자 — 근로·자녀장려금 모두 제외</small></span></label>
-      <label class="toggle"><input type="checkbox" id="exHigh" /><span>본인 또는 배우자가 2025.12.31 현재 계속 근무 중인 상용근로자로 월평균 급여 500만원 이상 <small>근로장려금만 제외, 자녀장려금은 가능</small></span></label>
+      <label class="toggle"><input type="checkbox" id="exHigh" /><span>본인 또는 배우자가 2025.12.31 현재 계속 근무 중인 상용근로자<i class="tip" data-t="regular">?</i>로 월평균 급여 500만원 이상 <small>근로장려금만 제외, 자녀장려금은 가능</small></span></label>
     </div>
     <div class="divider"></div>
     <div class="grid">
-      <div class="field"><label>연말정산·종소세에서 받은 자녀세액공제액 <small>(자녀장려금에서 차감)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" id="ctcDeduct" /><span class="unit">원</span></div><span class="sub">자녀장려금과 자녀세액공제는 중복 불가 — 조특법 §100조의30 ②</span></div>
+      <div class="field"><label>연말정산·종소세에서 받은 자녀세액공제액<i class="tip" data-t="ctcded">?</i> <small>(자녀장려금에서 차감)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" id="ctcDeduct" /><span class="unit">원</span></div><span class="sub">자녀장려금과 자녀세액공제는 중복 불가 — 조특법 §100조의30 ②</span></div>
       <div class="field"><label>국세 체납액 <small>(환급액의 30% 한도로 충당)</small></label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" id="arrears" /><span class="unit">원</span></div><span class="sub">체납이 있어도 70%는 받습니다. 250만원 이하는 압류 금지.</span></div>
     </div>
     <div class="divider"></div>
-    <label class="toggle"><input type="checkbox" id="halfOn" /><span>반기 신청(근로소득만 있는 경우) 선지급액도 보기 <small>2026년 9월 1~15일 상반기 신청 → 12월 30일까지 연간 산정액의 35% 선지급, 2027년 6월 정산(환급 또는 환수)</small></span></label>
+    <label class="toggle"><input type="checkbox" id="halfOn" /><span>반기 신청<i class="tip" data-t="half">?</i>(근로소득만 있는 경우) 선지급액도 보기 <small>2026년 9월 1~15일 상반기 신청 → 12월 30일까지 연간 산정액의 35% 선지급, 2027년 6월 정산(환급 또는 환수)</small></span></label>
     <div class="grid" id="halfBox" hidden style="margin-top:12px">
       <div class="field"><label>본인 상반기(1~6월) 근로소득</label><div class="inp"><input type="text" inputmode="numeric" placeholder="0" id="hSelfW" /><span class="unit">만원</span></div></div>
       <div class="field"><label>본인 상반기 근무월수</label><div class="inp"><input type="text" inputmode="numeric" placeholder="6" value="6" id="hSelfM" /><span class="unit">개월</span></div></div>
@@ -407,7 +414,7 @@
     <div class="big-sub" id="bigSub">입력값을 넣으면 바로 계산됩니다.</div>
     <p class="hint" style="margin-top:10px"><b>국세청 기준 그대로 계산한 예상액입니다.</b> 최종 결정은 세무서가 하며, 신청 전 홈택스 ‘계산해보기’로 한 번 더 확인하세요.</p>
     <div class="twin">
-      <div class="tile"><div class="k"><span>근로장려금</span><span id="eitcZone"></span></div><div class="v" id="eitcAmt">0원</div><div class="m" id="eitcMemo">—</div></div>
+      <div class="tile"><div class="k"><span>근로장려금</span><span id="eitcZone"></span><i class="tip" data-t="zone">?</i></div><div class="v" id="eitcAmt">0원</div><div class="m" id="eitcMemo">—</div></div>
       <div class="tile"><div class="k"><span>자녀장려금</span><span id="ctcKids"></span></div><div class="v" id="ctcAmt">0원</div><div class="m" id="ctcMemo">—</div></div>
     </div>
     <div class="adslot" aria-hidden="true"></div>
@@ -621,15 +628,15 @@
     const steps=[]; let eitc=0, ctc=0, eitcZone='out', notes={};
     const st=(cls,title,val,desc,law)=>steps.push({cls,title,val,desc,law});
 
-    st('info','가구유형 판정', TYPE_KO[type], h.why, '조특법 §100조의3 ⑤ · 2025.12.31 가족관계등록부 기준');
-    st('info','총급여액 등 (부부합산)', kr(x), '근로 + 사업(수입×조정률) + 종교인. 지급액을 정하는 기준값.', '조특법 §100조의3 ⑤ 3호');
+    st('info','가구유형 판정<i class=\"tip\" data-t=\"hh\">?</i>', TYPE_KO[type], h.why, '조특법 §100조의3 ⑤ · 2025.12.31 가족관계등록부 기준');
+    st('info','총급여액 등 (부부합산)<i class=\"tip\" data-t=\"x\">?</i>', kr(x), '근로 + 사업(수입×조정률) + 종교인. 지급액을 정하는 기준값.', '조특법 §100조의3 ⑤ 3호');
 
     // 소득요건
     const incOk = total < incCap;
-    st(incOk?'ok':'no','총소득 요건', kr(total)+' / '+kr(incCap)+' 미만', incOk? (TYPE_KO[type]+' 기준 '+kr(incCap)+'보다 '+kr(incCap-total)+' 아래') : (TYPE_KO[type]+' 기준을 '+kr(total-incCap)+' 초과 → 근로장려금 신청 불가'), '조특법 §100조의3 ① 2호');
+    st(incOk?'ok':'no','총소득 요건<i class=\"tip\" data-t=\"total\">?</i>', kr(total)+' / '+kr(incCap)+' 미만', incOk? (TYPE_KO[type]+' 기준 '+kr(incCap)+'보다 '+kr(incCap-total)+' 아래') : (TYPE_KO[type]+' 기준을 '+kr(total-incCap)+' 초과 → 근로장려금 신청 불가'), '조특법 §100조의3 ① 2호');
     // 재산요건
     const assetOk = asset < ASSET.cap*M, assetHalf = asset >= ASSET.half*M && assetOk;
-    st(assetOk?(assetHalf?'warn':'ok'):'no','재산 요건 (가구원 합산)', kr(asset)+' / 2억 4,000만원 미만',
+    st(assetOk?(assetHalf?'warn':'ok'):'no','재산 요건 (가구원 합산)<i class=\"tip\" data-t=\"member\">?</i>', kr(asset)+' / 2억 4,000만원 미만',
       !assetOk? '2억 4,000만원 이상 → 근로·자녀장려금 모두 신청 불가' : assetHalf? '1억 7,000만원 이상 → 산정액의 50%만 지급' : '1억 7,000만원 미만 → 감액 없음', '조특법 §100조의3 ① 4호, §100조의5 ④ · 2025.6.1 기준, 부채 차감 없음');
     // 제외
     if(blockAll||ex.high){ const r=[]; if(ex.nat) r.push('대한민국 국적 아님(예외 미해당)'); if(ex.dep) r.push('다른 거주자의 부양자녀'); if(ex.pro) r.push('전문직 사업자'); if(ex.high) r.push('상용근로자 월평균 500만원 이상(근로장려금만)');
@@ -646,8 +653,8 @@
       if(S.when==='late'){ amt*=0.95; st('warn','기한 후 신청 감액 5%', kr(amt), '정기 신청기간(5.1~6.1) 이후 6.2~12.1 신청', '조특법 §100조의7 ②'); }
       amt=Math.round(amt);
       if(amt<15000){ if(amt>0) st('no','최소지급 규칙', '0원', '산정액 1만 5천원 미만 → 근로장려금 없음', '조특법 §100조의7 ③'); amt=0; }
-      else if(e.zone==='inc' && amt<100000){ st('warn','최소지급 규칙', '100,000원', '점증구간에서 1.5만~10만원 미만 → 10만원으로 결정', '조특법 §100조의7 ③'); amt=100000; }
-      else if(e.zone==='dec' && amt<30000){ st('warn','최소지급 규칙', '30,000원', '점감구간에서 1.5만~3만원 미만 → 3만원으로 결정', '조특법 §100조의7 ③'); amt=30000; }
+      else if(e.zone==='inc' && amt<100000){ st('warn','최소지급 규칙<i class=\"tip\" data-t=\"min\">?</i>', '100,000원', '점증구간에서 1.5만~10만원 미만 → 10만원으로 결정', '조특법 §100조의7 ③'); amt=100000; }
+      else if(e.zone==='dec' && amt<30000){ st('warn','최소지급 규칙<i class=\"tip\" data-t=\"min\">?</i>', '30,000원', '점감구간에서 1.5만~3만원 미만 → 3만원으로 결정', '조특법 §100조의7 ③'); amt=30000; }
       eitc=amt;
     } else if(x<=0 && incOk && assetOk && !blockAll && !ex.high){
       st('no','근로장려금 산정액','0원','총급여액 등이 0원 — 근로·사업·종교인소득이 없거나 전부 제외 소득', '조특법 §100조의5 ①');
@@ -730,7 +737,7 @@
     r.steps.forEach(s=>{ const li=document.createElement('li'); li.className='step';
       li.innerHTML = `<span class="ic ${s.cls}">${({ok:'✓',no:'✕',warn:'!',info:'i'})[s.cls]}</span><div><h4>${s.title}<span class="val">${s.val}</span></h4>${s.desc?`<p>${s.desc}</p>`:''}${s.law?`<div class="law">${s.law}</div>`:''}</div>`; ol.appendChild(li); });
 
-    drawChart(r); drawEdges(r); drawCmp(r); drawHalf(r); drawChecklist(r);
+    drawChart(r); drawEdges(r); drawCmp(r); drawHalf(r); drawChecklist(r); armTips();
 
     // 독
     $('#dockType').textContent = TYPE_KO[r.type]+(r.assetHalf?' · 재산 50%':'')+(S.when==='late'?' · 기한후':'');
@@ -863,6 +870,44 @@
   ];
   $('#myths').innerHTML = MYTHS.map(m=>`<div class="myth"><div class="q">${m[0]}</div><div class="a"><b>국세청·법령 확인</b>${m[1]}</div><div class="c"><b>내가 확인할 것</b>${m[2]}</div></div>`).join('');
   $('#rateTable').innerHTML = RATES.map(r=>`<tr><td>${r[0]}</td><td class="r"><b>${r[1]}%</b></td></tr>`).join('');
+
+  // ── 용어 물음표
+  const TERMS = {
+    x:['총급여액 등','지급액을 정하는 기준 소득. 근로소득(총급여) + 사업소득(수입×조정률) + 종교인소득. 이자·배당·연금·기타소득은 여기 안 들어갑니다. 예: 월급 1,500만 + 프리랜서 수입 500만×90% = 1,950만.'],
+    total:['총소득','자격을 가르는 소득. 총급여액 등에 이자·배당·연금(총수입)과 기타소득(수입−필요경비)을 더한 것. 퇴직·양도소득은 제외. 이 값이 가구유형 기준(2,200/3,200/4,400만원) 미만이어야 신청 가능.'],
+    rate:['업종별 조정률','사업소득은 매출 전부가 아니라 매출×조정률만 소득으로 봅니다. 도매 20%, 소매 25%, 음식점 40%, 인적용역(프리랜서 3.3%) 90% 등. 같은 매출이라도 업종에 따라 결과가 달라집니다.'],
+    child:['부양자녀','2025.12.31 기준 18세 미만(2007.1.2 이후 출생)이고 연 소득금액 100만원 이하인 자녀·입양자. 중증장애인 자녀는 나이 제한 없음. 부모가 없는 손자녀·형제자매도 요건 맞으면 포함.'],
+    elder:['70세 이상 직계존속','부모·조부모(배우자의 부모 포함)로 1955.12.31 이전 출생, 주민등록상 같이 살며 실제 생계를 같이 하고, 각자 연 소득금액 100만원 이하. 따로 살면 부양가족공제를 받아도 안 셉니다.'],
+    hh:['단독·홑벌이·맞벌이','배우자·부양자녀·70세 이상 직계존속이 다 없으면 단독. 배우자의 총급여액 등이 300만원 미만이거나, 배우자 없이 자녀·직계존속이 있으면 홑벌이. 부부 각자 300만원 이상이면 맞벌이. 2025.12.31 가족관계등록부 기준.'],
+    std:['시가표준액·기준시가','정부가 세금 매길 때 쓰는 공식 가격(공시가격). 실제 시세보다 보통 낮습니다. 주택은 공동주택가격·개별주택가격, 토지는 공시지가. 부동산공시가격알리미에서 조회.'],
+    deemed:['간주전세금','세 들어 사는 집도 재산으로 봅니다. 집 기준시가의 55%를 전세금으로 "간주"하고, 실제 보증금이 그보다 적으면 계약서를 내야 실제 금액으로 인정. 부모·자녀 소유 집이면 기준시가 100%.'],
+    dep:['예금 평가 기준','정기예금·적금·저축성보험·주식은 2025.6.1 잔액(주식은 종가). 보통예금처럼 아무 때나 빼는 요구불예금은 3.2~6.1 석 달 평균잔액. 동창회·계모임 통장은 실소유 입증 시 제외.'],
+    member:['가구원','재산을 합산하는 범위. 배우자 + 같은 주소에 사는 부모·조부모·자녀·손자녀(그 배우자 포함) + 부양자녀. 주민등록을 따로 해도 주소가 같으면 포함. 형제자매·사촌은 같이 살아도 제외.'],
+    regular:['상용근로자','일용직이 아닌 계속 고용된 근로자. 2025.12.31 현재 재직 중이고 월평균 급여가 500만원 이상이면 근로장려금만 제외. 중도 퇴사자·일용직은 해당 없음.'],
+    bonus:['인정상여','세무조사 등에서 회사 돈이 대표·임원에게 간 것으로 보고 급여로 처분한 금액. 실제 받은 월급이 아니라 총급여액 등에서 뺍니다.'],
+    ctcded:['자녀세액공제','연말정산·종합소득세에서 자녀 수에 따라 세금을 깎아주는 제도. 자녀장려금과 중복 불가라 받은 만큼 자녀장려금에서 차감. 근로장려금은 영향 없음.'],
+    half:['반기 신청','근로소득만 있으면 1년을 둘로 나눠 신청. 상반기(9.1~15 신청) 분은 12월에 연간 예상액의 35%를 먼저 주고, 다음 해 6월에 실제 소득으로 정산해 더 주거나 도로 가져갑니다. 더 받는 게 아니라 나눠 받는 것.'],
+    late:['기한 후 신청','정기(5.1~6.1)를 놓쳐도 12.1까지 신청 가능. 대신 산정액의 95%만 지급. 신청일부터 4개월 안에 결정·지급.'],
+    zone:['점증·평탄·점감구간','소득이 오를수록 장려금이 늘어나는 구간(점증) → 최대액이 유지되는 구간(평탄) → 소득이 오를수록 줄어드는 구간(점감). 점감구간이라도 늘어난 소득이 줄어든 장려금보다 항상 큽니다.'],
+    min:['최소지급 규칙','계산액이 1만 5천원 미만이면 안 줍니다. 점증구간에서 1.5만~10만원 미만이면 10만원으로, 점감구간에서 1.5만~3만원 미만이면 3만원으로 올려서 줍니다.'],
+    year:['귀속연도','"2025년 귀속"은 2025년 1~12월에 번 소득으로 계산해 2026년에 신청·지급한다는 뜻. 재산은 2025.6.1, 가구는 2025.12.31 기준.']
+  };
+  const pop=document.createElement('div'); pop.className='tippop'; pop.setAttribute('role','tooltip'); document.body.appendChild(pop);
+  let tipEl=null;
+  function showTip(el){ const t=TERMS[el.dataset.t]; if(!t) return; if(tipEl) tipEl.classList.remove('open'); tipEl=el; el.classList.add('open');
+    pop.innerHTML='<b>'+t[0]+'</b>'+t[1]; pop.classList.add('on');
+    const r=el.getBoundingClientRect(); const w=Math.min(300,innerWidth-24); pop.style.maxWidth=w+'px';
+    const left=Math.min(Math.max(12,r.left-8), innerWidth-w-12); pop.style.left=left+'px';
+    const h=pop.offsetHeight; let top=r.bottom+8; if(top+h>innerHeight-12) top=Math.max(12,r.top-h-8); pop.style.top=top+'px'; }
+  function hideTip(){ if(tipEl) tipEl.classList.remove('open'); tipEl=null; pop.classList.remove('on'); }
+  const canHover = ()=> matchMedia('(hover:hover)').matches;
+  document.addEventListener('click',e=>{ const el=e.target.closest('.tip'); if(el){ e.preventDefault(); e.stopPropagation(); if(tipEl===el) hideTip(); else showTip(el); return; } hideTip(); });
+  document.addEventListener('mouseover',e=>{ const el=e.target.closest('.tip'); if(el && canHover()) showTip(el); });
+  document.addEventListener('mouseout',e=>{ const el=e.target.closest('.tip'); if(el && canHover()) hideTip(); });
+  addEventListener('scroll',()=>{ if(tipEl) showTip(tipEl); },{passive:true});
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideTip(); const el=e.target; if((e.key==='Enter'||e.key===' ') && el.classList && el.classList.contains('tip')){ e.preventDefault(); tipEl===el?hideTip():showTip(el);} });
+  function armTips(){ $$('.tip').forEach(el=>{ if(el.hasAttribute('tabindex')) return; el.setAttribute('tabindex','0'); el.setAttribute('role','button'); el.setAttribute('aria-label',(TERMS[el.dataset.t]||[''])[0]+' 설명'); }); }
+  armTips();
 
   // ── 입력 바인딩
   function bindSeg(id, key, cb){ const seg=$(id); seg.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; $$('button',seg).forEach(x=>x.setAttribute('aria-pressed', x===b)); S[key]=b.dataset.v; if(cb) cb(); render(); }); }
