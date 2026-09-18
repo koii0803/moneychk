@@ -132,6 +132,7 @@
   .toggle input:checked{background:var(--gold);border-color:var(--gold)}
   .toggle input:checked::after{left:18px;background:#1a1206}
   .toggle span{font-size:14px;font-weight:600}
+  .sub-toggle{margin-left:22px;border-style:dashed}
   .toggle small{display:block;font-weight:400;color:var(--ink-3);font-size:12.5px;margin-top:2px}
   .rows{display:flex;flex-direction:column;gap:10px}
   .row{display:grid;grid-template-columns:minmax(0,1fr) 46px;gap:8px 10px;align-items:end;padding:12px;border:1px solid var(--hair);border-radius:14px;background:var(--field)}
@@ -384,8 +385,10 @@
   <section class="card" id="s5">
     <div class="card-h"><span class="num">05</span><h2>제외 사유 · 감액 · 반기</h2><p>해당하는 것만 켜세요</p></div>
     <div class="grid">
-      <label class="toggle"><input type="checkbox" id="exNat" /><span>2025.12.31 현재 대한민국 국적이 아니다 <small>한국 국적 배우자가 있거나 한국 국적 부양자녀가 있으면 신청 가능</small></span></label>
-      <label class="toggle"><input type="checkbox" id="exNatOk" /><span>└ 한국 국적 배우자 또는 한국 국적 부양자녀가 있다</span></label>
+      <div class="field" style="gap:8px">
+        <label class="toggle"><input type="checkbox" id="exNat" /><span>2025.12.31 현재 대한민국 국적이 아니다 <small>한국 국적 배우자가 있거나 한국 국적 부양자녀가 있으면 신청 가능</small></span></label>
+        <label class="toggle sub-toggle" id="exNatOkWrap" hidden><input type="checkbox" id="exNatOk" /><span>한국 국적 배우자가 있거나 한국 국적 부양자녀가 있다 <small>켜면 국적 제외에서 빠집니다</small></span></label>
+      </div>
       <label class="toggle"><input type="checkbox" id="exDep" /><span>2025년 중 다른 사람의 부양자녀였다 <small>부모가 나를 부양자녀로 넣은 경우</small></span></label>
       <label class="toggle"><input type="checkbox" id="exPro" /><span>본인 또는 배우자가 전문직 사업자 <small>변호사·세무사·의사·약사 등 전문직 사업소득자 — 근로·자녀장려금 모두 제외</small></span></label>
       <label class="toggle"><input type="checkbox" id="exHigh" /><span>본인 또는 배우자가 2025.12.31 현재 계속 근무 중인 상용근로자<i class="tip" data-t="regular">?</i>로 월평균 급여 500만원 이상 <small>근로장려금만 제외, 자녀장려금은 가능</small></span></label>
@@ -934,7 +937,7 @@
   $$('[data-a]').forEach(el=>{ const k=el.dataset.a; const ev = el.tagName==='SELECT'?'change':'input';
     el.addEventListener(ev,()=>{ S.asset[k] = el.tagName==='SELECT'? el.value : num(el.value); render(); }); if(el.tagName!=='SELECT') el.addEventListener('blur',()=>fmtInput(el)); });
   $('#rentOn').addEventListener('change',e=>{ S.asset.rentOn=e.target.checked; $('#rentBox').hidden=!S.asset.rentOn; render(); });
-  [['exNat','nat'],['exNatOk','natOk'],['exDep','dep'],['exPro','pro'],['exHigh','high']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{ S.ex[k]=e.target.checked; render(); }));
+  [['exNat','nat'],['exNatOk','natOk'],['exDep','dep'],['exPro','pro'],['exHigh','high']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{ S.ex[k]=e.target.checked; if(k==='nat'){ $('#exNatOkWrap').hidden=!S.ex.nat; if(!S.ex.nat){ S.ex.natOk=false; $('#exNatOk').checked=false; } } render(); }));
   $('#ctcDeduct').addEventListener('input',e=>{ S.ctcDeduct=num(e.target.value); render(); }); $('#ctcDeduct').addEventListener('blur',e=>fmtInput(e.target));
   $('#arrears').addEventListener('input',e=>{ S.arrears=num(e.target.value); render(); }); $('#arrears').addEventListener('blur',e=>fmtInput(e.target));
   $('#halfOn').addEventListener('change',e=>{ S.half.on=e.target.checked; $('#halfBox').hidden=!S.half.on; $('#halfHint').hidden=!S.half.on; render(); });
