@@ -9,7 +9,7 @@
     "input": "나이·소득·재산·부채·배우자 유무",
     "output": "소득인정액, 선정 여부, 월 수령액",
     "priority": 1,
-    "href": ""
+    "href": "/tools/basic-pension"
   },
   {
     "no": 25,
@@ -33,7 +33,7 @@
     "input": "나이·소득·신용점수·재직",
     "output": "가능 상품, 한도, 금리 범위",
     "priority": 1,
-    "href": ""
+    "href": "/tools/sunshine-loan"
   },
   {
     "no": 43,
@@ -45,7 +45,7 @@
     "input": "가구원·소득인정액·지역·실제 월세",
     "output": "기준임대료, 지급액",
     "priority": 1,
-    "href": ""
+    "href": "/tools/housing-benefit"
   },
   {
     "no": 55,
@@ -57,7 +57,7 @@
     "input": "수급 유형·가구·사용량",
     "output": "전기·가스·통신·수도·TV수신료 감면액 합계",
     "priority": 1,
-    "href": ""
+    "href": "/tools/fee-reduction"
   },
   {
     "no": 16,
@@ -69,7 +69,7 @@
     "input": "나이·가입기간·퇴직 전 3개월 임금",
     "output": "구직급여일액, 소정급여일수, 총액",
     "priority": 1,
-    "href": ""
+    "href": "/tools/unemployment-benefit"
   },
   {
     "no": 84,
@@ -81,6 +81,150 @@
     "input": "가구원 수·월 소득",
     "output": "중위소득 대비 %, 해당 제도 목록",
     "priority": 1,
-    "href": ""
+    "href": "/tools/median-income"
+  },
+  {
+    "no": 86,
+    "cat": "work",
+    "system": "퇴직금",
+    "name": "퇴직금 계산기",
+    "kind": "계산기",
+    "angle": "기본",
+    "input": "입사일·퇴직일·퇴직 전 3개월 임금·연간 상여·연차수당",
+    "output": "재직일수, 1일 평균임금, 퇴직금",
+    "priority": 1,
+    "href": "/tools/severance-pay"
+  },
+  {
+    "no": 87,
+    "cat": "work",
+    "system": "4대보험",
+    "name": "4대보험 계산기",
+    "kind": "계산기",
+    "angle": "기본",
+    "input": "월급·사업장 규모",
+    "output": "국민연금·건강·장기요양·고용 근로자/사업주 부담, 실수령액",
+    "priority": 1,
+    "href": "/tools/four-insurance"
+  },
+  {
+    "no": 88,
+    "cat": "home",
+    "system": "취득세",
+    "name": "취득세 계산기",
+    "kind": "계산기",
+    "angle": "기본",
+    "input": "취득가액·면적·주택 수·조정지역·감면",
+    "output": "취득세·지방교육세·농특세·합계",
+    "priority": 1,
+    "href": "/tools/acquisition-tax"
+  },
+  {
+    "no": 89,
+    "cat": "home",
+    "system": "중개보수",
+    "name": "중개수수료 계산기",
+    "kind": "계산기",
+    "angle": "기본",
+    "input": "거래 종류·물건 종류·금액",
+    "output": "상한 요율·최대 보수·부가세 포함액",
+    "priority": 1,
+    "href": "/tools/brokerage-fee"
+  },
+  {
+    "no": 90,
+    "cat": "home",
+    "system": "청약가점",
+    "name": "청약가점 계산기",
+    "kind": "계산기",
+    "angle": "기본",
+    "input": "무주택 기간·부양가족·통장 가입기간",
+    "output": "항목별 점수, 합계/84",
+    "priority": 1,
+    "href": "/tools/subscription-score"
+  },
+  {
+    "no": 91,
+    "cat": "benefit",
+    "system": "육아휴직급여",
+    "name": "육아휴직급여 계산기",
+    "kind": "계산기",
+    "angle": "2025 개편·6+6",
+    "input": "통상임금·개월 수·부모 동시 사용",
+    "output": "개월별 급여, 총액",
+    "priority": 1,
+    "href": "/tools/parental-leave-benefit"
+  },
+  {
+    "no": 92,
+    "cat": "save",
+    "system": "건강보험료",
+    "name": "지역가입자 건강보험료 계산기",
+    "kind": "계산기",
+    "angle": "기본",
+    "input": "연소득·재산 과표·전월세",
+    "output": "소득·재산 보험료, 장기요양, 월 납부액",
+    "priority": 1,
+    "href": "/tools/regional-health-insurance"
+  },
+  {
+    "no": 93,
+    "cat": "future",
+    "system": "청년도약계좌",
+    "name": "청년도약계좌 만기 계산기",
+    "kind": "계산기",
+    "angle": "기가입자",
+    "input": "월 납입·소득 구간·금리",
+    "output": "원금·이자·정부기여금·만기 총액",
+    "priority": 1,
+    "href": "/tools/youth-leap-account"
+  },
+  {
+    "no": 94,
+    "cat": "loan",
+    "system": "주택담보대출",
+    "name": "주택담보대출 한도 계산기 (LTV·DSR)",
+    "kind": "계산기",
+    "angle": "2026 규제",
+    "input": "주택 가격·지역·주택 수·연소득·금리·만기",
+    "output": "LTV 한도·DSR 한도·예상 한도·월 상환액",
+    "priority": 1,
+    "href": "/tools/mortgage-limit"
+  },
+  {
+    "no": 95,
+    "cat": "benefit",
+    "system": "출산전후휴가급여",
+    "name": "출산휴가급여 계산기",
+    "kind": "계산기",
+    "angle": "2026 고시",
+    "input": "통상임금·회사 규모·다태아·배우자",
+    "output": "고용보험 지급·회사 지급·총액",
+    "priority": 1,
+    "href": "/tools/maternity-leave-benefit"
+  },
+  {
+    "no": 96,
+    "cat": "benefit",
+    "system": "생계급여",
+    "name": "생계급여 계산기",
+    "kind": "계산기",
+    "angle": "2026 고시",
+    "input": "가구원 수·소득인정액(간이 환산)",
+    "output": "선정기준·급여액",
+    "priority": 1,
+    "href": "/tools/living-benefit"
+  },
+  {
+    "no": 97,
+    "cat": "future",
+    "system": "국민연금",
+    "name": "국민연금 예상수령액 계산기",
+    "kind": "계산기",
+    "angle": "2026 A값",
+    "input": "출생연도·평균소득·가입기간·수령 시점",
+    "output": "기본연금액·조기/연기 증감·월 예상액",
+    "priority": 1,
+    "href": "/tools/national-pension"
   }
 ]

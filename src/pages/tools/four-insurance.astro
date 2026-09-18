@@ -1,0 +1,390 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, CATEGORIES } from '../../config/site';
+import calc from '../../data/calcs/four-insurance.json';
+import tools from '../../data/tools.json';
+
+// 계산기 한 장 = JSON 한 장(src/data/calcs/<slug>.json). 이 페이지는 그 JSON을 읽어 그린다.
+// 산식·요율은 JSON params(연도 키)에서만 온다. 코드에 숫자를 박지 않는다.
+const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
+const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
+const related = calc.related_calcs.map((r) => {
+  const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
+  return { ...r, href: t?.href || '' };
+});
+const basisYear = calc.basis_date.slice(0, 4);
+const P = calc.params as Record<string, unknown>;
+const params = P[basisYear] as Record<string, unknown>;
+const stepTitle = ['', '월급', '사업장', '선택 사항'];
+const stepSub = ['', '세전 월 보수', '고용안정·직능 요율', '나이 예외'];
+---
+
+<Base title={calc.name} description={calc.description}>
+  <div class="calc" data-calc>
+    <header class="hero">
+      <span class="eyebrow">모의계산기 · {cat.short}</span>
+      <h1>{calc.name}</h1>
+      <p class="lede">{calc.lede}</p>
+      <div class="stamps">
+        <span class="stamp gold"><b>{calc.basis_label}</b></span>
+        <span class="stamp">확인일 <b>{calc.basis_date.replace(/-/g, '.')}</b></span>
+        <span class="stamp">산식 <b>4대사회보험정보연계센터 모의계산</b></span>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div class="in">
+        {[1, 2, 3].map((n) => (
+          <section class="card" id={`s${n}`}>
+            <div class="card-h">
+              <span class="num">STEP {n}</span>
+              <h2>{stepTitle[n]}</h2>
+              <p>{stepSub[n]}</p>
+            </div>
+            <div class="grid">
+              {byStep(n).map((f) => (
+                <div class="field">
+                  {f.type === 'check' ? (
+                    <label class="toggle">
+                      <input type="checkbox" id={`f-${f.id}`} data-in={f.id} data-type="check" />
+                      <span>{f.label}<small>{f.help}</small></span>
+                    </label>
+                  ) : (
+                    <>
+                      <label for={`f-${f.id}`}>{f.label}{f.optional && <small> (선택)</small>}</label>
+                      <div class="inp">
+                        {f.type === 'select' ? (
+                          <select id={`f-${f.id}`} data-in={f.id} data-type="select">
+                            {(f.options || []).map((o) => <option value={o.value}>{o.label}</option>)}
+                          </select>
+                        ) : (
+                          <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="won" placeholder="0" autocomplete="off" />
+                        )}
+                        {f.type === 'won' && <span class="unit">원</span>}
+                      </div>
+                      {f.help && <p class="sub">{f.help}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="out">
+        <section class="card result" id="result" aria-live="polite">
+          <div class="card-h"><span class="num">결과</span><h2>4대보험 계산표</h2><p>{calc.basis_label}</p></div>
+          <p class="answer" data-answer>세전 월급을 넣으면 보험료와 실수령액이 나온다.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>항목</th><th class="r">근로자</th><th class="r">사업주</th><th class="f">산식</th></tr></thead>
+              <tbody>
+                {calc.steps.map((s) => (
+                  <tr class={s.total ? 'total' : s.subtotal ? 'subtotal' : ''} data-row={s.id}>
+                    <td><span class="no">({s.no})</span> {s.label}<small class="f2">{s.formula}</small></td>
+                    <td class="r">{s.side === 'er' ? <span class="na">—</span> : <b data-val={`${s.id}_ee`}>—</b>}</td>
+                    <td class="r">{s.side === 'ee' ? <span class="na">—</span> : <b data-val={`${s.id}_er`}>—</b>}</td>
+                    <td class="f"><code>{s.formula}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="hint" data-warn hidden></p>
+        </section>
+      </div>
+    </div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">관련</span><h2>같이 쓰는 계산기</h2></div>
+      <div class="rel">
+        {related.map((r) => r.href
+          ? <a class="rel-btn" href={r.href}>{r.name}</a>
+          : <span class="rel-btn off" aria-disabled="true">{r.name} <small>준비 중</small></span>)}
+      </div>
+      <div class="share" data-share data-url={pageUrl} data-title={`${calc.name} — ${SITE.name}`}>
+        <span class="share-l">공유</span>
+        <a class="share-btn" data-share-fb href="#" target="_blank" rel="noopener">페이스북</a>
+        <a class="share-btn" data-share-x href="#" target="_blank" rel="noopener">X</a>
+        <a class="share-btn" data-share-naver href="#" target="_blank" rel="noopener">네이버 블로그</a>
+        <a class="share-btn" data-share-band href="#" target="_blank" rel="noopener">밴드</a>
+      </div>
+    </section>
+
+    <div class="ad-slot" data-slot="in-article"></div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">※</span><h2>산식과 근거</h2><p>확인일 {calc.basis_date.replace(/-/g, '.')}</p></div>
+      <ol class="notes">
+        {calc.notes.map((n) => <li>{n}</li>)}
+      </ol>
+      <p class="src">
+        {calc.law.map((l) => <span>· <a href={l.url} target="_blank" rel="noopener">{l.name}</a> <em>{l.ver}</em><br /></span>)}
+      </p>
+    </section>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
+      <div class="tbl-wrap">
+        <table class="hist">
+          <thead><tr><th>날짜</th><th>기준값</th><th class="r">값</th><th>출처</th></tr></thead>
+          <tbody>
+            {calc.history.map((h) => (
+              <tr><td>{h.date.replace(/-/g, '.')}</td><td><code>{h.param}</code></td><td class="r"><b>{h.value}</b></td><td>{h.src}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="foot-note">{calc.disclaimer}<br />입력값은 이 브라우저 안에서만 계산되며 서버로 보내지 않는다.</p>
+  </div>
+
+  <script type="application/json" id="calc-params" set:html={JSON.stringify(params)} />
+  <script is:inline>
+    // 순수 JS. 입력이 바뀌면 즉시 다시 계산한다. 산식은 JSON steps.formula와 같은 순서.
+    // 각 몫은 4대사회보험정보연계센터 모의계산과 같이 근로자·사업주를 따로 계산해 10원 미만 절사.
+    (function () {
+      function init() {
+        var root = document.querySelector('[data-calc]');
+        if (!root || root.dataset.ready) return;
+        root.dataset.ready = '1';
+        var P = JSON.parse(document.getElementById('calc-params').textContent);
+
+        var fmt = function (n) {
+          if (n === null || n === undefined || isNaN(n)) return '—';
+          return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+        var won = function (n) { return n === null ? '—' : fmt(n) + '원'; };
+        var pct = function (n) { return String(n) + '%'; };
+        var num = function (el) { return Number((el.value || '').replace(/[^\d]/g, '')) || 0; };
+        var cut = function (n, unit) { return Math.floor(n / unit) * unit; };
+        var r10 = function (n) { return cut(n, P.round_unit); };
+
+        var I = {};
+        root.querySelectorAll('[data-in]').forEach(function (el) { I[el.dataset.in] = el; });
+        var V = {};
+        root.querySelectorAll('[data-val]').forEach(function (el) { V[el.dataset.val] = el; });
+        var answer = root.querySelector('[data-answer]');
+        var warn = root.querySelector('[data-warn]');
+
+        function set(id, text) { if (V[id]) V[id].textContent = text; }
+        function calc() {
+          var sal = num(I.salary);
+          var size = I.company_size.value;
+          var a60 = I.age60.checked, a65 = I.age65.checked;
+          var msgs = [];
+          Object.keys(V).forEach(function (k) { set(k, '—'); });
+          set('wc_er', '별도');
+
+          if (!sal) {
+            answer.textContent = '세전 월급을 넣으면 보험료와 실수령액이 나온다.';
+            warn.hidden = true; return;
+          }
+
+          // (2) 국민연금 기준소득월액: 천원 미만 절사 → 하한·상한
+          var npRaw = cut(sal, P.np_income_unit);
+          var npBase = Math.min(Math.max(npRaw, P.np_income_min), P.np_income_max);
+          var npTag = npRaw < P.np_income_min ? ' (하한 적용)' : npRaw > P.np_income_max ? ' (상한 적용)' : '';
+          // (3) 국민연금
+          var npEe = a60 ? 0 : r10(npBase * P.np_rate_employee / 100);
+          var npEr = a60 ? 0 : r10(npBase * P.np_rate_employer / 100);
+          // (4) 건강보험: 각 몫 계산 뒤 월 보험료 상·하한(합계 기준의 절반) 적용
+          var hiMin = P.hi_premium_min_total / 2, hiMax = P.hi_premium_max_total / 2;
+          var hiRawEe = r10(sal * P.hi_rate_employee / 100), hiRawEr = r10(sal * P.hi_rate_employer / 100);
+          var hiEe = Math.min(Math.max(hiRawEe, hiMin), hiMax);
+          var hiEr = Math.min(Math.max(hiRawEr, hiMin), hiMax);
+          var hiTag = hiRawEe < hiMin ? ' (하한 적용)' : hiRawEe > hiMax ? ' (상한 적용)' : '';
+          // (5) 장기요양: 건강보험료 × (장기요양보험료율 ÷ 건강보험료율)
+          var ltcEe = r10(hiEe * P.ltc_rate / P.hi_rate_total);
+          var ltcEr = r10(hiEr * P.ltc_rate / P.hi_rate_total);
+          // (6) 고용보험 실업급여
+          var eiEe = a65 ? 0 : r10(sal * P.ei_rate_employee / 100);
+          var eiEr = a65 ? 0 : r10(sal * P.ei_rate_employer / 100);
+          // (7) 고용안정·직업능력개발 (사업주만)
+          var stabRate = P.ei_stab_rate[size];
+          var stabEr = r10(sal * stabRate / 100);
+          // (9) 합계, (10) 실수령액
+          var sumEe = npEe + hiEe + ltcEe + eiEe;
+          var sumEr = npEr + hiEr + ltcEr + eiEr + stabEr;
+          var net = sal - sumEe;
+
+          set('salary_ee', won(sal));
+          set('np_base_ee', won(npBase) + npTag);
+          set('np_ee', won(npEe)); set('np_er', won(npEr));
+          set('hi_ee', won(hiEe) + hiTag); set('hi_er', won(hiEr) + hiTag);
+          set('ltc_ee', won(ltcEe)); set('ltc_er', won(ltcEr));
+          set('ei_ee', won(eiEe)); set('ei_er', won(eiEr));
+          set('ei_stab_er', won(stabEr) + ' (' + pct(stabRate) + ')');
+          set('sum_ee', won(sumEe)); set('sum_er', won(sumEr) + ' + 산재');
+          set('net_ee', won(net));
+
+          answer.textContent = '월급 ' + won(sal) + '의 실수령액은 ' + won(net) + '이다 (4대보험 근로자 부담 ' + won(sumEe) + ').';
+
+          if (npRaw < P.np_income_min) msgs.push('국민연금은 기준소득월액 하한 ' + won(P.np_income_min) + '으로 계산했다 (' + P.np_income_period + ' 적용).');
+          if (npRaw > P.np_income_max) msgs.push('국민연금은 기준소득월액 상한 ' + won(P.np_income_max) + '으로 계산했다 (' + P.np_income_period + ' 적용). 월급이 그 이상이어도 보험료는 같다.');
+          if (hiRawEe < hiMin) msgs.push('건강보험은 월 보험료 하한(각 ' + won(hiMin) + ')을 적용했다.');
+          if (hiRawEe > hiMax) msgs.push('건강보험은 월 보험료 상한(각 ' + won(hiMax) + ')을 적용했다. 장기요양은 상한 적용 뒤 금액에 곱한다.');
+          if (a60) msgs.push('만 60세 이상은 국민연금 당연 사업장가입 대상이 아니라 0원으로 계산했다 (국민연금법 제8조 제1항). 임의계속가입 중이면 4.75%를 낸다.');
+          if (a65) msgs.push('만 65세 이후 새로 고용된 사람은 실업급여 보험료를 걷지 않아 고용보험 0원이다 (보험료징수법 제13조 제3항). 사업주의 고용안정·직능 보험료는 그대로다.');
+          msgs.push('소득세·지방소득세는 빼지 않았다. 산재보험료는 사업주 전액 부담이며 업종별 요율이라 사업주 합계에 들어 있지 않다.');
+          warn.innerHTML = msgs.join('<br />');
+          warn.hidden = msgs.length === 0;
+        }
+
+        // 금액 칸: 숫자만 남기고 천 단위 콤마
+        root.querySelectorAll('[data-type="won"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+            el.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+            calc();
+          });
+        });
+        root.querySelectorAll('[data-type="select"], [data-type="check"]').forEach(function (el) {
+          el.addEventListener('input', calc); el.addEventListener('change', calc);
+        });
+
+        // 공유 주소 (기획서 3번)
+        var sh = root.querySelector('[data-share]');
+        if (sh) {
+          var u = encodeURIComponent(sh.dataset.url), t = encodeURIComponent(sh.dataset.title);
+          sh.querySelector('[data-share-fb]').href = 'https://www.facebook.com/sharer/sharer.php?u=' + u;
+          sh.querySelector('[data-share-x]').href = 'https://twitter.com/intent/tweet?url=' + u + '&text=' + t;
+          sh.querySelector('[data-share-naver]').href = 'https://share.naver.com/web/shareView?url=' + u + '&title=' + t;
+          sh.querySelector('[data-share-band]').href = 'https://band.us/plugin/share?body=' + t + '%20' + u + '&route=' + u;
+        }
+        calc();
+      }
+      document.addEventListener('astro:page-load', init);
+      if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</Base>
+
+<style>
+  /* 계산기 무드: 퇴직금 계산기(severance-pay.astro)와 같은 유리 카드·금색 강조 토큰을 이 페이지 안에서만 정의 */
+  .calc {
+    --gold: #f5b544; --gold-ink: #ffd27a; --gold-soft: rgba(245, 181, 68, .12);
+    --rose: #ff6b7a; --rose-soft: rgba(255, 107, 122, .12);
+    --hair-2: rgba(255, 255, 255, .14);
+    --glass: rgba(18, 24, 38, .66); --glass-2: rgba(22, 28, 44, .55);
+    --field: rgba(9, 12, 22, .55);
+    --cshadow: 0 24px 60px -20px rgba(0, 0, 0, .6), 0 8px 18px -8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+    --r-sm: 12px;
+    max-width: 920px; margin: 0 auto; font-size: 15.5px; letter-spacing: -.01em;
+  }
+  :global(:root[data-theme='light']) .calc {
+    --gold: #c98a12; --gold-ink: #a86f0a; --gold-soft: rgba(201, 138, 18, .10);
+    --rose: #e0475a; --rose-soft: rgba(224, 71, 90, .10);
+    --hair-2: #d3d8e0; --glass: rgba(255, 255, 255, .78); --glass-2: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .85);
+    --cshadow: 0 24px 60px -24px rgba(25, 31, 40, .18), 0 6px 14px -8px rgba(25, 31, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+
+  .hero { padding: 54px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .02em; text-transform: uppercase; }
+  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); }
+  h1 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 14px; font-weight: 800; }
+  .lede { color: var(--ink-2); font-size: 16px; max-width: 640px; margin: 0; line-height: 1.6; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .stamp { font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--hair-2); color: var(--ink-2); background: var(--glass-2); backdrop-filter: blur(8px); }
+  .stamp b { color: var(--ink); font-weight: 700; }
+  .stamp.gold { border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--gold-ink); background: var(--gold-soft); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+  .out { position: sticky; top: 76px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .out { position: static; } }
+
+  .card { position: relative; background: var(--glass); border: 1px solid var(--hair-2); border-radius: var(--r); box-shadow: var(--cshadow); backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%); padding: 24px 24px 22px; margin: 18px 0; }
+  .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .14), transparent 60%); mix-blend-mode: overlay; }
+  :global(:root[data-theme='light']) .card::before { display: none; }
+  .card-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .num { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .06em; }
+  .card-h h2 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  .card-h p { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; line-height: 1.6; padding: 12px 14px; border-radius: 12px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); }
+  .hint[hidden] { display: none; }
+
+  .grid { display: grid; gap: 14px 18px; grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .field label small { font-weight: 500; color: var(--ink-3); }
+  .inp { position: relative; }
+  .inp input, .inp select { width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .inp select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+  .inp select option { color: #191f28; background: #fff; }
+  .inp:has(select)::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .inp input[data-type='won'] { text-align: right; padding-right: 40px; }
+  .inp input:focus, .inp select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .inp input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .inp .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink-3); pointer-events: none; }
+  .sub { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+  .toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--hair); background: var(--glass-2); cursor: pointer; }
+  .toggle:hover { border-color: var(--hair-2); }
+  .toggle input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--hair-2); position: relative; flex: none; margin: 2px 0 0; cursor: pointer; transition: background .2s; }
+  .toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 99px; background: var(--ink-3); transition: all .2s cubic-bezier(.34, 1.5, .64, 1); }
+  .toggle input:checked { background: var(--gold); border-color: var(--gold); }
+  .toggle input:checked::after { left: 18px; background: #1a1206; }
+  .toggle span { font-size: 14px; font-weight: 600; }
+  .toggle small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; line-height: 1.5; }
+
+  /* 결과표: 항목 | 근로자 | 사업주 | 산식 (모바일은 산식 열을 숨기고 항목 밑에 작게) */
+  .answer { margin: 0 0 14px; font-size: clamp(19px, 2.6vw, 24px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 55%, var(--gold-ink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 10px 8px; border-top: 1px solid var(--hair); vertical-align: top; text-align: left; line-height: 1.5; }
+  th { font-size: 12.5px; color: var(--ink-3); font-weight: 700; border-top: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td .no { color: var(--gold); font-weight: 800; font-size: 12px; margin-right: 2px; }
+  td .na { color: var(--ink-3); }
+  td code { font-family: inherit; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-2); font-size: 12.5px; line-height: 1.8; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  td:first-child { white-space: normal; min-width: 96px; }
+  .result td.r { white-space: normal; min-width: 78px; }
+  .result td.f { min-width: 96px; }
+  .result td code { font-size: 11.5px; padding: 1px 5px; line-height: 1.7; }
+  .result th, .result td { padding: 9px 5px; }
+  td .f2 { display: none; }
+  tr.subtotal td { border-top: 2px solid var(--hair-2); font-weight: 700; }
+  tr.subtotal td.r b { color: var(--ink); }
+  tr.total td { border-top: 2px solid var(--hair-2); font-weight: 800; font-size: 15px; }
+  tr.total td.r b { color: var(--gold-ink); font-size: 18px; }
+  @media (max-width: 640px) {
+    th.f, td.f { display: none; }
+    td .f2 { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; }
+    td:first-child { white-space: normal; }
+    td.r { white-space: normal; font-size: 13px; }
+    th, td { padding: 9px 4px; }
+    tr.total td.r b { font-size: 16px; }
+  }
+
+  .slim { padding-bottom: 20px; }
+  .rel { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); color: var(--gold-ink); font-size: 14px; font-weight: 700; }
+  .rel-btn:hover { background: var(--gold); color: #1a1206; }
+  .rel-btn.off { border-style: dashed; border-color: var(--hair-2); background: transparent; color: var(--ink-3); cursor: default; }
+  .rel-btn.off:hover { background: transparent; color: var(--ink-3); }
+  .rel-btn small { font-size: 11px; font-weight: 600; }
+  .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .share-l { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin-right: 4px; }
+  .share-btn { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--hair-2); background: var(--glass-2); color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  .share-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .notes { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .notes li { margin-bottom: 8px; }
+  .notes li::marker { color: var(--gold); font-weight: 800; }
+  .src { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .src a { color: var(--ink-2); border-bottom: 1px dotted var(--ink-3); }
+  .src em { font-style: normal; color: var(--ink-3); }
+  .hist td { font-size: 13px; }
+  .hist code { font-family: inherit; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  @media (max-width: 640px) {
+    /* 이력표: 좁은 화면에선 날짜·기준값·값 한 줄, 출처는 그 아래 */
+    .hist thead { display: none; }
+    .hist tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); }
+    .hist tr:first-child { border-top: 0; }
+    .hist td { border: 0; padding: 0; white-space: normal; }
+    .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+  }
+  .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
+</style>

@@ -1,0 +1,504 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, CATEGORIES } from '../../config/site';
+import calc from '../../data/calcs/sunshine-loan.json';
+import tools from '../../data/tools.json';
+
+// 계산기 한 장 = JSON 한 장(src/data/calcs/<slug>.json). 이 페이지는 그 JSON을 읽어 그린다.
+// 구조·무드는 severance-pay.astro와 같은 벌. 판정형(subscription-score.astro)처럼 결과표 한 줄 = 상품 하나.
+// 소득 기준·한도·금리는 전부 JSON params(연도 키)에서 온다. 코드에 숫자를 박지 않는다.
+const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
+const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
+const related = calc.related_calcs.map((r: any) => {
+  const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
+  return { ...r, href: r.href || t?.href || '' };
+});
+const basisYear = calc.basis_date.slice(0, 4);
+const P = calc.params as Record<string, unknown>;
+const params = P[basisYear] as Record<string, unknown>;
+const stepTitle = ['', '나이·소득·신용', '일자리', '이용 이력·연체'];
+const stepSub = ['', '만 나이·세전 연소득', '재직 형태·기간·배려대상', '정책서민금융·유스 한도'];
+---
+
+<Base title={calc.name} description={calc.description}>
+  <div class="calc" data-calc>
+    <header class="hero">
+      <span class="eyebrow">모의계산기 · {cat.short}</span>
+      <h1>{calc.name}</h1>
+      <p class="lede">{calc.lede}</p>
+      <div class="stamps">
+        <span class="stamp gold"><b>{calc.basis_label}</b></span>
+        <span class="stamp">확인일 <b>{calc.basis_date.replace(/-/g, '.')}</b></span>
+        <span class="stamp">기준 <b>서민금융진흥원 상품 안내 · 2026.1.2 개편</b></span>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div class="in">
+        {[1, 2, 3].map((n) => (
+          <section class="card" id={`s${n}`}>
+            <div class="card-h">
+              <span class="num">STEP {n}</span>
+              <h2>{stepTitle[n]}</h2>
+              <p>{stepSub[n]}</p>
+            </div>
+            <div class="grid">
+              {byStep(n).map((f: any) => (
+                <div class="field" data-field={f.id}>
+                  {f.type === 'check' ? (
+                    <label class="toggle">
+                      <input type="checkbox" id={`f-${f.id}`} data-in={f.id} data-type="check" />
+                      <span>{f.label}<small>{f.help}</small></span>
+                    </label>
+                  ) : (
+                    <>
+                      <label for={`f-${f.id}`}>{f.label}{f.optional && <small> (선택)</small>}</label>
+                      <div class="inp">
+                        {f.type === 'select' ? (
+                          <select id={`f-${f.id}`} data-in={f.id} data-type="select">
+                            {(f.options || []).map((o: any) => <option value={o.value}>{o.label}</option>)}
+                          </select>
+                        ) : f.type === 'num' ? (
+                          <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="num" placeholder="0" autocomplete="off" />
+                        ) : (
+                          <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="won" placeholder="0" autocomplete="off" />
+                        )}
+                        {f.type === 'won' && <span class="unit">원</span>}
+                        {f.type === 'num' && <span class="unit">{f.unit}</span>}
+                      </div>
+                      {f.help && <p class="sub">{f.help}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="out">
+        <section class="card result" id="result" aria-live="polite">
+          <div class="card-h"><span class="num">결과</span><h2>햇살론 판정표</h2><p>{calc.basis_label}</p></div>
+          <p class="answer" data-answer>만 나이·연소득을 넣으면 되는 햇살론 상품과 한도가 나온다.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>상품</th><th>자격</th><th class="r">한도</th><th class="r">금리</th></tr></thead>
+              <tbody>
+                {calc.steps.map((s) => (
+                  <tr data-row={s.id}>
+                    <td><span class="no">({s.no})</span> {s.label}<small class="f2">{s.formula}</small></td>
+                    <td class="e"><b data-val={s.id}>—</b><small class="tag" data-tag={s.id}></small></td>
+                    <td class="r"><b data-lim={s.id}>{s.limit.split(' (')[0]}</b><small class="tag" data-lim2={s.id}></small></td>
+                    <td class="r"><b class="rt" data-rate={s.id}>{s.rate.split(' (')[0]}</b><small class="tag" data-rate2={s.id}></small></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="cond">
+            {calc.steps.map((s) => <span>· <b>{s.label}</b> <code>{s.formula}</code><br /></span>)}
+          </p>
+          <p class="hint" data-warn hidden></p>
+        </section>
+      </div>
+    </div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">관련</span><h2>같이 쓰는 계산기</h2></div>
+      <div class="rel">
+        {related.map((r) => r.href
+          ? <a class="rel-btn" href={r.href}>{r.name}</a>
+          : <span class="rel-btn off" aria-disabled="true">{r.name} <small>준비 중</small></span>)}
+      </div>
+      <div class="share" data-share data-url={pageUrl} data-title={`${calc.name} — ${SITE.name}`}>
+        <span class="share-l">공유</span>
+        <a class="share-btn" data-share-fb href="#" target="_blank" rel="noopener">페이스북</a>
+        <a class="share-btn" data-share-x href="#" target="_blank" rel="noopener">X</a>
+        <a class="share-btn" data-share-naver href="#" target="_blank" rel="noopener">네이버 블로그</a>
+        <a class="share-btn" data-share-band href="#" target="_blank" rel="noopener">밴드</a>
+      </div>
+    </section>
+
+    <div class="ad-slot" data-slot="in-article"></div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">※</span><h2>판정 기준과 근거</h2><p>확인일 {calc.basis_date.replace(/-/g, '.')}</p></div>
+      <ol class="notes">
+        {calc.notes.map((n) => <li>{n}</li>)}
+      </ol>
+      <p class="src">
+        {calc.law.map((l) => <span>· <a href={l.url} target="_blank" rel="noopener">{l.name}</a> <em>{l.ver}</em><br /></span>)}
+      </p>
+    </section>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
+      <div class="tbl-wrap">
+        <table class="hist">
+          <thead><tr><th>날짜</th><th>기준값</th><th class="r">값</th><th>출처</th></tr></thead>
+          <tbody>
+            {calc.history.map((h) => (
+              <tr><td>{h.date.replace(/-/g, '.')}</td><td><code>{h.param}</code></td><td class="r"><b>{h.value}</b></td><td>{h.src}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="foot-note">{calc.disclaimer}<br />최종 심사는 서민금융진흥원과 취급 금융회사(은행 등)가 한다. 입력값은 이 브라우저 안에서만 계산되며 서버로 보내지 않는다.</p>
+  </div>
+
+  <script type="application/json" id="calc-params" set:html={JSON.stringify(params)} />
+  <script is:inline>
+    // 순수 JS. 입력이 바뀌면 즉시 다시 판정한다. 조건은 JSON steps.formula와 같은 순서.
+    // 되는 상품 중 조건 좋은 순(유스 → 징검다리론 → 일반 → 특례)의 첫 줄을 굵게 하고 첫 답 한 줄로 쓴다.
+    (function () {
+      function init() {
+        var root = document.querySelector('[data-calc]');
+        if (!root || root.dataset.ready) return;
+        root.dataset.ready = '1';
+        var P = JSON.parse(document.getElementById('calc-params').textContent);
+        var Y = P.youth, B = P.bridge, G = P.general, S = P.special;
+
+        var I = {};
+        root.querySelectorAll('[data-in]').forEach(function (el) { I[el.dataset.in] = el; });
+        var V = {}, T = {}, L = {}, L2 = {}, R = {}, R2 = {}, ROW = {};
+        root.querySelectorAll('[data-val]').forEach(function (el) { V[el.dataset.val] = el; });
+        root.querySelectorAll('[data-tag]').forEach(function (el) { T[el.dataset.tag] = el; });
+        root.querySelectorAll('[data-lim]').forEach(function (el) { L[el.dataset.lim] = el; });
+        root.querySelectorAll('[data-lim2]').forEach(function (el) { L2[el.dataset.lim2] = el; });
+        root.querySelectorAll('[data-rate]').forEach(function (el) { R[el.dataset.rate] = el; });
+        root.querySelectorAll('[data-rate2]').forEach(function (el) { R2[el.dataset.rate2] = el; });
+        root.querySelectorAll('[data-row]').forEach(function (el) { ROW[el.dataset.row] = el; });
+        var answer = root.querySelector('[data-answer]');
+        var warn = root.querySelector('[data-warn]');
+        var F = {};
+        root.querySelectorAll('[data-field]').forEach(function (el) { F[el.dataset.field] = el; });
+
+        var num = function (el) { return Number((el.value || '').replace(/[^\d]/g, '')) || 0; };
+        var man = function (won) { // 원 → 만원 문자열
+          var m = Math.round(won / 10000);
+          return m.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '만원';
+        };
+        var pct = function (n) { return n.toFixed(1) + '%'; };
+        var ORDER = ['youth', 'bridge', 'general', 'special'];
+        var NAME = { youth: '햇살론유스', bridge: '징검다리론', general: '햇살론일반', special: '햇살론특례' };
+
+        function set(id, r) {
+          // r = { st: 'ok'|'no'|'cond'|'wait', tag, limit, limitNote, rate, rateNote, limitWon }
+          var mark = r.st === 'ok' ? '✓ 가능' : r.st === 'no' ? '✗ 안 됨' : r.st === 'cond' ? '△ 조건부' : '—';
+          V[id].textContent = mark;
+          T[id].textContent = r.tag || '';
+          L[id].textContent = r.limit; L2[id].textContent = r.limitNote || '';
+          R[id].textContent = r.rate; R2[id].textContent = r.rateNote || '';
+          ROW[id].classList.remove('ok', 'bad', 'cond', 'total');
+          if (r.st === 'ok') ROW[id].classList.add('ok');
+          if (r.st === 'no') ROW[id].classList.add('bad');
+          if (r.st === 'cond') ROW[id].classList.add('cond');
+        }
+
+        function calc() {
+          var age = num(I.age), income = num(I.income), credit = I.credit.value;
+          var job = I.job.value, tenure = I.tenure.value, social = I.social.checked;
+          var history = I.history.value, used = num(I.youth_used), overdue = I.overdue.checked, workout = I.workout.checked;
+          var msgs = [];
+          var low = credit === 'low', high = credit === 'high', unknown = credit === 'unknown';
+
+          // 안 쓰는 칸은 흐리게
+          F.tenure.classList.toggle('dim', job === 'none');
+          F.workout.classList.toggle('dim', !overdue);
+
+          if (!age || !I.income.value) {
+            ORDER.forEach(function (id) {
+              var s0 = { youth: { limit: man(Y.limit_total), rate: pct(Y.apr) }, bridge: { limit: man(B.limit), rate: pct(B.apr_max) + ' 이내' }, general: { limit: man(G.limit), rate: pct(G.apr_max) + ' 이내' }, special: { limit: man(S.limit), rate: pct(S.apr) } }[id];
+              set(id, { st: 'wait', tag: '', limit: s0.limit, limitNote: '', rate: s0.rate, rateNote: '' });
+            });
+            answer.textContent = '만 나이·연소득을 넣으면 되는 햇살론 상품과 한도가 나온다.';
+            warn.hidden = true; return;
+          }
+          var adult = age >= P.adult_age;
+          var res = {};
+
+          // (1) 햇살론유스: 19~34세 & 연소득 3,500만 이하 & 유형(취업준비생·사회초년생·청년사업자) & 동일인 한도 잔여
+          (function () {
+            var r = { st: 'ok', tag: '', limitWon: 0 };
+            var remain = Math.max(Y.limit_total - used, 0);
+            var type = job === 'none' ? '취업준비생(대학(원)생·미취업청년)' : job === 'worker' ? (tenure === 'le1' ? '사회초년생(중소기업 1년 이하 재직)' : '') : (tenure === 'le1' ? '청년사업자(창업 1년 이하 저소득 개인사업자)' : '');
+            if (age < Y.age_min || age > Y.age_max) { r.st = 'no'; r.tag = '만 ' + age + '세 — ' + Y.age_min + '~' + Y.age_max + '세 아님'; }
+            else if (income > Y.income_cap) { r.st = 'no'; r.tag = '연소득 ' + man(income) + ' — ' + man(Y.income_cap) + ' 초과'; }
+            else if (!type) { r.st = 'no'; r.tag = (job === 'worker' ? '재직' : '창업') + ' ' + Y.tenure_max_years + '년 초과 — 사회초년생·청년사업자 아님'; }
+            else if (remain <= 0) { r.st = 'no'; r.tag = '동일인 한도 ' + man(Y.limit_total) + ' 이미 다 씀 (1회만 부여)'; }
+            else if (overdue) { r.st = 'cond'; r.tag = type + ' — 연체 중이면 서금원 보증심사에서 걸릴 수 있다'; }
+            else { r.tag = type + (used ? ' · 잔여 ' + man(remain) : ''); }
+            var cap = Math.min(remain, Y.limit_total);
+            r.limitWon = r.st === 'no' ? 0 : cap;
+            r.limit = r.st === 'no' ? man(Y.limit_total) : man(cap);
+            r.limitNote = '일반생활 연 ' + man(Y.limit_year_general) + '·1회 ' + man(Y.limit_once_general) + ' / 특정용도 1회 ' + man(Y.limit_once_special);
+            r.rate = social ? pct(Y.apr_social) : pct(Y.apr);
+            r.rateNote = social ? '사회적배려대상자' : '대출 ' + pct(Y.rate) + ' + 보증료 ' + pct(Y.fee);
+            res.youth = r;
+          })();
+
+          // (2) 징검다리론: 정책서민금융 2년 이상 성실 이용 또는 최근 3년 내 완제 + 서금원 심사
+          (function () {
+            var r = { st: 'ok', tag: '', limitWon: B.limit };
+            if (history === 'none') { r.st = 'no'; r.tag = '정책서민금융 이용 이력 없음'; r.limitWon = 0; }
+            else if (history === 'lt2') { r.st = 'no'; r.tag = '이용 ' + B.sincere_years + '년 미만 — ' + B.sincere_years + '년 이상 성실 이용 또는 ' + B.paid_within_years + '년 내 완제 아님'; r.limitWon = 0; }
+            else if (overdue) { r.st = 'no'; r.tag = '연체 중 — 성실상환 요건 아님'; r.limitWon = 0; }
+            else { r.tag = (history === 'ge2' ? B.sincere_years + '년 이상 성실 이용 중' : '최근 ' + B.paid_within_years + '년 내 완제') + ' · 서금원 서민특화 신용평가 통과 필요'; }
+            r.limit = man(B.limit);
+            r.rate = pct(B.apr_max) + ' 이내'; r.rateNote = '은행별·수시 변동';
+            res.bridge = r;
+          })();
+
+          // (3) 햇살론일반: 성년 & 소득 증빙 & (3,500만 이하 | 하위 20% & 4,500만 이하) & 연체 없음
+          (function () {
+            var r = { st: 'ok', tag: '', limitWon: G.limit };
+            if (!adult) { r.st = 'no'; r.tag = '만 ' + age + '세 — 민법상 성년(' + P.adult_age + '세) 아님'; }
+            else if (job === 'none') { r.st = 'no'; r.tag = '소득 증빙 없음 — 일반보증 이용 불가'; }
+            else if (income <= P.income_cap) { r.tag = '연소득 ' + man(income) + ' ≤ ' + man(P.income_cap) + ' (신용점수 무관)'; }
+            else if (income <= P.income_cap_lowcredit) {
+              if (low) r.tag = '연소득 ' + man(income) + ' ≤ ' + man(P.income_cap_lowcredit) + ' & 신용 하위 20%';
+              else if (high) { r.st = 'no'; r.tag = '연소득 ' + man(P.income_cap) + ' 초과 — 하위 20% 아니면 ' + man(P.income_cap_lowcredit) + ' 기준 못 씀'; }
+              else { r.st = 'cond'; r.tag = '연소득 ' + man(income) + ' — 신용 하위 20%일 때만 (' + man(P.income_cap_lowcredit) + ' 이하)'; }
+            }
+            else { r.st = 'no'; r.tag = '연소득 ' + man(income) + ' — ' + man(P.income_cap_lowcredit) + ' 초과'; }
+            if (r.st !== 'no' && overdue) {
+              if (workout) { r.st = 'cond'; r.tag = '연체 중 — 채무조정 6개월 이상 성실상환자는 서금원 승인 시 가능'; }
+              else { r.st = 'no'; r.tag = '현재 연체 중 — 지원대상 제외'; }
+            }
+            if (r.st === 'no') r.limitWon = 0;
+            r.limit = man(G.limit);
+            r.rate = pct(G.apr_max) + ' 이내'; r.rateNote = '대출 ' + pct(G.loan_rate_max) + ' 이내 + 보증료 ' + pct(G.fee_max) + (social ? ' − ' + G.fee_cut_social + '%p' : '');
+            res.general = r;
+          })();
+
+          // (4) 햇살론특례: 성년 & 3,500만 이하 & 하위 20% & 연체 없음. 소득 증빙 없으면 추정소득 300만
+          (function () {
+            var r = { st: 'ok', tag: '', limitWon: S.limit };
+            var lim = job === 'none' ? S.limit_estimated : S.limit;
+            if (!adult) { r.st = 'no'; r.tag = '만 ' + age + '세 — 민법상 성년(' + P.adult_age + '세) 아님'; }
+            else if (income > P.income_cap) { r.st = 'no'; r.tag = '연소득 ' + man(income) + ' — ' + man(P.income_cap) + ' 초과'; }
+            else if (high) { r.st = 'no'; r.tag = '신용 하위 20% 아님'; }
+            else if (unknown) { r.st = 'cond'; r.tag = '연소득 OK — 신용 하위 20%일 때만'; }
+            else { r.tag = '연소득 ' + man(income) + ' ≤ ' + man(P.income_cap) + ' & 신용 하위 20%'; }
+            if (r.st !== 'no' && overdue) {
+              if (workout) { r.st = 'cond'; r.tag = '연체 중 — 채무조정 6개월 이상 성실상환자는 서금원 승인 시 가능'; }
+              else { r.st = 'no'; r.tag = '현재 연체 중 — 지원대상 제외'; }
+            }
+            if (r.st !== 'no' && job === 'none') r.tag += ' · 소득 증빙 없음 → 추정소득 ' + man(S.limit_estimated);
+            r.limitWon = r.st === 'no' ? 0 : lim;
+            r.limit = man(lim); r.limitNote = job === 'none' ? '추정소득 기준' : '';
+            r.rate = social ? pct(S.apr_social) : pct(S.apr);
+            r.rateNote = (social ? '사회적배려 · ' : '보증료 포함 · ') + '성실상환 시 ' + pct(social ? S.apr_min_social : S.apr_min_sincere);
+            res.special = r;
+          })();
+
+          ORDER.forEach(function (id) { set(id, res[id]); });
+
+          // 첫 답: 되는 상품 중 조건 좋은 순 첫 줄
+          var best = null, cond = null;
+          ORDER.forEach(function (id) {
+            if (!best && res[id].st === 'ok') best = id;
+            if (!cond && res[id].st === 'cond') cond = id;
+          });
+          if (best) {
+            ROW[best].classList.add('total');
+            answer.textContent = NAME[best] + ' 신청 가능, 한도 ' + man(res[best].limitWon) + '.';
+          } else if (cond) {
+            ROW[cond].classList.add('total');
+            answer.textContent = NAME[cond] + ' 조건부 가능 (' + res[cond].tag.split(' — ').pop() + '), 한도 ' + man(res[cond].limitWon) + '.';
+          } else {
+            answer.textContent = '지금 조건으로는 되는 햇살론 상품이 없다.';
+          }
+
+          // 안내
+          var okList = ORDER.filter(function (id) { return res[id].st === 'ok'; }).map(function (id) { return NAME[id]; });
+          if (okList.length > 1) msgs.push('되는 상품: ' + okList.join(' · ') + '. 금리 낮은 순으로 첫 줄을 굵게 표시했다. 한도는 서금원 신용평가에 따라 줄 수 있다.');
+          if (unknown) msgs.push('신용점수 구간을 모르면 하위 20%가 필요한 줄은 △로 표시한다. 서민금융 잇다 앱 가조회에서 하위 20% 여부를 확인하고 다시 고른다.');
+          if (!adult) msgs.push('만 ' + P.adult_age + '세 미만은 민법상 성년이 아니라 햇살론 보증 대상이 아니다.');
+          if (res.youth.st === 'ok' && job === 'worker') msgs.push('햇살론유스 사회초년생은 중소기업 재직자만이다. 대기업·공공기관 재직이면 유스는 빠지고 일반·특례를 본다.');
+          if (res.youth.st === 'ok' && job === 'self') msgs.push('청년사업자는 미소금융 등 다른 서민금융으로 안내될 수 있다(서민금융콜센터 1397).');
+          if (res.youth.st === 'ok') msgs.push('햇살론유스 ' + man(Y.limit_total) + '은 평생 1회 부여다. 갚아도 되살아나지 않으니 꼭 필요한 만큼만 신청한다. 국민취업지원제도 성공자는 ' + pct(Y.apr_nes) + '.');
+          if (res.bridge.st === 'ok') msgs.push('징검다리론은 은행 상품이다. 잇다 앱에서 자격 확인·사전신청 뒤 취급 은행(14곳, ’26년 상반기 순차 출시)에 신청한다. 햇살론 일반·특례 성실상환자는 "포함 예정"이라 은행에 확인.');
+          if (res.general.st !== 'no' && res.special.st !== 'no') msgs.push('일반과 특례가 둘 다 되면 보통 한도가 큰 일반(' + man(G.limit) + ')을 먼저 본다. 특례는 보증비율 100%·정부재원이라 심사 결과에 따라 특례로만 될 수도 있다.');
+          if (overdue && workout) msgs.push('채무조정 성실상환자도 서금원 신용평가시스템 승인이 나야 대출이 된다.');
+          msgs.push('이 표는 공개된 자격 조건만 본 것이다. 실제로는 서금원 상환능력 심사와 금융회사 자체 심사를 모두 통과해야 하며, 자격이 돼도 보증이 거절될 수 있다.');
+          warn.innerHTML = msgs.join('<br />');
+          warn.hidden = msgs.length === 0;
+        }
+
+        // 금액 칸: 숫자만 남기고 천 단위 콤마
+        root.querySelectorAll('[data-type="won"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+            el.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+            calc();
+          });
+        });
+        root.querySelectorAll('[data-type="num"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            el.value = el.value.replace(/[^\d]/g, '').slice(0, 3);
+            calc();
+          });
+        });
+        root.querySelectorAll('[data-type="select"], [data-type="check"]').forEach(function (el) {
+          el.addEventListener('input', calc); el.addEventListener('change', calc);
+        });
+
+        // 공유 주소 (기획서 3번)
+        var sh = root.querySelector('[data-share]');
+        if (sh) {
+          var u = encodeURIComponent(sh.dataset.url), t = encodeURIComponent(sh.dataset.title);
+          sh.querySelector('[data-share-fb]').href = 'https://www.facebook.com/sharer/sharer.php?u=' + u;
+          sh.querySelector('[data-share-x]').href = 'https://twitter.com/intent/tweet?url=' + u + '&text=' + t;
+          sh.querySelector('[data-share-naver]').href = 'https://share.naver.com/web/shareView?url=' + u + '&title=' + t;
+          sh.querySelector('[data-share-band]').href = 'https://band.us/plugin/share?body=' + t + '%20' + u + '&route=' + u;
+        }
+        calc();
+      }
+      document.addEventListener('astro:page-load', init);
+      if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</Base>
+
+<style>
+  /* 계산기 무드: 퇴직금 계산기(severance-pay.astro)와 같은 유리 카드·금색 강조 토큰을 이 페이지 안에서만 정의 */
+  .calc {
+    --gold: #f5b544; --gold-ink: #ffd27a; --gold-soft: rgba(245, 181, 68, .12);
+    --rose: #ff6b7a; --rose-soft: rgba(255, 107, 122, .12);
+    --mint: #35c48a; --mint-ink: #7fe0b6; --mint-soft: rgba(53, 196, 138, .12);
+    --hair-2: rgba(255, 255, 255, .14);
+    --glass: rgba(18, 24, 38, .66); --glass-2: rgba(22, 28, 44, .55);
+    --field: rgba(9, 12, 22, .55);
+    --cshadow: 0 24px 60px -20px rgba(0, 0, 0, .6), 0 8px 18px -8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+    --r-sm: 12px;
+    max-width: 920px; margin: 0 auto; font-size: 15.5px; letter-spacing: -.01em;
+  }
+  :global(:root[data-theme='light']) .calc {
+    --gold: #c98a12; --gold-ink: #a86f0a; --gold-soft: rgba(201, 138, 18, .10);
+    --rose: #e0475a; --rose-soft: rgba(224, 71, 90, .10);
+    --mint: #177a53; --mint-ink: #177a53; --mint-soft: rgba(23, 122, 83, .10);
+    --hair-2: #d3d8e0; --glass: rgba(255, 255, 255, .78); --glass-2: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .85);
+    --cshadow: 0 24px 60px -24px rgba(25, 31, 40, .18), 0 6px 14px -8px rgba(25, 31, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+
+  .hero { padding: 54px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .02em; text-transform: uppercase; }
+  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); }
+  h1 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 14px; font-weight: 800; }
+  .lede { color: var(--ink-2); font-size: 16px; max-width: 640px; margin: 0; line-height: 1.6; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .stamp { font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--hair-2); color: var(--ink-2); background: var(--glass-2); backdrop-filter: blur(8px); }
+  .stamp b { color: var(--ink); font-weight: 700; }
+  .stamp.gold { border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--gold-ink); background: var(--gold-soft); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+  .out { position: sticky; top: 76px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .out { position: static; } }
+
+  .card { position: relative; background: var(--glass); border: 1px solid var(--hair-2); border-radius: var(--r); box-shadow: var(--cshadow); backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%); padding: 24px 24px 22px; margin: 18px 0; }
+  .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .14), transparent 60%); mix-blend-mode: overlay; }
+  :global(:root[data-theme='light']) .card::before { display: none; }
+  .card-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .num { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .06em; }
+  .card-h h2 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  .card-h p { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; line-height: 1.6; padding: 12px 14px; border-radius: 12px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); }
+  .hint[hidden] { display: none; }
+
+  .grid { display: grid; gap: 14px 18px; grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; transition: opacity .15s; }
+  .field.dim { opacity: .45; }
+  .field > label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .field label small { font-weight: 500; color: var(--ink-3); }
+  .inp { position: relative; }
+  .inp input, .inp select { width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .inp input[data-type='won'], .inp input[data-type='num'] { text-align: right; padding-right: 40px; }
+  .inp select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+  .inp select option { color: #191f28; background: #fff; }
+  .inp:has(select)::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .inp input:focus, .inp select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .inp input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .inp .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink-3); pointer-events: none; }
+  .sub { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+  .toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--hair); background: var(--glass-2); cursor: pointer; }
+  .toggle:hover { border-color: var(--hair-2); }
+  .toggle input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--hair-2); position: relative; flex: none; margin: 2px 0 0; cursor: pointer; transition: background .2s; }
+  .toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 99px; background: var(--ink-3); transition: all .2s cubic-bezier(.34, 1.5, .64, 1); }
+  .toggle input:checked { background: var(--gold); border-color: var(--gold); }
+  .toggle input:checked::after { left: 18px; background: #1a1206; }
+  .toggle span { font-size: 14px; font-weight: 600; }
+  .toggle small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; line-height: 1.5; }
+
+  /* 판정표: 상품 | 자격(+걸린 조건) | 한도 | 금리 — 4열. 조건 산식은 표 아래 한 줄씩 */
+  .answer { margin: 0 0 14px; font-size: clamp(19px, 2.6vw, 24px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 55%, var(--gold-ink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 10px 8px; border-top: 1px solid var(--hair); vertical-align: top; text-align: left; line-height: 1.5; }
+  th { font-size: 12.5px; color: var(--ink-3); font-weight: 700; border-top: 0; }
+  td.r, th.r { text-align: right; }
+  td .no { color: var(--gold); font-weight: 800; font-size: 12px; margin-right: 2px; }
+  td code, .cond code { font-family: inherit; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-2); font-size: 12px; line-height: 1.8; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .result td:first-child { white-space: nowrap; font-weight: 700; }
+  .result td.e { min-width: 120px; }
+  .result td.r { font-size: 12.5px; color: var(--ink-2); min-width: 96px; }
+  .result td.r b { color: var(--ink); font-size: 13.5px; white-space: nowrap; }
+  .result td.r .tag { text-align: right; }
+  .result th, .result td { padding: 9px 5px; }
+  td .tag { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; line-height: 1.4; }
+  td .tag:empty { display: none; }
+  td .f2 { display: none; }
+  tr.ok td.e b { color: var(--mint-ink); }
+  tr.cond td.e b { color: var(--gold-ink); }
+  tr.bad td.e b { color: var(--rose); }
+  tr.bad td { opacity: .75; }
+  tr.total td { border-top: 2px solid var(--hair-2); border-bottom: 2px solid var(--hair-2); font-weight: 800; background: var(--gold-soft); opacity: 1; }
+  tr.total td.r b { color: var(--gold-ink); font-size: 16px; }
+  tr.total td:first-child { color: var(--gold-ink); }
+  .cond { font-size: 12px; color: var(--ink-3); line-height: 1.9; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--hair); }
+  .cond b { color: var(--ink-2); font-weight: 700; }
+  @media (max-width: 640px) {
+    td .f2 { display: none; }
+    .result td:first-child { white-space: normal; min-width: 52px; }
+    .result td.e { min-width: 74px; }
+    .result td.r { min-width: 60px; white-space: normal; font-size: 11.5px; }
+    .result td.r .tag { display: none; }
+    .result td:first-child { font-size: 12.5px; }
+    .result td.r b { font-size: 12.5px; }
+    th, td { padding: 9px 3px; }
+    tr.total td.r b { font-size: 14px; }
+  }
+
+  .slim { padding-bottom: 20px; }
+  .rel { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); color: var(--gold-ink); font-size: 14px; font-weight: 700; }
+  .rel-btn:hover { background: var(--gold); color: #1a1206; }
+  .rel-btn.off { border-style: dashed; border-color: var(--hair-2); background: transparent; color: var(--ink-3); cursor: default; }
+  .rel-btn.off:hover { background: transparent; color: var(--ink-3); }
+  .rel-btn small { font-size: 11px; font-weight: 600; }
+  .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .share-l { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin-right: 4px; }
+  .share-btn { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--hair-2); background: var(--glass-2); color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  .share-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .notes { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .notes li { margin-bottom: 8px; }
+  .notes li::marker { color: var(--gold); font-weight: 800; }
+  .src { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .src a { color: var(--ink-2); border-bottom: 1px dotted var(--ink-3); }
+  .src em { font-style: normal; color: var(--ink-3); }
+  .hist td { font-size: 13px; }
+  .hist code { font-family: inherit; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  @media (max-width: 640px) {
+    /* 이력표: 좁은 화면에선 날짜·기준값·값 한 줄, 출처는 그 아래 */
+    .hist thead { display: none; }
+    .hist tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); }
+    .hist tr:first-child { border-top: 0; }
+    .hist td { border: 0; padding: 0; white-space: normal; }
+    .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+  }
+  .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
+</style>

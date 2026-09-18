@@ -1,0 +1,411 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, CATEGORIES } from '../../config/site';
+import calc from '../../data/calcs/youth-leap-account.json';
+import tools from '../../data/tools.json';
+
+// 계산기 한 장 = JSON 한 장(src/data/calcs/<slug>.json). 이 페이지는 그 JSON을 읽어 그린다.
+// 기여금 표·개월 수·세율은 JSON params(연도 키)에서만 온다. 코드에 숫자를 박지 않는다.
+const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
+const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
+const related = calc.related_calcs.map((r) => {
+  const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
+  return { ...r, href: t?.href || '' };
+});
+const basisYear = calc.basis_date.slice(0, 4);
+const P = calc.params as Record<string, unknown>;
+const params = P[basisYear] as Record<string, unknown>;
+const defaults: Record<string, string> = {
+  rate_base: String(params.rate_base_default),
+  rate_bonus: String(params.rate_bonus_default),
+};
+const checkedByDefault = ['use_bonus'];
+const stepTitle = ['', '월 납입액', '개인소득 구간', '금리·선택 사항'];
+const stepSub = ['', '1천원 ~ 70만원', '기여금 비율이 갈린다', '은행별 금리는 직접 넣는다'];
+---
+
+<Base title={calc.name} description={calc.description}>
+  <div class="calc" data-calc>
+    <header class="hero">
+      <span class="eyebrow">모의계산기 · {cat.short}</span>
+      <h1>{calc.name}</h1>
+      <p class="lede">{calc.lede}</p>
+      <div class="stamps">
+        <span class="stamp gold"><b>{calc.basis_label}</b></span>
+        <span class="stamp">확인일 <b>{calc.basis_date.replace(/-/g, '.')}</b></span>
+        <span class="stamp">기여금표 <b>서민금융진흥원 (’25.1월분~)</b></span>
+        <span class="stamp rose">신규 가입 <b>’25.12.31 종료</b></span>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div class="in">
+        {[1, 2, 3].map((n) => (
+          <section class="card" id={`s${n}`}>
+            <div class="card-h">
+              <span class="num">STEP {n}</span>
+              <h2>{stepTitle[n]}</h2>
+              <p>{stepSub[n]}</p>
+            </div>
+            <div class="grid">
+              {byStep(n).map((f) => (
+                <div class="field">
+                  {f.type === 'check' ? (
+                    <label class="toggle">
+                      <input type="checkbox" id={`f-${f.id}`} data-in={f.id} data-type="check" checked={checkedByDefault.includes(f.id)} />
+                      <span>{f.label}<small>{f.help}</small></span>
+                    </label>
+                  ) : (
+                    <>
+                      <label for={`f-${f.id}`}>{f.label}{f.optional && <small> (선택)</small>}</label>
+                      <div class="inp">
+                        {f.type === 'select' ? (
+                          <select id={`f-${f.id}`} data-in={f.id} data-type="select">
+                            {(f.options || []).map((o) => <option value={o.value}>{o.label}</option>)}
+                          </select>
+                        ) : f.type === 'pct' ? (
+                          <input type="text" inputmode="decimal" id={`f-${f.id}`} data-in={f.id} data-type="pct" placeholder="0" value={defaults[f.id] ?? ''} autocomplete="off" />
+                        ) : (
+                          <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="won" placeholder="0" autocomplete="off" />
+                        )}
+                        {f.type === 'won' && <span class="unit">원</span>}
+                        {f.type === 'pct' && <span class="unit">%</span>}
+                      </div>
+                      {f.help && <p class="sub">{f.help}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="out">
+        <section class="card result" id="result" aria-live="polite">
+          <div class="card-h"><span class="num">결과</span><h2>만기 수령액 계산표</h2><p>{calc.basis_label}</p></div>
+          <p class="answer" data-answer>월 납입액을 넣으면 5년 만기 수령액이 나온다.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>항목</th><th class="r">금액</th><th class="f">산식</th></tr></thead>
+              <tbody>
+                {calc.steps.map((s) => (
+                  <tr class={s.total ? 'total' : ''} data-row={s.id}>
+                    <td><span class="no">({s.no})</span> {s.label}<small class="f2">{s.formula}</small></td>
+                    <td class="r"><b data-val={s.id}>—</b></td>
+                    <td class="f"><code>{s.formula}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="hint" data-warn hidden></p>
+        </section>
+      </div>
+    </div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">관련</span><h2>같이 쓰는 계산기</h2></div>
+      <div class="rel">
+        {related.map((r) => r.href
+          ? <a class="rel-btn" href={r.href}>{r.name}</a>
+          : <span class="rel-btn off" aria-disabled="true">{r.name} <small>준비 중</small></span>)}
+      </div>
+      <div class="share" data-share data-url={pageUrl} data-title={`${calc.name} — ${SITE.name}`}>
+        <span class="share-l">공유</span>
+        <a class="share-btn" data-share-fb href="#" target="_blank" rel="noopener">페이스북</a>
+        <a class="share-btn" data-share-x href="#" target="_blank" rel="noopener">X</a>
+        <a class="share-btn" data-share-naver href="#" target="_blank" rel="noopener">네이버 블로그</a>
+        <a class="share-btn" data-share-band href="#" target="_blank" rel="noopener">밴드</a>
+      </div>
+    </section>
+
+    <div class="ad-slot" data-slot="in-article"></div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">※</span><h2>산식과 근거</h2><p>확인일 {calc.basis_date.replace(/-/g, '.')}</p></div>
+      <ol class="notes">
+        {calc.notes.map((n) => <li>{n}</li>)}
+      </ol>
+      <p class="src">
+        {calc.law.map((l) => <span>· <a href={l.url} target="_blank" rel="noopener">{l.name}</a> <em>{l.ver}</em><br /></span>)}
+      </p>
+    </section>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
+      <div class="tbl-wrap">
+        <table class="hist">
+          <thead><tr><th>날짜</th><th>기준값</th><th class="r">값</th><th>출처</th></tr></thead>
+          <tbody>
+            {calc.history.map((h) => (
+              <tr><td>{h.date.replace(/-/g, '.')}</td><td><code>{h.param}</code></td><td class="r"><b>{h.value}</b></td><td>{h.src}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="foot-note">{calc.disclaimer}<br />입력값은 이 브라우저 안에서만 계산되며 서버로 보내지 않는다.</p>
+  </div>
+
+  <script type="application/json" id="calc-params" set:html={JSON.stringify(params)} />
+  <script is:inline>
+    // 순수 JS. 입력이 바뀌면 즉시 다시 계산한다. 산식은 JSON steps.formula와 같은 순서.
+    // 이자는 적금 단리: 월 납입 회차마다 남은 개월 수 ÷ 12 만큼 붙는다 (금융위 2024.12.26 보도자료 예시와 같은 방식).
+    (function () {
+      function init() {
+        var root = document.querySelector('[data-calc]');
+        if (!root || root.dataset.ready) return;
+        root.dataset.ready = '1';
+        var P = JSON.parse(document.getElementById('calc-params').textContent);
+
+        var fmt = function (n) {
+          if (n === null || n === undefined || isNaN(n)) return '—';
+          return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+        var won = function (n) { return n === null ? '—' : fmt(n) + '원'; };
+        var pct = function (n) { return String(Math.round(n * 100) / 100) + '%'; };
+        var num = function (el) { return Number((el.value || '').replace(/[^\d]/g, '')) || 0; };
+        var dec = function (el) { var v = parseFloat((el.value || '').replace(/[^\d.]/g, '')); return isNaN(v) ? 0 : v; };
+
+        var I = {};
+        root.querySelectorAll('[data-in]').forEach(function (el) { I[el.dataset.in] = el; });
+        var V = {};
+        root.querySelectorAll('[data-val]').forEach(function (el) { V[el.dataset.val] = el; });
+        var answer = root.querySelector('[data-answer]');
+        var warn = root.querySelector('[data-warn]');
+        var totalRow = root.querySelector('[data-row="total"]');
+        var totalText = null;
+        totalRow.querySelector('td').childNodes.forEach(function (n) { if (n.nodeType === 3 && n.nodeValue.trim()) totalText = n; });
+
+        function set(id, text) { if (V[id]) V[id].textContent = text; }
+        function calc() {
+          var m = num(I.monthly);
+          var bracket = I.income.value;
+          var rb = dec(I.rate_base), rbn = dec(I.rate_bonus);
+          var useBonus = I.use_bonus.checked, early = I.early.checked;
+          var msgs = [];
+          Object.keys(V).forEach(function (k) { set(k, '—'); });
+          totalRow.classList.remove('bad');
+
+          if (!m) {
+            answer.textContent = '월 납입액을 넣으면 5년 만기 수령액이 나온다.';
+            warn.hidden = true; return;
+          }
+          if (m > P.monthly_max) {
+            m = P.monthly_max;
+            msgs.push('월 납입 한도는 ' + won(P.monthly_max) + '이라 그 값으로 계산했다.');
+          }
+          if (m < P.monthly_min) {
+            answer.textContent = '월 납입액은 최소 ' + won(P.monthly_min) + '이다.';
+            warn.hidden = true; return;
+          }
+
+          var months = early ? P.early_months : P.months;
+          var factor = months * (months + 1) / 2 / 12;          // (개월 수 + … + 1) ÷ 12
+          var rateDep = early ? rb : (useBonus ? rb + rbn : rb); // 납입액 금리: 3년 해지는 중도해지이율(=기본금리)
+          var rateCon = rb;                                      // 기여금 금리: 기본금리만
+          var conRatio = early ? P.early_contrib_pct / 100 : 1;
+
+          var M = P.match[bracket];
+          var inLimit = Math.min(m, M.limit);
+          var over = Math.max(0, m - M.limit);
+          var cm = Math.round(inLimit * M.rate1 / 100 + over * M.rate2 / 100); // (3) 월 정부기여금
+
+          var principal = m * months;                          // (1)
+          var interest = m * rateDep / 100 * factor;           // (2)
+          var conTotal = cm * months * conRatio;               // (4)
+          var conInterest = cm * rateCon / 100 * factor * conRatio; // (5)
+          var tax = 0;                                         // (6)
+          var total = principal + interest + conTotal + conInterest - tax; // (7)
+          var plain = principal + interest * (1 - P.tax_rate / 100);      // (8) 일반 적금
+          var diff = total - plain;
+
+          set('principal', won(principal) + ' (' + months + '개월)');
+          set('interest', won(interest) + ' (연 ' + pct(rateDep) + ')');
+          set('contrib_month', cm ? won(cm) + (over > 0 && M.rate2 ? ' (' + pct(M.rate1) + ' + 초과분 ' + pct(M.rate2) + ')' : ' (' + pct(M.rate1) + ')') : '0원 (비과세만)');
+          set('contrib_total', won(conTotal) + (early ? ' (60%)' : ''));
+          set('contrib_interest', cm ? won(conInterest) + ' (연 ' + pct(rateCon) + (early ? ', 60%' : '') + ')' : '0원');
+          set('tax', '0원');
+          set('total', won(total));
+          set('compare', won(plain) + ' → 차이 +' + won(diff));
+          if (totalText) totalText.nodeValue = early ? ' 3년 해지 수령액' : ' 만기 수령액';
+
+          answer.textContent = (early ? '3년 유지 후 해지하면 ' : '5년 만기 수령액은 ') + won(total) + '이다 (원금 ' + won(principal) + ' + 이자·기여금 ' + won(total - principal) + ', 비과세).';
+
+          if (bracket === 'b7500') msgs.push('총급여 6,000만원 초과 7,500만원 이하는 정부기여금이 없고 이자소득 비과세만 받는다.');
+          else if (over > 0 && M.rate2) msgs.push('매칭한도 ' + won(M.limit) + '까지는 ' + pct(M.rate1) + ', 초과분 ' + won(over) + '에는 3.0%가 붙어 월 기여금 ' + won(cm) + '이다 (구간 최대 ' + won(M.max_monthly) + ').');
+          if (!early && useBonus && rbn > 0) msgs.push('납입액 이자는 기본 ' + pct(rb) + ' + 우대 ' + pct(rbn) + 'p = 연 ' + pct(rateDep) + ', 기여금 이자는 기본금리 ' + pct(rb) + '만 적용했다 (금융위 주요 QA 15번).');
+          if (early) msgs.push('3년(36개월) 유지 후 일반 중도해지: 이자는 중도해지이율(기본금리 ' + pct(rb) + ', 우대 없음), 정부기여금과 기여금 이자는 60%, 비과세는 유지 (조세특례제한법 개정 ’25.1.1 시행).');
+          msgs.push('같은 금리의 일반 적금은 이자에 15.4%를 떼고 기여금이 없어 ' + won(plain) + '이다. 청년도약계좌가 ' + won(diff) + ' 더 많다. 이자는 단리 계산이라 은행 실제와 몇만원 차이 날 수 있다.');
+          warn.innerHTML = msgs.join('<br />');
+          warn.hidden = msgs.length === 0;
+        }
+
+        // 금액 칸: 숫자만 남기고 천 단위 콤마
+        root.querySelectorAll('[data-type="won"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+            el.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+            calc();
+          });
+        });
+        // 금리 칸: 숫자와 소수점 하나만
+        root.querySelectorAll('[data-type="pct"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d.]/g, '');
+            var parts = raw.split('.');
+            el.value = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('').slice(0, 2) : raw;
+            calc();
+          });
+        });
+        root.querySelectorAll('[data-type="select"], [data-type="check"]').forEach(function (el) {
+          el.addEventListener('input', calc); el.addEventListener('change', calc);
+        });
+
+        // 공유 주소 (기획서 3번)
+        var sh = root.querySelector('[data-share]');
+        if (sh) {
+          var u = encodeURIComponent(sh.dataset.url), t = encodeURIComponent(sh.dataset.title);
+          sh.querySelector('[data-share-fb]').href = 'https://www.facebook.com/sharer/sharer.php?u=' + u;
+          sh.querySelector('[data-share-x]').href = 'https://twitter.com/intent/tweet?url=' + u + '&text=' + t;
+          sh.querySelector('[data-share-naver]').href = 'https://share.naver.com/web/shareView?url=' + u + '&title=' + t;
+          sh.querySelector('[data-share-band]').href = 'https://band.us/plugin/share?body=' + t + '%20' + u + '&route=' + u;
+        }
+        calc();
+      }
+      document.addEventListener('astro:page-load', init);
+      if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</Base>
+
+<style>
+  /* 계산기 무드: 퇴직금·4대보험 계산기와 같은 유리 카드·금색 강조 토큰을 이 페이지 안에서만 정의 */
+  .calc {
+    --gold: #f5b544; --gold-ink: #ffd27a; --gold-soft: rgba(245, 181, 68, .12);
+    --rose: #ff6b7a; --rose-soft: rgba(255, 107, 122, .12);
+    --hair-2: rgba(255, 255, 255, .14);
+    --glass: rgba(18, 24, 38, .66); --glass-2: rgba(22, 28, 44, .55);
+    --field: rgba(9, 12, 22, .55);
+    --cshadow: 0 24px 60px -20px rgba(0, 0, 0, .6), 0 8px 18px -8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+    --r-sm: 12px;
+    max-width: 920px; margin: 0 auto; font-size: 15.5px; letter-spacing: -.01em;
+  }
+  :global(:root[data-theme='light']) .calc {
+    --gold: #c98a12; --gold-ink: #a86f0a; --gold-soft: rgba(201, 138, 18, .10);
+    --rose: #e0475a; --rose-soft: rgba(224, 71, 90, .10);
+    --hair-2: #d3d8e0; --glass: rgba(255, 255, 255, .78); --glass-2: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .85);
+    --cshadow: 0 24px 60px -24px rgba(25, 31, 40, .18), 0 6px 14px -8px rgba(25, 31, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+
+  .hero { padding: 54px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .02em; text-transform: uppercase; }
+  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); }
+  h1 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 14px; font-weight: 800; }
+  .lede { color: var(--ink-2); font-size: 16px; max-width: 640px; margin: 0; line-height: 1.6; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .stamp { font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--hair-2); color: var(--ink-2); background: var(--glass-2); backdrop-filter: blur(8px); }
+  .stamp b { color: var(--ink); font-weight: 700; }
+  .stamp.gold { border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--gold-ink); background: var(--gold-soft); }
+  .stamp.rose { border-color: color-mix(in srgb, var(--rose) 45%, transparent); color: var(--rose); background: var(--rose-soft); }
+  .stamp.rose b { color: var(--rose); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+  .out { position: sticky; top: 76px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .out { position: static; } }
+
+  .card { position: relative; background: var(--glass); border: 1px solid var(--hair-2); border-radius: var(--r); box-shadow: var(--cshadow); backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%); padding: 24px 24px 22px; margin: 18px 0; }
+  .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .14), transparent 60%); mix-blend-mode: overlay; }
+  :global(:root[data-theme='light']) .card::before { display: none; }
+  .card-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .num { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .06em; }
+  .card-h h2 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  .card-h p { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; line-height: 1.6; padding: 12px 14px; border-radius: 12px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); }
+  .hint[hidden] { display: none; }
+
+  .grid { display: grid; gap: 14px 18px; grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .field label small { font-weight: 500; color: var(--ink-3); }
+  .inp { position: relative; }
+  .inp input, .inp select { width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .inp select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+  .inp select option { color: #191f28; background: #fff; }
+  .inp:has(select)::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .inp input[data-type='won'], .inp input[data-type='pct'] { text-align: right; padding-right: 40px; }
+  .inp input:focus, .inp select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .inp input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .inp .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink-3); pointer-events: none; }
+  .sub { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+  .toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--hair); background: var(--glass-2); cursor: pointer; }
+  .toggle:hover { border-color: var(--hair-2); }
+  .toggle input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--hair-2); position: relative; flex: none; margin: 2px 0 0; cursor: pointer; transition: background .2s; }
+  .toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 99px; background: var(--ink-3); transition: all .2s cubic-bezier(.34, 1.5, .64, 1); }
+  .toggle input:checked { background: var(--gold); border-color: var(--gold); }
+  .toggle input:checked::after { left: 18px; background: #1a1206; }
+  .toggle span { font-size: 14px; font-weight: 600; }
+  .toggle small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; line-height: 1.5; }
+
+  /* 결과표: 항목 | 금액 | 산식 (모바일은 산식 열을 숨기고 항목 밑에 작게) */
+  .answer { margin: 0 0 14px; font-size: clamp(19px, 2.6vw, 24px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 55%, var(--gold-ink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 10px 8px; border-top: 1px solid var(--hair); vertical-align: top; text-align: left; line-height: 1.5; }
+  th { font-size: 12.5px; color: var(--ink-3); font-weight: 700; border-top: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td .no { color: var(--gold); font-weight: 800; font-size: 12px; margin-right: 2px; }
+  td code { font-family: inherit; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-2); font-size: 12.5px; line-height: 1.8; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  td:first-child { white-space: normal; min-width: 96px; }
+  .result td.r { white-space: normal; min-width: 96px; }
+  .result td.f { min-width: 96px; }
+  .result td code { font-size: 11.5px; padding: 1px 5px; line-height: 1.7; }
+  .result th, .result td { padding: 9px 5px; }
+  td .f2 { display: none; }
+  tr.total td { border-top: 2px solid var(--hair-2); font-weight: 800; font-size: 15px; }
+  tr.total td.r b { color: var(--gold-ink); font-size: 18px; }
+  tr.total.bad td.r b { color: var(--rose); font-size: 15px; }
+  tr[data-row='compare'] td { color: var(--ink-3); }
+  tr[data-row='compare'] td.r b { font-weight: 600; color: var(--ink-2); }
+  @media (max-width: 640px) {
+    th.f, td.f { display: none; }
+    td .f2 { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; }
+    td:first-child { white-space: normal; }
+    td.r { white-space: normal; font-size: 13px; }
+    th, td { padding: 9px 4px; }
+    tr.total td.r b { font-size: 16px; }
+  }
+
+  .slim { padding-bottom: 20px; }
+  .rel { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); color: var(--gold-ink); font-size: 14px; font-weight: 700; }
+  .rel-btn:hover { background: var(--gold); color: #1a1206; }
+  .rel-btn.off { border-style: dashed; border-color: var(--hair-2); background: transparent; color: var(--ink-3); cursor: default; }
+  .rel-btn.off:hover { background: transparent; color: var(--ink-3); }
+  .rel-btn small { font-size: 11px; font-weight: 600; }
+  .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .share-l { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin-right: 4px; }
+  .share-btn { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--hair-2); background: var(--glass-2); color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  .share-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .notes { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .notes li { margin-bottom: 8px; }
+  .notes li::marker { color: var(--gold); font-weight: 800; }
+  .src { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .src a { color: var(--ink-2); border-bottom: 1px dotted var(--ink-3); }
+  .src em { font-style: normal; color: var(--ink-3); }
+  .hist td { font-size: 13px; }
+  .hist code { font-family: inherit; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  @media (max-width: 640px) {
+    /* 이력표: 좁은 화면에선 날짜·기준값·값 한 줄, 출처는 그 아래 */
+    .hist thead { display: none; }
+    .hist tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); }
+    .hist tr:first-child { border-top: 0; }
+    .hist td { border: 0; padding: 0; white-space: normal; }
+    .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+  }
+  .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
+</style>

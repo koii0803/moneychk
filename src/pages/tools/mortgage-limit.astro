@@ -1,0 +1,492 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, CATEGORIES } from '../../config/site';
+import calc from '../../data/calcs/mortgage-limit.json';
+import tools from '../../data/tools.json';
+
+// 계산기 한 장 = JSON 한 장(src/data/calcs/<slug>.json). 이 페이지는 그 JSON을 읽어 그린다.
+// LTV·한도·스트레스 금리·DSR 비율은 JSON params(연도 키)에서만 온다. 코드에 숫자를 박지 않는다.
+const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
+const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
+const related = calc.related_calcs.map((r) => {
+  const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
+  return { ...r, href: t?.href || '' };
+});
+const basisYear = calc.basis_date.slice(0, 4);
+const P = calc.params as Record<string, unknown>;
+const params = P[basisYear] as Record<string, unknown>;
+const defaults: Record<string, string> = { term: '30' };
+const stepTitle = ['', '집과 지역', '소득과 기존 대출', '대출 조건'];
+const stepSub = ['', 'LTV·주택가격별 한도', 'DSR 여력', '금리·만기·상환 방식'];
+const stressLocalUntil = String(params.stress_local_until).replace(/-/g, '.');
+---
+
+<Base title={calc.name} description={calc.description}>
+  <div class="calc" data-calc>
+    <header class="hero">
+      <span class="eyebrow">모의계산기 · {cat.short}</span>
+      <h1>{calc.name}</h1>
+      <p class="lede">{calc.lede}</p>
+      <div class="stamps">
+        <span class="stamp gold big"><b>{calc.basis_label}</b></span>
+        <span class="stamp">확인일 <b>{calc.basis_date.replace(/-/g, '.')}</b></span>
+        <span class="stamp">규제 <b>금융위 6.27 · 10.15 대책 · ’26 가계부채 관리방안</b></span>
+        <span class="stamp rose">지방 스트레스 0.75%p <b>{stressLocalUntil}까지</b></span>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div class="in">
+        {[1, 2, 3].map((n) => (
+          <section class="card" id={`s${n}`}>
+            <div class="card-h">
+              <span class="num">STEP {n}</span>
+              <h2>{stepTitle[n]}</h2>
+              <p>{stepSub[n]}</p>
+            </div>
+            <div class="grid">
+              {byStep(n).map((f) => (
+                <div class="field">
+                  {f.type === 'check' ? (
+                    <label class="toggle">
+                      <input type="checkbox" id={`f-${f.id}`} data-in={f.id} data-type="check" />
+                      <span>{f.label}<small>{f.help}</small></span>
+                    </label>
+                  ) : (
+                    <>
+                      <label for={`f-${f.id}`}>{f.label}{f.optional && <small> (선택)</small>}</label>
+                      <div class="inp">
+                        {f.type === 'select' ? (
+                          <select id={`f-${f.id}`} data-in={f.id} data-type="select">
+                            {(f.options || []).map((o) => <option value={o.value}>{o.label}</option>)}
+                          </select>
+                        ) : f.type === 'pct' ? (
+                          <input type="text" inputmode="decimal" id={`f-${f.id}`} data-in={f.id} data-type="pct" placeholder="0" value={defaults[f.id] ?? ''} autocomplete="off" />
+                        ) : f.type === 'num' ? (
+                          <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="num" placeholder="0" value={defaults[f.id] ?? ''} autocomplete="off" />
+                        ) : (
+                          <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="won" placeholder="0" autocomplete="off" />
+                        )}
+                        {f.type === 'won' && <span class="unit">원</span>}
+                        {f.type === 'pct' && <span class="unit">%</span>}
+                        {f.type === 'num' && <span class="unit">{f.unit}</span>}
+                      </div>
+                      {f.help && <p class="sub">{f.help}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="out">
+        <section class="card result" id="result" aria-live="polite">
+          <div class="card-h"><span class="num">결과</span><h2>대출 한도 계산표</h2><p>{calc.basis_label}</p></div>
+          <p class="answer" data-answer>주택 가격과 연소득을 넣으면 예상 대출 한도가 나온다.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>항목</th><th class="r">금액</th><th class="f">산식</th></tr></thead>
+              <tbody>
+                {calc.steps.map((s) => (
+                  <tr class={s.total ? 'total' : ''} data-row={s.id}>
+                    <td><span class="no">({s.no})</span> {s.label}<small class="f2">{s.formula}</small></td>
+                    <td class="r"><b data-val={s.id}>—</b></td>
+                    <td class="f"><code>{s.formula}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="hint" data-warn hidden></p>
+        </section>
+      </div>
+    </div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">관련</span><h2>같이 쓰는 계산기</h2></div>
+      <div class="rel">
+        {related.map((r) => r.href
+          ? <a class="rel-btn" href={r.href}>{r.name}</a>
+          : <span class="rel-btn off" aria-disabled="true">{r.name} <small>준비 중</small></span>)}
+      </div>
+      <div class="share" data-share data-url={pageUrl} data-title={`${calc.name} — ${SITE.name}`}>
+        <span class="share-l">공유</span>
+        <a class="share-btn" data-share-fb href="#" target="_blank" rel="noopener">페이스북</a>
+        <a class="share-btn" data-share-x href="#" target="_blank" rel="noopener">X</a>
+        <a class="share-btn" data-share-naver href="#" target="_blank" rel="noopener">네이버 블로그</a>
+        <a class="share-btn" data-share-band href="#" target="_blank" rel="noopener">밴드</a>
+      </div>
+    </section>
+
+    <div class="ad-slot" data-slot="in-article"></div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">※</span><h2>산식과 근거</h2><p>확인일 {calc.basis_date.replace(/-/g, '.')}</p></div>
+      <ol class="notes">
+        {calc.notes.map((n) => <li>{n}</li>)}
+      </ol>
+      <p class="src">
+        {calc.law.map((l) => <span>· <a href={l.url} target="_blank" rel="noopener">{l.name}</a> <em>{l.ver}</em><br /></span>)}
+      </p>
+    </section>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
+      <div class="tbl-wrap">
+        <table class="hist">
+          <thead><tr><th>날짜</th><th>기준값</th><th class="r">값</th><th>출처</th></tr></thead>
+          <tbody>
+            {calc.history.map((h) => (
+              <tr><td>{h.date.replace(/-/g, '.')}</td><td><code>{h.param}</code></td><td class="r"><b>{h.value}</b></td><td>{h.src}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="foot-note">{calc.disclaimer}<br />입력값은 이 브라우저 안에서만 계산되며 서버로 보내지 않는다.</p>
+  </div>
+
+  <script type="application/json" id="calc-params" set:html={JSON.stringify(params)} />
+  <script is:inline>
+    // 순수 JS. 입력이 바뀌면 즉시 다시 계산한다. 산식은 JSON steps.formula와 같은 순서.
+    // (1)(2) LTV → (3) 수도권·규제지역 주택가격별 한도 → (4)(5)(6) 스트레스 DSR 역산 → (7) 셋 중 최소 → (8) 실제 금리 월 상환액.
+    (function () {
+      function init() {
+        var root = document.querySelector('[data-calc]');
+        if (!root || root.dataset.ready) return;
+        root.dataset.ready = '1';
+        var P = JSON.parse(document.getElementById('calc-params').textContent);
+
+        var fmt = function (n) {
+          if (n === null || n === undefined || isNaN(n)) return '—';
+          return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+        var won = function (n) { return n === null || n === undefined || isNaN(n) ? '—' : fmt(n) + '원'; };
+        var eok = function (n) {
+          // 억 단위 보조 표기 (1억 이상만)
+          if (!n || n < 100000000) return '';
+          var e = n / 100000000;
+          return ' (' + (Math.round(e * 100) / 100).toLocaleString('ko-KR') + '억)';
+        };
+        var pct = function (n) { return String(Math.round(n * 100) / 100) + '%'; };
+        var num = function (el) { return Number((el.value || '').replace(/[^\d]/g, '')) || 0; };
+        var dec = function (el) { var v = parseFloat(el.value); return isNaN(v) ? 0 : v; };
+
+        var I = {};
+        root.querySelectorAll('[data-in]').forEach(function (el) { I[el.dataset.in] = el; });
+        var V = {};
+        root.querySelectorAll('[data-val]').forEach(function (el) { V[el.dataset.val] = el; });
+        var answer = root.querySelector('[data-answer]');
+        var warn = root.querySelector('[data-warn]');
+        var totalRow = root.querySelector('[data-row="limit"]');
+
+        function set(id, text) { if (V[id]) V[id].textContent = text; }
+
+        // 원리금균등: 월 상환액 = 원금 × r(1+r)^n ÷ ((1+r)^n − 1)
+        function annuityPay(principal, r, n) {
+          if (r <= 0) return principal / n;
+          var k = Math.pow(1 + r, n);
+          return principal * r * k / (k - 1);
+        }
+        // 원리금균등 역산: 월 상환액 m 으로 빌릴 수 있는 원금 = m × (1 − (1+r)^−n) ÷ r
+        function annuityPrincipal(m, r, n) {
+          if (r <= 0) return m * n;
+          return m * (1 - Math.pow(1 + r, -n)) / r;
+        }
+        // 스트레스 금리 적용비율: 고정기간 ÷ 만기 구간 (3단계 시행방안 표3)
+        function stressBucket(type, termYears) {
+          if (type === 'variable') return 'lt30';
+          if (type === 'fixed') return 'ge70';
+          var share = P.fixed_years / termYears;
+          if (P.fixed_years < 5) return 'under5';
+          if (share < 0.3) return 'lt30';
+          if (share < 0.5) return 'lt50';
+          if (share < 0.7) return 'lt70';
+          return 'ge70';
+        }
+
+        function calc() {
+          var price = num(I.price), region = I.region.value, houses = I.houses.value;
+          var first = I.first_home.checked, low = I.low_income.checked;
+          var income = num(I.income), existing = num(I.existing), lender = I.lender.value;
+          var rate = dec(I.rate), term = num(I.term), rtype = I.rate_type.value, repay = I.repay.value;
+          var msgs = [];
+          Object.keys(V).forEach(function (k) { set(k, '—'); });
+          totalRow.classList.remove('bad');
+
+          if (!price || !income) {
+            answer.textContent = '주택 가격과 연소득을 넣으면 예상 대출 한도가 나온다.';
+            warn.hidden = true; return;
+          }
+
+          // (1) 적용 LTV
+          var L = P.ltv[region];
+          var ltv = L[houses], ltvTag = '';
+          if (houses === 'none') {
+            var lowOk = low && price <= P.low_income.price_max && income <= P.low_income.income_max;
+            if (low && !lowOk) msgs.push('서민·실수요자 요건(주택 ' + won(P.low_income.price_max) + ' 이하, 부부합산 연소득 ' + won(P.low_income.income_max) + ' 이하)에 안 맞아 일반 LTV로 계산했다.');
+            if (first && L.first >= ltv) { ltv = L.first; ltvTag = ' (생애최초)'; }
+            if (lowOk && L.low > ltv) { ltv = L.low; ltvTag = ' (서민·실수요자)'; }
+          } else if (houses === 'sell1') {
+            ltvTag = ' (' + P.sell_months[region] + '개월 내 처분 약정)';
+            if (first || low) msgs.push('생애최초·서민실수요자 우대는 무주택자만 해당해 적용하지 않았다.');
+          } else {
+            if (first || low) msgs.push('생애최초·서민실수요자 우대는 무주택자만 해당해 적용하지 않았다.');
+          }
+          set('ltv_rate', pct(ltv) + ltvTag);
+
+          if (ltv === 0) {
+            set('ltv_limit', '0원'); set('limit', '대출 불가');
+            totalRow.classList.add('bad');
+            answer.textContent = '수도권·규제지역에서 1주택자가 처분 없이 추가 구입하거나 2주택 이상이면 주택구입 주담대가 안 된다 (LTV 0%).';
+            msgs.push('금융위 6.27 대책: 수도권·규제지역 내 2주택 이상 보유자의 추가 구입, 1주택자의 미처분 추가 구입은 주담대 금지. 기존 집을 6개월 내 처분하는 약정을 하면 무주택자와 같은 LTV를 받는다.');
+            warn.innerHTML = msgs.join('<br />'); warn.hidden = false; return;
+          }
+
+          // (2) LTV 한도
+          var ltvLimit = Math.floor(price * ltv / 100);
+          set('ltv_limit', won(ltvLimit) + eok(ltvLimit));
+
+          // (3) 주택가격별 한도 (수도권·규제지역만)
+          var capRows = P.cap[region], cap = null;
+          for (var i = 0; i < capRows.length; i++) {
+            if (capRows[i].price_max === null || price <= capRows[i].price_max) { cap = capRows[i].cap; break; }
+          }
+          set('cap', cap === null ? '없음 (지방)' : won(cap) + eok(cap));
+
+          // (4) 연간 상환 여력
+          var dsrPct = P.dsr[lender];
+          var room = income * dsrPct / 100 - existing;
+          set('dsr_room', (room < 0 ? '−' : '') + won(Math.abs(room)) + ' (DSR ' + dsrPct + '%)');
+
+          // 만기 보정
+          var maxTerm = P.max_term[region];
+          var termUsed = term;
+          if (!termUsed) {
+            set('stress_rate', '—'); set('dsr_limit', '—');
+            answer.textContent = '만기(년)를 넣으면 DSR 한도가 나온다.';
+            warn.innerHTML = msgs.join('<br />'); warn.hidden = msgs.length === 0; return;
+          }
+          if (maxTerm && termUsed > maxTerm) { termUsed = maxTerm; msgs.push('수도권·규제지역 주담대 만기는 ' + maxTerm + '년 이내라 ' + maxTerm + '년으로 계산했다 (6.27 대책).'); }
+          var n = termUsed * 12;
+
+          // (5) 심사 금리 = 금리 + 스트레스 금리 × 적용비율
+          var stress = P.stress[region];
+          var bucket = stressBucket(rtype, termUsed);
+          var ratio = P.stress_ratio[rtype][bucket];
+          var stressApplied = stress * ratio / 100;
+          var examRate = rate + stressApplied;
+          set('stress_rate', pct(examRate) + ' (' + pct(rate) + ' + ' + pct(stress) + ' × ' + ratio + '%)');
+
+          // (6) DSR 한도 (원리금균등 역산, 심사 금리)
+          var dsrLimit = room > 0 ? Math.floor(annuityPrincipal(room / 12, examRate / 100 / 12, n)) : 0;
+          set('dsr_limit', won(dsrLimit) + eok(dsrLimit));
+
+          // (7) 예상 한도 = min
+          var cands = [ { v: ltvLimit, k: 'LTV' }, { v: dsrLimit, k: 'DSR' } ];
+          if (cap !== null) cands.push({ v: cap, k: '주택가격별 한도' });
+          var best = cands.reduce(function (a, b) { return b.v < a.v ? b : a; });
+          var limit = Math.max(0, best.v);
+          set('limit', won(limit) + eok(limit) + ' · ' + best.k + ' 기준');
+
+          // (8) 월 상환액 (실제 금리)
+          var r = rate / 100 / 12, monthly, tag;
+          if (repay === 'annuity') { monthly = annuityPay(limit, r, n); tag = '원리금균등'; }
+          else if (repay === 'principal') { monthly = limit / n + limit * r; tag = '원금균등 첫 달'; }
+          else { monthly = limit * r; tag = '만기일시 이자'; }
+          set('monthly', rate > 0 || repay !== 'bullet' ? won(Math.round(monthly)) + ' (' + tag + ')' : '—');
+
+          if (limit <= 0) {
+            totalRow.classList.add('bad');
+            answer.textContent = '기존 대출 원리금이 DSR 여력을 다 써서 추가 주담대가 어렵다.';
+            msgs.push('연소득 × DSR ' + dsrPct + '% = ' + won(income * dsrPct / 100) + '인데 기존 대출 연 원리금이 ' + won(existing) + '이다. 기존 대출을 줄이거나 소득 인정을 늘려야 한다.');
+          } else {
+            answer.textContent = '예상 대출 한도는 ' + won(limit) + eok(limit) + '이다 (' + best.k + ' 기준, 월 ' + won(Math.round(monthly)) + ').';
+          }
+          if (rate === 0) msgs.push('대출 금리를 넣지 않아 심사 금리는 스트레스 금리만으로, 월 상환액은 무이자로 계산했다.');
+          if (region === 'local') msgs.push('지방 주담대 스트레스 금리 0.75%p는 ' + String(P.stress_local_until).replace(/-/g, '.') + '까지다 (금융위 공고 제2026-362호). 이후 1.5%p로 오르면 DSR 한도가 줄어든다.');
+          if (ratio === 0) msgs.push('고정기간이 만기의 70% 이상이라 스트레스 금리를 붙이지 않았다 (3단계 시행방안 표3).');
+          if (houses === 'none' && region !== 'local') msgs.push('수도권·규제지역 주택구입 주담대는 6개월 내 전입 의무가 있다 (6.27 대책).');
+          msgs.push('은행별 시세 산정·소득 인정·신용도·자체 총량 관리에 따라 실제 한도는 이보다 작을 수 있다.');
+          warn.innerHTML = msgs.join('<br />');
+          warn.hidden = msgs.length === 0;
+        }
+
+        // 금액 칸: 숫자만 남기고 천 단위 콤마
+        root.querySelectorAll('[data-type="won"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+            el.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+            calc();
+          });
+        });
+        // 금리 칸: 숫자와 소수점 하나만
+        root.querySelectorAll('[data-type="pct"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d.]/g, '');
+            var parts = raw.split('.');
+            el.value = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('').slice(0, 2) : raw;
+            calc();
+          });
+        });
+        // 연 수 칸: 정수만
+        root.querySelectorAll('[data-type="num"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            el.value = el.value.replace(/[^\d]/g, '').slice(0, 2);
+            calc();
+          });
+        });
+        root.querySelectorAll('[data-type="select"], [data-type="check"]').forEach(function (el) {
+          el.addEventListener('input', calc); el.addEventListener('change', calc);
+        });
+
+        // 공유 주소 (기획서 3번)
+        var sh = root.querySelector('[data-share]');
+        if (sh) {
+          var u = encodeURIComponent(sh.dataset.url), t = encodeURIComponent(sh.dataset.title);
+          sh.querySelector('[data-share-fb]').href = 'https://www.facebook.com/sharer/sharer.php?u=' + u;
+          sh.querySelector('[data-share-x]').href = 'https://twitter.com/intent/tweet?url=' + u + '&text=' + t;
+          sh.querySelector('[data-share-naver]').href = 'https://share.naver.com/web/shareView?url=' + u + '&title=' + t;
+          sh.querySelector('[data-share-band]').href = 'https://band.us/plugin/share?body=' + t + '%20' + u + '&route=' + u;
+        }
+        calc();
+      }
+      document.addEventListener('astro:page-load', init);
+      if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</Base>
+
+<style>
+  /* 계산기 무드: 퇴직금·4대보험·청년도약계좌 계산기와 같은 유리 카드·금색 강조 토큰을 이 페이지 안에서만 정의 */
+  .calc {
+    --gold: #f5b544; --gold-ink: #ffd27a; --gold-soft: rgba(245, 181, 68, .12);
+    --rose: #ff6b7a; --rose-soft: rgba(255, 107, 122, .12);
+    --hair-2: rgba(255, 255, 255, .14);
+    --glass: rgba(18, 24, 38, .66); --glass-2: rgba(22, 28, 44, .55);
+    --field: rgba(9, 12, 22, .55);
+    --cshadow: 0 24px 60px -20px rgba(0, 0, 0, .6), 0 8px 18px -8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+    --r-sm: 12px;
+    max-width: 920px; margin: 0 auto; font-size: 15.5px; letter-spacing: -.01em;
+  }
+  :global(:root[data-theme='light']) .calc {
+    --gold: #c98a12; --gold-ink: #a86f0a; --gold-soft: rgba(201, 138, 18, .10);
+    --rose: #e0475a; --rose-soft: rgba(224, 71, 90, .10);
+    --hair-2: #d3d8e0; --glass: rgba(255, 255, 255, .78); --glass-2: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .85);
+    --cshadow: 0 24px 60px -24px rgba(25, 31, 40, .18), 0 6px 14px -8px rgba(25, 31, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+
+  .hero { padding: 54px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .02em; text-transform: uppercase; }
+  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); }
+  h1 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 14px; font-weight: 800; }
+  .lede { color: var(--ink-2); font-size: 16px; max-width: 640px; margin: 0; line-height: 1.6; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .stamp { font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--hair-2); color: var(--ink-2); background: var(--glass-2); backdrop-filter: blur(8px); }
+  .stamp b { color: var(--ink); font-weight: 700; }
+  .stamp.gold { border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--gold-ink); background: var(--gold-soft); }
+  .stamp.gold.big { font-size: 15px; padding: 9px 16px; }
+  .stamp.gold.big b { font-size: 16px; color: var(--gold-ink); }
+  .stamp.rose { border-color: color-mix(in srgb, var(--rose) 45%, transparent); color: var(--rose); background: var(--rose-soft); }
+  .stamp.rose b { color: var(--rose); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+  .out { position: sticky; top: 76px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .out { position: static; } }
+
+  .card { position: relative; background: var(--glass); border: 1px solid var(--hair-2); border-radius: var(--r); box-shadow: var(--cshadow); backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%); padding: 24px 24px 22px; margin: 18px 0; }
+  .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .14), transparent 60%); mix-blend-mode: overlay; }
+  :global(:root[data-theme='light']) .card::before { display: none; }
+  .card-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .num { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .06em; }
+  .card-h h2 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  .card-h p { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; line-height: 1.6; padding: 12px 14px; border-radius: 12px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); }
+  .hint[hidden] { display: none; }
+
+  .grid { display: grid; gap: 14px 18px; grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .field label small { font-weight: 500; color: var(--ink-3); }
+  .inp { position: relative; }
+  .inp input, .inp select { width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .inp select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+  .inp select option { color: #191f28; background: #fff; }
+  .inp:has(select)::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .inp input[data-type='won'], .inp input[data-type='pct'], .inp input[data-type='num'] { text-align: right; padding-right: 40px; }
+  .inp input:focus, .inp select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .inp input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .inp .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink-3); pointer-events: none; }
+  .sub { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+  .toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--hair); background: var(--glass-2); cursor: pointer; }
+  .toggle:hover { border-color: var(--hair-2); }
+  .toggle input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--hair-2); position: relative; flex: none; margin: 2px 0 0; cursor: pointer; transition: background .2s; }
+  .toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 99px; background: var(--ink-3); transition: all .2s cubic-bezier(.34, 1.5, .64, 1); }
+  .toggle input:checked { background: var(--gold); border-color: var(--gold); }
+  .toggle input:checked::after { left: 18px; background: #1a1206; }
+  .toggle span { font-size: 14px; font-weight: 600; }
+  .toggle small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; line-height: 1.5; }
+
+  /* 결과표: 항목 | 금액 | 산식 (모바일은 산식 열을 숨기고 항목 밑에 작게) */
+  .answer { margin: 0 0 14px; font-size: clamp(19px, 2.6vw, 24px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 55%, var(--gold-ink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 10px 8px; border-top: 1px solid var(--hair); vertical-align: top; text-align: left; line-height: 1.5; }
+  th { font-size: 12.5px; color: var(--ink-3); font-weight: 700; border-top: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td .no { color: var(--gold); font-weight: 800; font-size: 12px; margin-right: 2px; }
+  td code { font-family: inherit; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-2); font-size: 12.5px; line-height: 1.8; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  td:first-child { white-space: normal; min-width: 96px; }
+  .result td.r { white-space: normal; min-width: 96px; }
+  .result td.f { min-width: 96px; }
+  .result td code { font-size: 11.5px; padding: 1px 5px; line-height: 1.7; }
+  .result th, .result td { padding: 9px 5px; }
+  td .f2 { display: none; }
+  tr.total td { border-top: 2px solid var(--hair-2); font-weight: 800; font-size: 15px; }
+  tr.total td.r b { color: var(--gold-ink); font-size: 18px; }
+  tr.total.bad td.r b { color: var(--rose); font-size: 15px; }
+  tr[data-row='compare'] td { color: var(--ink-3); }
+  tr[data-row='compare'] td.r b { font-weight: 600; color: var(--ink-2); }
+  @media (max-width: 640px) {
+    th.f, td.f { display: none; }
+    td .f2 { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; }
+    td:first-child { white-space: normal; }
+    td.r { white-space: normal; font-size: 13px; }
+    th, td { padding: 9px 4px; }
+    tr.total td.r b { font-size: 16px; }
+  }
+
+  .slim { padding-bottom: 20px; }
+  .rel { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); color: var(--gold-ink); font-size: 14px; font-weight: 700; }
+  .rel-btn:hover { background: var(--gold); color: #1a1206; }
+  .rel-btn.off { border-style: dashed; border-color: var(--hair-2); background: transparent; color: var(--ink-3); cursor: default; }
+  .rel-btn.off:hover { background: transparent; color: var(--ink-3); }
+  .rel-btn small { font-size: 11px; font-weight: 600; }
+  .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .share-l { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin-right: 4px; }
+  .share-btn { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--hair-2); background: var(--glass-2); color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  .share-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .notes { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .notes li { margin-bottom: 8px; }
+  .notes li::marker { color: var(--gold); font-weight: 800; }
+  .src { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .src a { color: var(--ink-2); border-bottom: 1px dotted var(--ink-3); }
+  .src em { font-style: normal; color: var(--ink-3); }
+  .hist td { font-size: 13px; }
+  .hist code { font-family: inherit; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  @media (max-width: 640px) {
+    /* 이력표: 좁은 화면에선 날짜·기준값·값 한 줄, 출처는 그 아래 */
+    .hist thead { display: none; }
+    .hist tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); }
+    .hist tr:first-child { border-top: 0; }
+    .hist td { border: 0; padding: 0; white-space: normal; }
+    .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+  }
+  .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
+</style>

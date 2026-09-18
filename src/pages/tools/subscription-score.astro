@@ -1,0 +1,444 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, CATEGORIES } from '../../config/site';
+import calc from '../../data/calcs/subscription-score.json';
+import tools from '../../data/tools.json';
+
+// 계산기 한 장 = JSON 한 장(src/data/calcs/<slug>.json). 이 페이지는 그 JSON을 읽어 그린다.
+// 구조·무드는 severance-pay.astro와 같은 벌. 점수표·상한·기산 나이는 전부 JSON params(연도 키)에서 온다. 코드에 숫자를 박지 않는다.
+const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
+const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
+const related = calc.related_calcs.map((r: any) => {
+  const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
+  return { ...r, href: r.href || t?.href || '' };
+});
+const basisYear = calc.basis_date.slice(0, 4);
+const P = calc.params as Record<string, unknown>;
+const params = P[basisYear] as Record<string, unknown>;
+const stepTitle = ['', '무주택기간', '부양가족', '청약통장'];
+const stepSub = ['', '만 30세·혼인·처분일', '본인 제외, 같은 등본', '가입일·기준일·예외'];
+---
+
+<Base title={calc.name} description={calc.description}>
+  <div class="calc" data-calc>
+    <header class="hero">
+      <span class="eyebrow">모의계산기 · {cat.short}</span>
+      <h1>{calc.name}</h1>
+      <p class="lede">{calc.lede}</p>
+      <div class="stamps">
+        <span class="stamp gold"><b>{calc.basis_label}</b></span>
+        <span class="stamp">확인일 <b>{calc.basis_date.replace(/-/g, '.')}</b></span>
+        <span class="stamp">산식 <b>주택공급에 관한 규칙 [별표 1]</b></span>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div class="in">
+        {[1, 2, 3].map((n) => (
+          <section class="card" id={`s${n}`}>
+            <div class="card-h">
+              <span class="num">STEP {n}</span>
+              <h2>{stepTitle[n]}</h2>
+              <p>{stepSub[n]}</p>
+            </div>
+            <div class="grid">
+              {byStep(n).map((f: any) => (
+                <div class="field" data-field={f.id}>
+                  {f.type === 'check' ? (
+                    <label class="toggle">
+                      <input type="checkbox" id={`f-${f.id}`} data-in={f.id} data-type="check" />
+                      <span>{f.label}<small>{f.help}</small></span>
+                    </label>
+                  ) : (
+                    <>
+                      <label for={`f-${f.id}`}>{f.label}{f.optional && <small> (선택)</small>}</label>
+                      <div class="inp">
+                        {f.type === 'select' ? (
+                          <select id={`f-${f.id}`} data-in={f.id} data-type="select">
+                            {(f.options || []).map((o: any) => <option value={o.value}>{o.label}</option>)}
+                          </select>
+                        ) : (
+                          <input type="date" id={`f-${f.id}`} data-in={f.id} data-type="date" />
+                        )}
+                      </div>
+                      {f.help && <p class="sub">{f.help}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="out">
+        <section class="card result" id="result" aria-live="polite">
+          <div class="card-h"><span class="num">결과</span><h2>청약가점 계산표</h2><p>{calc.basis_label}</p></div>
+          <p class="answer" data-answer>생년월일·청약통장 가입일을 넣으면 청약가점이 나온다.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>항목</th><th class="r">값</th><th class="f">산식</th></tr></thead>
+              <tbody>
+                {calc.steps.map((s) => (
+                  <tr class={s.total ? 'total' : ''} data-row={s.id}>
+                    <td><span class="no">({s.no})</span> {s.label}<small class="f2">{s.formula}</small></td>
+                    <td class="r"><b data-val={s.id}>—</b><small class="tag" data-tag={s.id}></small></td>
+                    <td class="f"><code>{s.formula}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="hint" data-warn hidden></p>
+        </section>
+      </div>
+    </div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">관련</span><h2>같이 쓰는 계산기</h2></div>
+      <div class="rel">
+        {related.map((r) => r.href
+          ? <a class="rel-btn" href={r.href}>{r.name}</a>
+          : <span class="rel-btn off" aria-disabled="true">{r.name} <small>준비 중</small></span>)}
+      </div>
+      <div class="share" data-share data-url={pageUrl} data-title={`${calc.name} — ${SITE.name}`}>
+        <span class="share-l">공유</span>
+        <a class="share-btn" data-share-fb href="#" target="_blank" rel="noopener">페이스북</a>
+        <a class="share-btn" data-share-x href="#" target="_blank" rel="noopener">X</a>
+        <a class="share-btn" data-share-naver href="#" target="_blank" rel="noopener">네이버 블로그</a>
+        <a class="share-btn" data-share-band href="#" target="_blank" rel="noopener">밴드</a>
+      </div>
+    </section>
+
+    <div class="ad-slot" data-slot="in-article"></div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">※</span><h2>산식과 근거</h2><p>확인일 {calc.basis_date.replace(/-/g, '.')}</p></div>
+      <ol class="notes">
+        {calc.notes.map((n) => <li>{n}</li>)}
+      </ol>
+      <p class="src">
+        {calc.law.map((l) => <span>· <a href={l.url} target="_blank" rel="noopener">{l.name}</a> <em>{l.ver}</em><br /></span>)}
+      </p>
+    </section>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
+      <div class="tbl-wrap">
+        <table class="hist">
+          <thead><tr><th>날짜</th><th>기준값</th><th class="r">값</th><th>출처</th></tr></thead>
+          <tbody>
+            {calc.history.map((h) => (
+              <tr><td>{h.date.replace(/-/g, '.')}</td><td><code>{h.param}</code></td><td class="r"><b>{h.value}</b></td><td>{h.src}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="foot-note">{calc.disclaimer}<br />입력값은 이 브라우저 안에서만 계산되며 서버로 보내지 않는다.</p>
+  </div>
+
+  <script type="application/json" id="calc-params" set:html={JSON.stringify(params)} />
+  <script is:inline>
+    // 순수 JS. 입력이 바뀌면 즉시 다시 계산한다. 산식은 JSON steps.formula와 같은 순서.
+    // 기간은 달력 기준 만 개월(같은 날짜가 돌아와야 한 달)로 센다. 점수표는 JSON params에서만 온다.
+    (function () {
+      function init() {
+        var root = document.querySelector('[data-calc]');
+        if (!root || root.dataset.ready) return;
+        root.dataset.ready = '1';
+        var P = JSON.parse(document.getElementById('calc-params').textContent);
+
+        var I = {};
+        root.querySelectorAll('[data-in]').forEach(function (el) { I[el.dataset.in] = el; });
+        var V = {}, T = {};
+        root.querySelectorAll('[data-val]').forEach(function (el) { V[el.dataset.val] = el; });
+        root.querySelectorAll('[data-tag]').forEach(function (el) { T[el.dataset.tag] = el; });
+        var answer = root.querySelector('[data-answer]');
+        var warn = root.querySelector('[data-warn]');
+        var totalRow = root.querySelector('[data-row="total"]');
+        var F = {};
+        root.querySelectorAll('[data-field]').forEach(function (el) { F[el.dataset.field] = el; });
+
+        // 날짜: 'YYYY-MM-DD' → {y,m,d} (UTC 기준, 시간대 영향 없음)
+        var parse = function (v) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return null;
+          var p = v.split('-').map(Number);
+          var t = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+          if (t.getUTCMonth() !== p[1] - 1) return null;
+          return { y: p[0], m: p[1], d: p[2], t: t.getTime() };
+        };
+        var date = function (el) { return parse(el.value); };
+        var today = function () { var n = new Date(); return parse(n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0')); };
+        var mk = function (y, m, d) { // 그 달에 없는 날짜(2.29·31일)는 말일로
+          var last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+          return parse(y + '-' + String(m).padStart(2, '0') + '-' + String(Math.min(d, last)).padStart(2, '0'));
+        };
+        var addYears = function (a, n) { return mk(a.y + n, a.m, a.d); };
+        var later = function (a, b) { return !a ? b : !b ? a : (a.t >= b.t ? a : b); };
+        var earlier = function (a, b) { return !a ? b : !b ? a : (a.t <= b.t ? a : b); };
+        // a ~ b 만 개월 수 (b < a면 0)
+        var months = function (a, b) {
+          if (!a || !b || b.t < a.t) return 0;
+          var n = (b.y - a.y) * 12 + (b.m - a.m);
+          if (b.d < a.d) n -= 1;
+          return Math.max(n, 0);
+        };
+        var ym = function (n) { var y = Math.floor(n / 12), m = n % 12; return ((y ? y + '년' : '') + (m || !y ? ' ' + m + '개월' : '')).trim(); };
+        var fd = function (a) { return a.y + '.' + String(a.m).padStart(2, '0') + '.' + String(a.d).padStart(2, '0') + '.'; };
+        // 구간표 [상한(미만), 점수] → 점수와 구간 이름
+        var band = function (table, val, unit) {
+          var lo = 0;
+          for (var i = 0; i < table.length; i++) {
+            var hi = table[i][0], sc = table[i][1];
+            if (hi === null || val < hi) {
+              var name = hi === null ? unit(lo) + ' 이상' : (lo ? unit(lo) + ' 이상 ~ ' : '') + unit(hi) + ' 미만';
+              return { score: sc, name: name };
+            }
+            lo = hi;
+          }
+          return { score: 0, name: '' };
+        };
+        var yUnit = function (n) { return n + '년'; };
+        var mUnit = function (n) { return n % 12 === 0 ? (n / 12) + '년' : n + '개월'; };
+
+        function set(id, text, tag) { if (V[id]) V[id].textContent = text; if (T[id]) T[id].textContent = tag || ''; }
+        function reset() { Object.keys(V).forEach(function (k) { set(k, '—', ''); }); totalRow.classList.remove('bad'); }
+
+        function calc() {
+          var birth = date(I.birth), married = I.marital.value === 'married', marry = date(I.marry_date);
+          var sold = I.owned.value === 'sold', soldAt = date(I.sold_date);
+          var parents = Number(I.parents.value) || 0, children = Number(I.children.value) || 0;
+          var join = date(I.join), sjoin = date(I.spouse_join), ref = date(I.ref_date) || today();
+          var hasHouse = I.has_house.checked;
+          var msgs = [];
+          reset();
+
+          // 안 쓰는 칸은 흐리게
+          F.marry_date.classList.toggle('dim', !married);
+          F.spouse_join.classList.toggle('dim', !married);
+          F.sold_date.classList.toggle('dim', !sold);
+
+          if (!birth || !join) {
+            answer.textContent = '생년월일·청약통장 가입일을 넣으면 청약가점이 나온다.';
+            warn.hidden = true; return;
+          }
+
+          // (1)(2) 무주택기간: 만 30세(30세 전 혼인은 혼인신고일)와 처분일 중 늦은 날부터 기준일까지
+          var age30 = addYears(birth, P.wh_age);
+          var start = age30, why = '만 ' + P.wh_age + '세 ' + fd(age30);
+          if (married && marry && marry.t < age30.t) { start = marry; why = '혼인신고일 ' + fd(marry); }
+          if (sold && soldAt && soldAt.t > start.t) { start = soldAt; why = '처분일 ' + fd(soldAt); }
+          var whM = months(start, ref);
+          var whScore = 0, whName = '';
+          if (hasHouse) { whScore = 0; whName = '유주택 세대 0점'; }
+          else if (start.t > ref.t) { whScore = 0; whName = '무주택기간 없음 0점'; }
+          else { var wb = band(P.wh_table, Math.floor(whM / 12), yUnit); whScore = wb.score; whName = wb.name; }
+
+          // (3)(4) 부양가족: 배우자 + 직계존속 + 직계비속, 6명 이상은 한 구간
+          var spouseN = married ? 1 : 0;
+          var famN = spouseN + parents + children;
+          var famIdx = Math.min(famN, P.family_table.length - 1);
+          var famScore = P.family_table[famIdx];
+          var famName = (famIdx === P.family_table.length - 1 ? famIdx + '명 이상' : famIdx + '명') + ' → ' + famScore + '점';
+
+          // (5) 가입기간: 만 19세 전 가입분은 2023.12.31. 이전 24개월·전체 60개월 상한
+          var adultAt = addYears(birth, P.adult_age);
+          var split = parse(P.minor_split_date);
+          var minorEnd = earlier(adultAt, ref);
+          var minorRec = 0, minorRaw = 0;
+          if (join.t < minorEnd.t) {
+            minorRaw = months(join, minorEnd);
+            var pre = months(join, earlier(minorEnd, split));
+            var post = months(later(join, split), minorEnd);
+            minorRec = Math.min(Math.min(pre, P.minor_pre2024_cap_months) + post, P.minor_cap_months);
+          }
+          var adultM = months(later(join, adultAt), ref);
+          var subM = minorRec + adultM;
+          var subTag = '';
+          if (join.t > ref.t) { subM = 0; subTag = '가입일이 기준일보다 뒤'; }
+          else if (minorRaw > minorRec) subTag = '미성년 ' + ym(minorRaw) + ' 중 ' + ym(minorRec) + '만 인정';
+
+          // (6) 가입기간 점수 + 배우자 가산
+          var sb = band(P.sub_table_months, subM, mUnit);
+          var subScore = join.t > ref.t ? 0 : sb.score;
+          var spScore = 0, spM = 0;
+          if (married && sjoin && sjoin.t <= ref.t) {
+            spM = Math.floor(months(sjoin, ref) * P.spouse_ratio);
+            spScore = Math.min(band(P.sub_table_months, spM, mUnit).score, P.spouse_max);
+          }
+          var subTotal = Math.min(subScore + spScore, P.sub_max);
+
+          var total = whScore + famScore + subTotal;
+
+          set('wh_period', start.t > ref.t ? '0개월' : ym(whM), '기산일 ' + why + (start.t > ref.t ? ' (아직 안 옴)' : ''));
+          set('wh_score', whScore + '점', whName);
+          set('family_n', famN + '명', '배우자 ' + spouseN + ' + 직계존속 ' + parents + ' + 직계비속 ' + children);
+          set('family_score', famScore + '점', famName);
+          set('sub_period', ym(subM), subTag || '가입일 ' + fd(join));
+          set('sub_score', subTotal + '점', join.t > ref.t ? '가입 전' : sb.name + ' → ' + subScore + '점' + (spScore ? ' + 배우자 ' + spScore + '점' : '') + (subScore + spScore > P.sub_max ? ' (상한 ' + P.sub_max + '점)' : ''));
+          set('total', total + '점 / ' + P.total_max + '점', whScore + ' + ' + famScore + ' + ' + subTotal);
+
+          answer.textContent = '청약가점은 ' + total + '점이다 (무주택 ' + whScore + ' · 부양가족 ' + famScore + ' · 통장 ' + subTotal + ').';
+
+          if (hasHouse) { totalRow.classList.add('bad'); msgs.push('세대원 중 주택 소유자가 있으면 무주택기간 점수가 0점이고, 1주택 세대는 1순위 가점제 대상에서 빠진다 (별표 1 비고 1). 처분한 뒤에는 처분일부터 다시 센다.'); }
+          if (!hasHouse && start.t > ref.t) msgs.push('기준일 현재 만 ' + P.wh_age + '세 미만 미혼(또는 처분일이 기준일 뒤)이라 무주택기간이 없어 0점이다. ' + fd(start) + '부터 센다.');
+          if (married && !marry) msgs.push('기혼인데 혼인신고일이 비어 있다. 만 ' + P.wh_age + '세 전에 혼인했으면 혼인신고일을 넣어야 무주택기간이 늘어난다.');
+          if (married && marry && marry.t >= age30.t) msgs.push('혼인신고일이 만 ' + P.wh_age + '세 이후라 무주택기간은 만 ' + P.wh_age + '세부터 센다.');
+          if (sold && !soldAt) msgs.push('주택 소유 이력이 있는데 처분일이 비어 있다. 처분일을 넣지 않으면 계속 무주택으로 계산된다.');
+          if (minorRaw > minorRec) msgs.push('미성년(만 ' + P.adult_age + '세 미만)으로 가입한 ' + ym(minorRaw) + ' 가운데 ' + ym(minorRec) + '만 인정했다 (규칙 제10조 제6항: 2023.12.31. 이전분 2년, 합계 5년 상한).');
+          if (spScore) msgs.push('배우자 통장 가입기간 ' + ym(months(sjoin, ref)) + '의 50%(' + ym(spM) + ')를 점수표에 넣어 ' + spScore + '점을 더했다 (별표 1 비고 2, 최대 3점·합산 17점 상한). 특별공급에는 이 가산이 없다.');
+          if (parents) msgs.push('직계존속 ' + parents + '명은 본인이 세대주이고 3년 이상 계속 같은 등본에 있으며 그분들 부부가 모두 무주택인 경우에만 인정된다.');
+          if (children) msgs.push('직계비속 ' + children + '명은 미혼이어야 하고, 만 30세 이상이면 1년 이상 계속 같은 등본에 있어야 한다.');
+          msgs.push('기준일 ' + fd(ref) + ' 기준. 실제 청약은 입주자모집공고일 기준으로 다시 센다.');
+          warn.innerHTML = msgs.join('<br />');
+          warn.hidden = msgs.length === 0;
+        }
+
+        root.querySelectorAll('[data-type="date"], [data-type="select"], [data-type="check"]').forEach(function (el) {
+          el.addEventListener('input', calc); el.addEventListener('change', calc);
+        });
+
+        // 공유 주소 (기획서 3번)
+        var sh = root.querySelector('[data-share]');
+        if (sh) {
+          var u = encodeURIComponent(sh.dataset.url), t = encodeURIComponent(sh.dataset.title);
+          sh.querySelector('[data-share-fb]').href = 'https://www.facebook.com/sharer/sharer.php?u=' + u;
+          sh.querySelector('[data-share-x]').href = 'https://twitter.com/intent/tweet?url=' + u + '&text=' + t;
+          sh.querySelector('[data-share-naver]').href = 'https://share.naver.com/web/shareView?url=' + u + '&title=' + t;
+          sh.querySelector('[data-share-band]').href = 'https://band.us/plugin/share?body=' + t + '%20' + u + '&route=' + u;
+        }
+        calc();
+      }
+      document.addEventListener('astro:page-load', init);
+      if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</Base>
+
+<style>
+  /* 계산기 무드: 퇴직금 계산기(severance-pay.astro)와 같은 유리 카드·금색 강조 토큰을 이 페이지 안에서만 정의 */
+  .calc {
+    --gold: #f5b544; --gold-ink: #ffd27a; --gold-soft: rgba(245, 181, 68, .12);
+    --rose: #ff6b7a; --rose-soft: rgba(255, 107, 122, .12);
+    --hair-2: rgba(255, 255, 255, .14);
+    --glass: rgba(18, 24, 38, .66); --glass-2: rgba(22, 28, 44, .55);
+    --field: rgba(9, 12, 22, .55);
+    --cshadow: 0 24px 60px -20px rgba(0, 0, 0, .6), 0 8px 18px -8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+    --r-sm: 12px;
+    max-width: 920px; margin: 0 auto; font-size: 15.5px; letter-spacing: -.01em;
+  }
+  :global(:root[data-theme='light']) .calc {
+    --gold: #c98a12; --gold-ink: #a86f0a; --gold-soft: rgba(201, 138, 18, .10);
+    --rose: #e0475a; --rose-soft: rgba(224, 71, 90, .10);
+    --hair-2: #d3d8e0; --glass: rgba(255, 255, 255, .78); --glass-2: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .85);
+    --cshadow: 0 24px 60px -24px rgba(25, 31, 40, .18), 0 6px 14px -8px rgba(25, 31, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+
+  .hero { padding: 54px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .02em; text-transform: uppercase; }
+  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); }
+  h1 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 14px; font-weight: 800; }
+  .lede { color: var(--ink-2); font-size: 16px; max-width: 640px; margin: 0; line-height: 1.6; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .stamp { font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--hair-2); color: var(--ink-2); background: var(--glass-2); backdrop-filter: blur(8px); }
+  .stamp b { color: var(--ink); font-weight: 700; }
+  .stamp.gold { border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--gold-ink); background: var(--gold-soft); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+  .out { position: sticky; top: 76px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .out { position: static; } }
+
+  .card { position: relative; background: var(--glass); border: 1px solid var(--hair-2); border-radius: var(--r); box-shadow: var(--cshadow); backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%); padding: 24px 24px 22px; margin: 18px 0; }
+  .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .14), transparent 60%); mix-blend-mode: overlay; }
+  :global(:root[data-theme='light']) .card::before { display: none; }
+  .card-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .num { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .06em; }
+  .card-h h2 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  .card-h p { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; line-height: 1.6; padding: 12px 14px; border-radius: 12px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); }
+  .hint[hidden] { display: none; }
+
+  .grid { display: grid; gap: 14px 18px; grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; transition: opacity .15s; }
+  .field.dim { opacity: .45; }
+  .field > label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .field label small { font-weight: 500; color: var(--ink-3); }
+  .inp { position: relative; }
+  .inp input, .inp select { width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .inp select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+  .inp select option { color: #191f28; background: #fff; }
+  .inp:has(select)::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .inp input:focus, .inp select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .inp input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .sub { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+  .toggle { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--hair); background: var(--glass-2); cursor: pointer; }
+  .toggle:hover { border-color: var(--hair-2); }
+  .toggle input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--hair-2); position: relative; flex: none; margin: 2px 0 0; cursor: pointer; transition: background .2s; }
+  .toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 99px; background: var(--ink-3); transition: all .2s cubic-bezier(.34, 1.5, .64, 1); }
+  .toggle input:checked { background: var(--gold); border-color: var(--gold); }
+  .toggle input:checked::after { left: 18px; background: #1a1206; }
+  .toggle span { font-size: 14px; font-weight: 600; }
+  .toggle small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; line-height: 1.5; }
+
+  /* 결과표: 항목 | 값(+적용 구간) | 산식 (모바일은 산식 열을 숨기고 항목 밑에 작게) */
+  .answer { margin: 0 0 14px; font-size: clamp(19px, 2.6vw, 24px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 55%, var(--gold-ink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 10px 8px; border-top: 1px solid var(--hair); vertical-align: top; text-align: left; line-height: 1.5; }
+  th { font-size: 12.5px; color: var(--ink-3); font-weight: 700; border-top: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td .no { color: var(--gold); font-weight: 800; font-size: 12px; margin-right: 2px; }
+  td code { font-family: inherit; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-2); font-size: 12.5px; line-height: 1.8; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  td:first-child { white-space: normal; min-width: 96px; }
+  .result td.r { white-space: normal; min-width: 96px; }
+  .result td.f { min-width: 110px; }
+  .result td code { font-size: 11.5px; padding: 1px 5px; line-height: 1.7; }
+  .result th, .result td { padding: 9px 5px; }
+  td .tag { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; line-height: 1.4; }
+  td .tag:empty { display: none; }
+  td .f2 { display: none; }
+  tr.total td { border-top: 2px solid var(--hair-2); font-weight: 800; font-size: 15px; }
+  tr.total td.r b { color: var(--gold-ink); font-size: 18px; }
+  tr.total.bad td.r b { color: var(--rose); }
+  @media (max-width: 640px) {
+    th.f, td.f { display: none; }
+    td .f2 { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; }
+    td:first-child { white-space: normal; }
+    td.r { white-space: normal; font-size: 13px; }
+    th, td { padding: 9px 4px; }
+    tr.total td.r b { font-size: 16px; }
+  }
+
+  .slim { padding-bottom: 20px; }
+  .rel { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); color: var(--gold-ink); font-size: 14px; font-weight: 700; }
+  .rel-btn:hover { background: var(--gold); color: #1a1206; }
+  .rel-btn.off { border-style: dashed; border-color: var(--hair-2); background: transparent; color: var(--ink-3); cursor: default; }
+  .rel-btn.off:hover { background: transparent; color: var(--ink-3); }
+  .rel-btn small { font-size: 11px; font-weight: 600; }
+  .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .share-l { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin-right: 4px; }
+  .share-btn { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--hair-2); background: var(--glass-2); color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  .share-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .notes { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .notes li { margin-bottom: 8px; }
+  .notes li::marker { color: var(--gold); font-weight: 800; }
+  .src { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .src a { color: var(--ink-2); border-bottom: 1px dotted var(--ink-3); }
+  .src em { font-style: normal; color: var(--ink-3); }
+  .hist td { font-size: 13px; }
+  .hist code { font-family: inherit; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  @media (max-width: 640px) {
+    /* 이력표: 좁은 화면에선 날짜·기준값·값 한 줄, 출처는 그 아래 */
+    .hist thead { display: none; }
+    .hist tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); }
+    .hist tr:first-child { border-top: 0; }
+    .hist td { border: 0; padding: 0; white-space: normal; }
+    .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+  }
+  .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
+</style>

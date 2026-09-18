@@ -1,0 +1,428 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE, CATEGORIES } from '../../config/site';
+import calc from '../../data/calcs/national-pension.json';
+import tools from '../../data/tools.json';
+
+// 계산기 한 장 = JSON 한 장(src/data/calcs/<slug>.json). 이 페이지는 그 JSON을 읽어 그린다.
+// 산식·A값·상수는 JSON params(연도 키)에서만 온다. 코드에 숫자를 박지 않는다.
+const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
+const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
+const related = calc.related_calcs.map((r) => {
+  const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
+  return { ...r, href: t?.href || '' };
+});
+const basisYear = calc.basis_date.slice(0, 4);
+const P = calc.params as Record<string, unknown>;
+const params = P[basisYear] as Record<string, unknown>;
+const firstYear = Number(params.first_year), baseYear = Number(params.base_year);
+// 첫 가입 연도 선택지: 비움(2026년 상수만) + 1988~2025
+const startYears = Array.from({ length: baseYear - firstYear }, (_, i) => firstYear + i);
+const optionsOf = (f: (typeof calc.inputs)[number]) =>
+  f.id === 'start_year'
+    ? [{ value: '', label: `비움 — 전 기간 ${baseYear}년 상수 ${params.const_current} 적용` }, ...startYears.map((y) => ({ value: String(y), label: `${y}년` }))]
+    : f.options || [];
+const stepTitle = ['', '출생·나이', '소득·가입기간', '수령 시점'];
+const stepSub = ['', '수급 개시 연령', '현재가치 기준', '정상·조기·연기'];
+---
+
+<Base title={calc.name} description={calc.description}>
+  <div class="calc" data-calc>
+    <header class="hero">
+      <span class="eyebrow">모의계산기 · {cat.short}</span>
+      <h1>{calc.name}</h1>
+      <p class="lede">{calc.lede}</p>
+      <div class="stamps">
+        <span class="stamp gold"><b>{calc.basis_label}</b></span>
+        <span class="stamp">확인일 <b>{calc.basis_date.replace(/-/g, '.')}</b></span>
+        <span class="stamp">산식 <b>국민연금법 제51조 · 공단 예상연금월액표</b></span>
+      </div>
+    </header>
+
+    <div class="cols">
+      <div class="in">
+        {[1, 2, 3].map((n) => (
+          <section class="card" id={`s${n}`}>
+            <div class="card-h">
+              <span class="num">STEP {n}</span>
+              <h2>{stepTitle[n]}</h2>
+              <p>{stepSub[n]}</p>
+            </div>
+            <div class={`grid${n === 1 ? ' two' : ''}`}>
+              {byStep(n).map((f) => (
+                <div class="field">
+                  <label for={`f-${f.id}`}>{f.label}{f.optional && <small> (선택)</small>}</label>
+                  <div class="inp">
+                    {f.type === 'select' ? (
+                      <select id={`f-${f.id}`} data-in={f.id} data-type="select">
+                        {optionsOf(f).map((o) => <option value={o.value}>{o.label}</option>)}
+                      </select>
+                    ) : f.type === 'won' ? (
+                      <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="won" placeholder="0" autocomplete="off" />
+                    ) : (
+                      <input type="text" inputmode="numeric" id={`f-${f.id}`} data-in={f.id} data-type="int" placeholder={f.type === 'year' ? '예: 1980' : '0'} maxlength={f.type === 'year' ? 4 : 3} autocomplete="off" />
+                    )}
+                    {f.type === 'won' && <span class="unit">원</span>}
+                    {f.type === 'year' && <span class="unit">년</span>}
+                    {f.type === 'int' && <span class="unit">{f.id === 'months' ? '개월' : '세'}</span>}
+                  </div>
+                  {f.help && <p class="sub">{f.help}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="out">
+        <section class="card result" id="result" aria-live="polite">
+          <div class="card-h"><span class="num">결과</span><h2>예상 연금 계산표</h2><p>{calc.basis_label}</p></div>
+          <p class="answer" data-answer>출생연도·평균 소득월액·총 가입 개월을 넣으면 월 예상 연금액이 나온다.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>항목</th><th class="r">값</th><th class="f">산식</th></tr></thead>
+              <tbody>
+                {calc.steps.map((s) => (
+                  <tr class={s.total ? 'total' : ''} data-row={s.id}>
+                    <td><span class="no">({s.no})</span> {s.label}<small class="f2">{s.formula}</small></td>
+                    <td class="r"><b data-val={s.id}>—</b></td>
+                    <td class="f"><code>{s.formula}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="basis-note">현재가치 기준, 물가 상승 반영 전. 부양가족연금·크레딧·세금 제외.</p>
+          <p class="hint" data-warn hidden></p>
+        </section>
+      </div>
+    </div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">관련</span><h2>같이 쓰는 계산기</h2></div>
+      <div class="rel">
+        {related.map((r) => r.href
+          ? <a class="rel-btn" href={r.href}>{r.name}</a>
+          : <span class="rel-btn off" aria-disabled="true">{r.name} <small>준비 중</small></span>)}
+      </div>
+      <div class="share" data-share data-url={pageUrl} data-title={`${calc.name} — ${SITE.name}`}>
+        <span class="share-l">공유</span>
+        <a class="share-btn" data-share-fb href="#" target="_blank" rel="noopener">페이스북</a>
+        <a class="share-btn" data-share-x href="#" target="_blank" rel="noopener">X</a>
+        <a class="share-btn" data-share-naver href="#" target="_blank" rel="noopener">네이버 블로그</a>
+        <a class="share-btn" data-share-band href="#" target="_blank" rel="noopener">밴드</a>
+      </div>
+    </section>
+
+    <div class="ad-slot" data-slot="in-article"></div>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">※</span><h2>산식과 근거</h2><p>확인일 {calc.basis_date.replace(/-/g, '.')}</p></div>
+      <ol class="notes">
+        {calc.notes.map((n) => <li>{n}</li>)}
+      </ol>
+      <p class="src">
+        {calc.law.map((l) => <span>· <a href={l.url} target="_blank" rel="noopener">{l.name}</a> <em>{l.ver}</em><br /></span>)}
+      </p>
+    </section>
+
+    <section class="card slim">
+      <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
+      <div class="tbl-wrap">
+        <table class="hist">
+          <thead><tr><th>날짜</th><th>기준값</th><th class="r">값</th><th>출처</th></tr></thead>
+          <tbody>
+            {calc.history.map((h) => (
+              <tr><td>{h.date.replace(/-/g, '.')}</td><td><code>{h.param}</code></td><td class="r"><b>{h.value}</b></td><td>{h.src}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="foot-note">{calc.disclaimer}<br />입력값은 이 브라우저 안에서만 계산되며 서버로 보내지 않는다.</p>
+  </div>
+
+  <script type="application/json" id="calc-params" set:html={JSON.stringify(params)} />
+  <script is:inline>
+    // 순수 JS. 입력이 바뀌면 즉시 다시 계산한다. 산식은 JSON steps.formula와 같은 순서.
+    // 기본연금액 = Σ[상수_i × (A + w_i·B) × P_i/P] × (1 + 0.05 × 20년 초과월수/12)  (국민연금법 제51조, 공단 급여의 산정)
+    (function () {
+      function init() {
+        var root = document.querySelector('[data-calc]');
+        if (!root || root.dataset.ready) return;
+        root.dataset.ready = '1';
+        var P = JSON.parse(document.getElementById('calc-params').textContent);
+
+        var fmt = function (n) {
+          if (n === null || n === undefined || isNaN(n)) return '—';
+          return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+        var won = function (n) { return n === null ? '—' : fmt(n) + '원'; };
+        var pct = function (n) { return String(Math.round(n * 1000) / 10) + '%'; };
+        var num = function (el) { return Number((el.value || '').replace(/[^\d]/g, '')) || 0; };
+        var cut = function (n) { return Math.floor(n / P.round_unit) * P.round_unit; };
+        var r3 = function (n) { return Math.round(n * 1000) / 1000; };
+
+        var I = {};
+        root.querySelectorAll('[data-in]').forEach(function (el) { I[el.dataset.in] = el; });
+        var V = {};
+        root.querySelectorAll('[data-val]').forEach(function (el) { V[el.dataset.val] = el; });
+        var answer = root.querySelector('[data-answer]');
+        var warn = root.querySelector('[data-warn]');
+        var totalRow = root.querySelector('[data-row="monthly"]');
+
+        function set(id, text) { if (V[id]) V[id].textContent = text; }
+        function set2(id, text, sub) { if (!V[id]) return; V[id].textContent = text; var sm = document.createElement('small'); sm.textContent = sub; V[id].appendChild(sm); }
+        // 출생연도 → 수급 개시 연령 (부칙 제8조)
+        function startAge(y) {
+          for (var i = 0; i < P.start_age.length; i++) if (y <= P.start_age[i].to) return P.start_age[i].age;
+          return P.start_age[P.start_age.length - 1].age;
+        }
+        // 연도별 비례상수·B 가중치 (공단 급여의 산정 표)
+        function constOf(y) {
+          for (var i = 0; i < P.const_periods.length; i++) {
+            var c = P.const_periods[i];
+            if (y >= c.from && y <= c.to) return { k: c.const !== undefined ? c.const : r3(c.const_start + c.const_step * (y - c.from)), w: c.b_weight };
+          }
+          return { k: P.const_current, w: 1 };
+        }
+        // 첫 가입 연도부터 개월을 순서대로 나눠 Σ 상수×(A+wB)×P_i/P
+        function weighted(startYear, months, A, B) {
+          if (!startYear) return { sum: P.const_current * (A + B), k: P.const_current, mixed: false };
+          var left = months, y = startYear, sum = 0, kw = 0;
+          while (left > 0) {
+            var m = Math.min(12, left), c = constOf(y);
+            sum += c.k * (A + c.w * B) * m / months;
+            kw += c.k * m / months;
+            left -= m; y++;
+          }
+          return { sum: sum, k: kw, mixed: true, endYear: y - 1 };
+        }
+
+        function calc() {
+          var by = num(I.birth_year), ageIn = num(I.age_now);
+          var bIn = num(I.b_value), months = num(I.months);
+          var sy = Number(I.start_year.value) || 0;
+          var shift = Number(I.timing.value) || 0;
+          var msgs = [];
+          Object.keys(V).forEach(function (k) { set(k, '—'); });
+          totalRow.classList.remove('bad');
+          set('a_value', won(P.a_value));
+
+          if (!by || by < 1900 || by > P.base_year) {
+            answer.textContent = '출생연도·평균 소득월액·총 가입 개월을 넣으면 월 예상 연금액이 나온다.';
+            warn.hidden = true; return;
+          }
+          var age0 = startAge(by);
+          var ageNow = ageIn || (P.base_year - by);
+          var claimAge = age0 + shift;
+          set2('start_age', age0 + '세', by + '년생' + (shift ? ' · ' + claimAge + '세부터 수령' : ''));
+          if (!bIn || !months) {
+            answer.textContent = '수급 개시 연령은 ' + age0 + '세다. 평균 소득월액과 총 가입 개월을 넣으면 월 예상액이 나온다.';
+            warn.hidden = true; return;
+          }
+
+          // (3) B값 상·하한
+          var B = Math.min(Math.max(bIn, P.b_min), P.b_max);
+          var bTag = bIn < P.b_min ? ' (하한 적용)' : bIn > P.b_max ? ' (상한 적용)' : '';
+          set('b_value', won(B) + bTag);
+          var A = P.a_value;
+
+          // 10년 미만: 반환일시금
+          if (months < P.min_months) {
+            set('basic', '—'); set('rate', '—'); set('normal', '—'); set('adjust', '—');
+            set('monthly', '연금 대상 아님');
+            totalRow.classList.add('bad');
+            answer.textContent = '가입기간 ' + fmt(months) + '개월 — 10년(' + P.min_months + '개월) 미만이라 노령연금이 아니라 반환일시금 대상이다.';
+            msgs.push('가입기간이 10년 미만이면 60세에 낸 보험료에 이자를 더한 반환일시금을 받는다 (국민연금법 제77조 제1항). 액수는 공단 조회로 확인한다. 임의계속가입·추납으로 120개월을 채우면 연금으로 받을 수 있다.');
+            msgs.push('참고: 120개월을 채우면 월 ' + won(cut(Math.min(P.const_current * (A + B) / 12 * P.rate_at_10y, B))) + '부터다 (2026년 상수, 지급률 50%).');
+            warn.innerHTML = msgs.join('<br />'); warn.hidden = false; return;
+          }
+
+          // (4) 기본연금액(연)
+          var w = weighted(sy, months, A, B);
+          var over = Math.max(0, months - 240);
+          var bonus = 1 + P.over20_rate_per_year * over / 12;
+          var basic = w.sum * bonus;
+          set2('basic', won(basic), '상수 ' + (w.mixed ? '가중 ' + (Math.round(w.k * 1000) / 1000) : P.const_current) + ' × (A+B)' + (over ? ' × (1 + ' + pct(bonus - 1) + ')' : '') + (over ? ' · 20년 초과 ' + over + '개월' : ''));
+          // (5) 지급률
+          var rate = months >= 240 ? 1 : Math.min(1, P.rate_at_10y + P.rate_per_year_10to20 * (months - P.min_months) / 12);
+          set('rate', pct(rate));
+          // (6) 정상 수령 월액 (최고한도 B값, 10원 절사)
+          var rawNormal = basic * rate / 12;
+          var capped = rawNormal > B;
+          var normal = cut(Math.min(rawNormal, B));
+          set2('normal', won(normal), '연 ' + won(basic * rate) + ' ÷ 12' + (capped ? ' → 한도 B값 적용' : ''));
+          // (7) 조기·연기
+          var adj = shift < 0 ? -P.early_rate_per_month * (-shift * 12) : shift > 0 ? P.delay_rate_per_month * (shift * 12) : 0;
+          set2('adjust', (adj > 0 ? '+' : '') + pct(adj), shift ? Math.abs(shift) + '년 = ' + Math.abs(shift) * 12 + '개월 × ' + (shift < 0 ? '−' + pct(P.early_rate_per_month) : '+' + pct(P.delay_rate_per_month)) : '정상 수령');
+          // (8) 월 예상액
+          var monthly = cut(normal * (1 + adj));
+          set('monthly', won(monthly));
+
+          answer.textContent = claimAge + '세부터 받는 월 예상 연금액은 ' + won(monthly) + '이다 (현재가치 기준, 물가 상승 반영 전).';
+
+          var yearsLeft = claimAge - ageNow;
+          if (yearsLeft > 0) msgs.push('현재 ' + ageNow + '세 기준으로 수령 시작까지 ' + yearsLeft + '년 남았다. 그동안 A값·재평가율이 바뀌면 실제 금액은 달라진다.');
+          else msgs.push('현재 ' + ageNow + '세로 이미 수령 시점(' + claimAge + '세)이 지났다. 공단에 청구 이력이 있으면 그 결정액이 우선한다.');
+          if (w.mixed) msgs.push(sy + '년부터 ' + w.endYear + '년까지 ' + fmt(months) + '개월을 연도별 상수로 나눠 가중 상수 ' + (Math.round(w.k * 1000) / 1000) + '을 적용했다. 2026년 1월 1일 전 가입기간은 종전 상수로 계산한다 (부칙 제5조 제2항).');
+          else msgs.push('전 기간에 2026년 상수 ' + P.const_current + '(소득대체율 ' + P.replacement_rate_current + '%)을 적용했다. 2025년 이전 가입기간이 있으면 「첫 가입 연도」를 넣어야 상수 1.245~2.4가 반영된다.');
+          if (shift < 0) msgs.push('조기노령연금은 소득 있는 업무(월 소득이 A값 ' + won(A) + ' 초과)에 종사하면 받을 수 없고, 한 번 감액된 비율은 평생 간다 (제61조 제2항, 제63조 제2항).');
+          if (shift > 0) msgs.push('연기 기간에는 연금이 나오지 않는다. 가산율은 연기 신청 당시 연금액에 붙는다 (제62조 제2항).');
+          if (capped) msgs.push('계산된 월액 ' + won(cut(rawNormal)) + '이 B값보다 커서 연금액 최고한도인 B값으로 막았다 (제53조).');
+          if (bIn < P.b_min) msgs.push('B값은 기준소득월액 하한 ' + won(P.b_min) + '으로 계산했다 (' + P.b_period + ' 적용).');
+          if (bIn > P.b_max) msgs.push('B값은 기준소득월액 상한 ' + won(P.b_max) + '으로 계산했다 (' + P.b_period + ' 적용). 소득이 그 이상이어도 연금은 같다.');
+          warn.innerHTML = msgs.join('<br />');
+          warn.hidden = msgs.length === 0;
+        }
+
+        // 금액 칸: 숫자만 남기고 천 단위 콤마
+        root.querySelectorAll('[data-type="won"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            var raw = el.value.replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+            el.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
+            calc();
+          });
+        });
+        // 연도·나이·개월 칸: 숫자만
+        root.querySelectorAll('[data-type="int"]').forEach(function (el) {
+          el.addEventListener('input', function () {
+            el.value = el.value.replace(/[^\d]/g, '');
+            calc();
+          });
+        });
+        root.querySelectorAll('[data-type="select"]').forEach(function (el) {
+          el.addEventListener('input', calc); el.addEventListener('change', calc);
+        });
+
+        // 공유 주소 (기획서 3번)
+        var sh = root.querySelector('[data-share]');
+        if (sh) {
+          var u = encodeURIComponent(sh.dataset.url), t = encodeURIComponent(sh.dataset.title);
+          sh.querySelector('[data-share-fb]').href = 'https://www.facebook.com/sharer/sharer.php?u=' + u;
+          sh.querySelector('[data-share-x]').href = 'https://twitter.com/intent/tweet?url=' + u + '&text=' + t;
+          sh.querySelector('[data-share-naver]').href = 'https://share.naver.com/web/shareView?url=' + u + '&title=' + t;
+          sh.querySelector('[data-share-band]').href = 'https://band.us/plugin/share?body=' + t + '%20' + u + '&route=' + u;
+        }
+        calc();
+      }
+      document.addEventListener('astro:page-load', init);
+      if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</Base>
+
+<style>
+  /* 계산기 무드: 퇴직금 계산기(severance-pay.astro)와 같은 유리 카드·금색 강조 토큰을 이 페이지 안에서만 정의 */
+  .calc {
+    --gold: #f5b544; --gold-ink: #ffd27a; --gold-soft: rgba(245, 181, 68, .12);
+    --rose: #ff6b7a; --rose-soft: rgba(255, 107, 122, .12);
+    --hair-2: rgba(255, 255, 255, .14);
+    --glass: rgba(18, 24, 38, .66); --glass-2: rgba(22, 28, 44, .55);
+    --field: rgba(9, 12, 22, .55);
+    --cshadow: 0 24px 60px -20px rgba(0, 0, 0, .6), 0 8px 18px -8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+    --r-sm: 12px;
+    max-width: 920px; margin: 0 auto; font-size: 15.5px; letter-spacing: -.01em;
+  }
+  :global(:root[data-theme='light']) .calc {
+    --gold: #c98a12; --gold-ink: #a86f0a; --gold-soft: rgba(201, 138, 18, .10);
+    --rose: #e0475a; --rose-soft: rgba(224, 71, 90, .10);
+    --hair-2: #d3d8e0; --glass: rgba(255, 255, 255, .78); --glass-2: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .85);
+    --cshadow: 0 24px 60px -24px rgba(25, 31, 40, .18), 0 6px 14px -8px rgba(25, 31, 40, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+  }
+
+  .hero { padding: 54px 0 26px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .02em; text-transform: uppercase; }
+  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); }
+  h1 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15; letter-spacing: -.035em; margin: 12px 0 14px; font-weight: 800; }
+  .lede { color: var(--ink-2); font-size: 16px; max-width: 640px; margin: 0; line-height: 1.6; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .stamp { font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--hair-2); color: var(--ink-2); background: var(--glass-2); backdrop-filter: blur(8px); }
+  .stamp b { color: var(--ink); font-weight: 700; }
+  .stamp.gold { border-color: color-mix(in srgb, var(--gold) 45%, transparent); color: var(--gold-ink); background: var(--gold-soft); }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; align-items: start; }
+  .out { position: sticky; top: 76px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .out { position: static; } }
+
+  .card { position: relative; background: var(--glass); border: 1px solid var(--hair-2); border-radius: var(--r); box-shadow: var(--cshadow); backdrop-filter: blur(22px) saturate(170%); -webkit-backdrop-filter: blur(22px) saturate(170%); padding: 24px 24px 22px; margin: 18px 0; }
+  .card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(255, 255, 255, .14), transparent 60%); mix-blend-mode: overlay; }
+  :global(:root[data-theme='light']) .card::before { display: none; }
+  .card-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .num { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .06em; }
+  .card-h h2 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+  .card-h p { margin: 0 0 0 auto; font-size: 13px; color: var(--ink-3); }
+  .hint { font-size: 13px; color: var(--ink-2); margin: 12px 0 0; line-height: 1.6; padding: 12px 14px; border-radius: 12px; background: var(--gold-soft); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); }
+  .hint[hidden] { display: none; }
+  .basis-note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+
+  .grid { display: grid; gap: 14px 18px; grid-template-columns: 1fr; }
+  .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) { .grid.two { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > label { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .field label small { font-weight: 500; color: var(--ink-3); }
+  .inp { position: relative; }
+  .inp input, .inp select { width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--hair-2); background: var(--field); color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; outline: none; transition: border-color .15s, box-shadow .15s; }
+  .inp select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+  .inp select option { color: #191f28; background: #fff; }
+  .inp:has(select)::after { content: ''; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .inp input[data-type='won'], .inp input[data-type='int'] { text-align: right; padding-right: 48px; }
+  .inp input:focus, .inp select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft); }
+  .inp input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .inp .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--ink-3); pointer-events: none; }
+  .sub { font-size: 12.5px; color: var(--ink-3); margin: 0; line-height: 1.5; }
+
+  /* 결과표 */
+  .answer { margin: 0 0 14px; font-size: clamp(19px, 2.6vw, 24px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 55%, var(--gold-ink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 10px 8px; border-top: 1px solid var(--hair); vertical-align: top; text-align: left; line-height: 1.5; }
+  th { font-size: 12.5px; color: var(--ink-3); font-weight: 700; border-top: 0; }
+  td.r, th.r { text-align: right; white-space: nowrap; }
+  td.r b :global(small) { display: block; font-weight: 600; font-size: 11.5px; color: var(--ink-3); white-space: normal; line-height: 1.4; }
+  td .no { color: var(--gold); font-weight: 800; font-size: 12px; margin-right: 2px; }
+  td code { font-family: inherit; background: var(--surface-2); padding: 2px 7px; border-radius: 6px; color: var(--ink-2); font-size: 12.5px; line-height: 1.8; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  td:first-child { min-width: 9em; }
+  td .f2 { display: none; }
+  tr.total td { border-top: 2px solid var(--hair-2); font-weight: 800; font-size: 15px; }
+  tr.total td.r b { color: var(--gold-ink); font-size: 18px; }
+  tr.total.bad td.r b { color: var(--rose); font-size: 15px; }
+  @media (max-width: 640px) {
+    th.f, td.f { display: none; }
+    td .f2 { display: block; color: var(--ink-3); font-size: 11.5px; font-weight: 500; margin-top: 2px; }
+    th, td { padding: 9px 4px; }
+  }
+
+  .slim { padding-bottom: 20px; }
+  .rel { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rel-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); background: var(--gold-soft); color: var(--gold-ink); font-size: 14px; font-weight: 700; }
+  .rel-btn:hover { background: var(--gold); color: #1a1206; }
+  .rel-btn.off { border-style: dashed; border-color: var(--hair-2); background: transparent; color: var(--ink-3); cursor: default; }
+  .rel-btn.off:hover { background: transparent; color: var(--ink-3); }
+  .rel-btn small { font-size: 11px; font-weight: 600; }
+  .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .share-l { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin-right: 4px; }
+  .share-btn { padding: 8px 14px; border-radius: 99px; border: 1px solid var(--hair-2); background: var(--glass-2); color: var(--ink-2); font-size: 13px; font-weight: 600; }
+  .share-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .notes { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  .notes li { margin-bottom: 8px; }
+  .notes li::marker { color: var(--gold); font-weight: 800; }
+  .src { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .src a { color: var(--ink-2); border-bottom: 1px dotted var(--ink-3); }
+  .src em { font-style: normal; color: var(--ink-3); }
+  .hist td { font-size: 13px; }
+  .hist code { font-family: inherit; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  @media (max-width: 640px) {
+    /* 이력표: 좁은 화면에선 날짜·기준값·값 한 줄, 출처는 그 아래 */
+    .hist thead { display: none; }
+    .hist tr { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--hair); }
+    .hist tr:first-child { border-top: 0; }
+    .hist td { border: 0; padding: 0; white-space: normal; }
+    .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
+  }
+  .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
+</style>
