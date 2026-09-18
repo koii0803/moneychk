@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LUMINA 3D - Frosted Glass & Claymorphic Calculator</title>
+  <title>머니첵 계산기 — 기본·적금·대출·할인</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -249,13 +249,10 @@
       <div>
         <div class="flex items-center gap-1.5">
           <h1 class="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-200 to-pink-300">
-            LUMINA 3D
+            머니첵 계산기
           </h1>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            PRO
-          </span>
         </div>
-        <p class="text-xs text-slate-400 font-medium">Liquid Glass & Claymorphic Calc</p>
+        <p class="text-xs text-slate-400 font-medium">기본 · 적금복리 · 대출이자 · 할인·%</p>
       </div>
     </div>
 
@@ -950,8 +947,17 @@
     btnThemeToggle.addEventListener('click', () => {
       const isCurrentlyDark = htmlEl.classList.contains('dark');
       setTheme(!isCurrentlyDark);
+      try { localStorage.setItem('theme', isCurrentlyDark ? 'light' : 'dark'); } catch (e) {}
       playSound('tap');
     });
+    // 사이트(머니첵)와 밝기 공유: 같은 키 'theme'. 계산기 페이지 안에 끼워 넣었을 때 본문 토글도 따라온다.
+    try { if (localStorage.getItem('theme') === 'light') setTheme(false); } catch (e) {}
+    window.addEventListener('storage', (e) => { if (e.key === 'theme') setTheme(e.newValue !== 'light'); });
+    // 끼워 넣기 모드(?embed=1): 여백 줄이고 기록 서랍은 창 폭 전체
+    if (new URLSearchParams(location.search).get('embed') === '1') {
+      document.body.classList.remove('sm:p-6'); document.body.classList.add('p-3');
+      document.querySelectorAll('.ambient-orb').forEach((o) => o.remove());
+    }
 
     /* ============================================================
      * 5. KOREAN MONETARY NUMBER FORMATTER (억, 만 원)
