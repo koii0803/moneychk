@@ -18,7 +18,7 @@ const P = calc.params as Record<string, Record<string, string | number>>;
 const params = {
   days_per_year: Number(P.days_per_year[basisYear]),
   days_per_severance_year: Number(P.days_per_severance_year[basisYear]),
-  min_service_days: Number(P.min_service_days[basisYear]),
+  min_service_years: Number(P.min_service_years[basisYear]),
 };
 ---
 
@@ -150,7 +150,7 @@ const params = {
         if (!root || root.dataset.ready) return;
         root.dataset.ready = '1';
         var P = JSON.parse(document.getElementById('calc-params').textContent);
-        var DAYS_YEAR = P.days_per_year, DAYS_SEV = P.days_per_severance_year, MIN_DAYS = P.min_service_days;
+        var DAYS_YEAR = P.days_per_year, DAYS_SEV = P.days_per_severance_year, MIN_YEARS = P.min_service_years;
         var DAY = 86400000;
 
         var fmt = function (n, d) {
@@ -166,6 +166,12 @@ const params = {
           var v = el.value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
           var p = v.split('-').map(Number); var t = Date.UTC(p[0], p[1] - 1, p[2]);
           var dd = new Date(t); return dd.getUTCMonth() === p[1] - 1 ? t : null;
+        };
+        // 계속근로기간 1년은 날짜로 센다. 일수(365)로 보면 윤년이 낀 365일을 1년으로 잘못 본다.
+        var plusYears = function (t, n) {
+          var d = new Date(t); var y = d.getUTCFullYear() + n, m = d.getUTCMonth(), day = d.getUTCDate();
+          var last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+          return Date.UTC(y, m, Math.min(day, last));
         };
         // 퇴직일에서 3개월 전 같은 날. 그 달에 그 날짜가 없으면 말일 (예: 5.31 → 2.28)
         var minus3m = function (t) {
@@ -214,11 +220,12 @@ const params = {
           set('avg_wage', won(avg, 2));
           set('base_wage', won(base, 2) + (ord ? (useOrd ? ' (통상임금)' : ' (평균임금)') : ''));
 
-          var eligible = serviceDays >= MIN_DAYS && !short;
+          var oneYear = plusYears(join, MIN_YEARS);
+          var eligible = leave >= oneYear && !short;
           if (!eligible) {
             set('severance', '대상 아님');
             totalRow.classList.add('bad');
-            if (serviceDays < MIN_DAYS) msgs.push('재직일수 ' + fmt(serviceDays) + '일 — 계속근로기간 1년(' + MIN_DAYS + '일) 미만이라 법정 퇴직금 대상이 아니다 (근로자퇴직급여 보장법 제4조 제1항).');
+            if (leave < oneYear) msgs.push('재직일수 ' + fmt(serviceDays) + '일 — 계속근로기간 ' + MIN_YEARS + '년 미만이라 법정 퇴직금 대상이 아니다 (근로자퇴직급여 보장법 제4조 제1항).');
             if (short) msgs.push('4주 평균 주 15시간 미만 근로자는 법정 퇴직금 대상이 아니다 (근로자퇴직급여 보장법 제4조 제1항).');
             msgs.push('참고로 대상이었다면 ' + won(Math.round(sev)) + '이다.');
             answer.textContent = '법정 퇴직금 지급 대상이 아니다.';

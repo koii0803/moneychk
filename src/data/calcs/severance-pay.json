@@ -105,8 +105,8 @@
     "bonus_months_ratio": {
       "2026": "3/12"
     },
-    "min_service_days": {
-      "2026": 365
+    "min_service_years": {
+      "2026": 1
     },
     "note": "기준값이 연도별로 다르면 연도 키로 둔다. 2026년 현재 네 값 모두 법·고용노동부 계산기 그대로다."
   },
@@ -185,8 +185,8 @@
     },
     {
       "date": "2026-09-19",
-      "param": "min_service_days",
-      "value": "365",
+      "param": "min_service_years",
+      "value": "1",
       "src": "근로자퇴직급여 보장법 제4조 제1항 단서 (계속근로기간 1년 미만 제외)"
     }
   ],

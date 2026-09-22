@@ -277,7 +277,9 @@ const stressLocalUntil = String(params.stress_local_until).replace(/-/g, '.');
           // (5) 심사 금리 = 금리 + 스트레스 금리 × 적용비율
           var stress = P.stress[region];
           var bucket = stressBucket(rtype, termUsed);
-          var ratio = P.stress_ratio[rtype][bucket];
+          // 수도권·규제지역 밖 주담대는 혼합형·주기형 적용비율도 2단계 표를 쓴다 (~2026.12.31, 금융위 공고 제2026-362호)
+          var stage2 = (P.stage2_ratio_regions || []).indexOf(region) >= 0;
+          var ratio = (stage2 ? P.stress_ratio_stage2 : P.stress_ratio)[rtype][bucket];
           var stressApplied = stress * ratio / 100;
           var examRate = rate + stressApplied;
           set('stress_rate', pct(examRate) + ' (' + pct(rate) + ' + ' + pct(stress) + ' × ' + ratio + '%)');
@@ -308,7 +310,7 @@ const stressLocalUntil = String(params.stress_local_until).replace(/-/g, '.');
             answer.textContent = '예상 대출 한도는 ' + won(limit) + eok(limit) + '이다 (' + best.k + ' 기준, 월 ' + won(Math.round(monthly)) + ').';
           }
           if (rate === 0) msgs.push('대출 금리를 넣지 않아 심사 금리는 스트레스 금리만으로, 월 상환액은 무이자로 계산했다.');
-          if (region === 'local') msgs.push('지방 주담대 스트레스 금리 0.75%p는 ' + String(P.stress_local_until).replace(/-/g, '.') + '까지다 (금융위 공고 제2026-362호). 이후 1.5%p로 오르면 DSR 한도가 줄어든다.');
+          if (region === 'local') msgs.push('지방 주담대는 스트레스 금리 0.75%p와 2단계 적용비율(혼합형 60·40·20%, 주기형 30·20·10%)을 ' + String(P.stress_local_until).replace(/-/g, '.') + '까지 쓴다 (금융위 공고 제2026-362호). 이후 3단계로 돌아가면 DSR 한도가 줄어든다.');
           if (ratio === 0) msgs.push('고정기간이 만기의 70% 이상이라 스트레스 금리를 붙이지 않았다 (3단계 시행방안 표3).');
           if (houses === 'none' && region !== 'local') msgs.push('수도권·규제지역 주택구입 주담대는 6개월 내 전입 의무가 있다 (6.27 대책).');
           msgs.push('은행별 시세 산정·소득 인정·신용도·자체 총량 관리에 따라 실제 한도는 이보다 작을 수 있다.');

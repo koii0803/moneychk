@@ -177,6 +177,14 @@ const stepSub = ['', '1천원 ~ 70만원', '기여금 비율이 갈린다', '은
         var answer = root.querySelector('[data-answer]');
         var warn = root.querySelector('[data-warn]');
         var totalRow = root.querySelector('[data-row="total"]');
+        // 소득+우대금리 0.5%p는 총급여 2,400만원 이하만 받는다(은행연합회 공시 주2).
+        // 그래서 구간을 바꾸면, 사람이 손대지 않은 우대금리 칸의 기본값을 그 구간 값으로 갈아 끼운다.
+        var bonusDirty = false;
+        I.rate_bonus.addEventListener('input', function () { bonusDirty = true; });
+        I.income.addEventListener('change', function () {
+          if (bonusDirty) return;
+          I.rate_bonus.value = String(I.income.value === P.rate_bonus_income_bracket ? P.rate_bonus_default : P.rate_bonus_default_other);
+        });
         var totalText = null;
         totalRow.querySelector('td').childNodes.forEach(function (n) { if (n.nodeType === 3 && n.nodeValue.trim()) totalText = n; });
 
@@ -238,6 +246,7 @@ const stepSub = ['', '1천원 ~ 70만원', '기여금 비율이 갈린다', '은
           if (bracket === 'b7500') msgs.push('총급여 6,000만원 초과 7,500만원 이하는 정부기여금이 없고 이자소득 비과세만 받는다.');
           else if (over > 0 && M.rate2) msgs.push('매칭한도 ' + won(M.limit) + '까지는 ' + pct(M.rate1) + ', 초과분 ' + won(over) + '에는 3.0%가 붙어 월 기여금 ' + won(cm) + '이다 (구간 최대 ' + won(M.max_monthly) + ').');
           if (!early && useBonus && rbn > 0) msgs.push('납입액 이자는 기본 ' + pct(rb) + ' + 우대 ' + pct(rbn) + 'p = 연 ' + pct(rateDep) + ', 기여금 이자는 기본금리 ' + pct(rb) + '만 적용했다 (금융위 주요 QA 15번).');
+          if (!early && useBonus && rbn > 0 && bracket !== P.rate_bonus_income_bracket) msgs.push('소득+우대금리 ' + pct(P.rate_bonus_income_pp) + 'p는 총급여 2,400만원(종합소득 1,600만원) 이하만 받는다. 이 구간은 은행별 우대금리(최대 1.0~1.7%p)만 넣어야 한다 (은행연합회 공시 주2).');
           if (early) msgs.push('3년(36개월) 유지 후 일반 중도해지: 이자는 중도해지이율(기본금리 ' + pct(rb) + ', 우대 없음), 정부기여금과 기여금 이자는 60%, 비과세는 유지 (조세특례제한법 개정 ’25.1.1 시행).');
           msgs.push('같은 금리의 일반 적금은 이자에 15.4%를 떼고 기여금이 없어 ' + won(plain) + '이다. 청년도약계좌가 ' + won(diff) + ' 더 많다. 이자는 단리 계산이라 은행 실제와 몇만원 차이 날 수 있다.');
           warn.innerHTML = msgs.join('<br />');

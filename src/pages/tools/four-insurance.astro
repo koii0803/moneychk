@@ -175,6 +175,10 @@ const stepSub = ['', '세전 월 보수', '고용안정·직능 요율', '나이
           var sal = num(I.salary);
           var size = I.company_size.value;
           var a60 = I.age60.checked, a65 = I.age65.checked;
+          // 월 60시간 미만 단시간근로자: 국민연금·건강보험 적용 제외, 고용보험은 3개월 이상 계속 근로면 적용
+          var short60 = I.short60.checked, cont3m = I.cont3m.checked;
+          var npOut = a60 || short60;
+          var eiOut = a65 || (short60 && !cont3m);
           var msgs = [];
           Object.keys(V).forEach(function (k) { set(k, '—'); });
           set('wc_er', '별도');
@@ -189,23 +193,23 @@ const stepSub = ['', '세전 월 보수', '고용안정·직능 요율', '나이
           var npBase = Math.min(Math.max(npRaw, P.np_income_min), P.np_income_max);
           var npTag = npRaw < P.np_income_min ? ' (하한 적용)' : npRaw > P.np_income_max ? ' (상한 적용)' : '';
           // (3) 국민연금
-          var npEe = a60 ? 0 : r10(npBase * P.np_rate_employee / 100);
-          var npEr = a60 ? 0 : r10(npBase * P.np_rate_employer / 100);
+          var npEe = npOut ? 0 : r10(npBase * P.np_rate_employee / 100);
+          var npEr = npOut ? 0 : r10(npBase * P.np_rate_employer / 100);
           // (4) 건강보험: 각 몫 계산 뒤 월 보험료 상·하한(합계 기준의 절반) 적용
           var hiMin = P.hi_premium_min_total / 2, hiMax = P.hi_premium_max_total / 2;
           var hiRawEe = r10(sal * P.hi_rate_employee / 100), hiRawEr = r10(sal * P.hi_rate_employer / 100);
-          var hiEe = Math.min(Math.max(hiRawEe, hiMin), hiMax);
-          var hiEr = Math.min(Math.max(hiRawEr, hiMin), hiMax);
-          var hiTag = hiRawEe < hiMin ? ' (하한 적용)' : hiRawEe > hiMax ? ' (상한 적용)' : '';
+          var hiEe = short60 ? 0 : Math.min(Math.max(hiRawEe, hiMin), hiMax);
+          var hiEr = short60 ? 0 : Math.min(Math.max(hiRawEr, hiMin), hiMax);
+          var hiTag = short60 ? ' (적용 제외)' : hiRawEe < hiMin ? ' (하한 적용)' : hiRawEe > hiMax ? ' (상한 적용)' : '';
           // (5) 장기요양: 건강보험료 × (장기요양보험료율 ÷ 건강보험료율)
           var ltcEe = r10(hiEe * P.ltc_rate / P.hi_rate_total);
           var ltcEr = r10(hiEr * P.ltc_rate / P.hi_rate_total);
           // (6) 고용보험 실업급여
-          var eiEe = a65 ? 0 : r10(sal * P.ei_rate_employee / 100);
-          var eiEr = a65 ? 0 : r10(sal * P.ei_rate_employer / 100);
-          // (7) 고용안정·직업능력개발 (사업주만)
+          var eiEe = eiOut ? 0 : r10(sal * P.ei_rate_employee / 100);
+          var eiEr = eiOut ? 0 : r10(sal * P.ei_rate_employer / 100);
+          // (7) 고용안정·직업능력개발 (사업주만). 고용보험 적용 제외면 이것도 안 낸다
           var stabRate = P.ei_stab_rate[size];
-          var stabEr = r10(sal * stabRate / 100);
+          var stabEr = (short60 && !cont3m) ? 0 : r10(sal * stabRate / 100);
           // (9) 합계, (10) 실수령액
           var sumEe = npEe + hiEe + ltcEe + eiEe;
           var sumEr = npEr + hiEr + ltcEr + eiEr + stabEr;
@@ -223,10 +227,14 @@ const stepSub = ['', '세전 월 보수', '고용안정·직능 요율', '나이
 
           answer.textContent = '월급 ' + won(sal) + '의 실수령액은 ' + won(net) + '이다 (4대보험 근로자 부담 ' + won(sumEe) + ').';
 
-          if (npRaw < P.np_income_min) msgs.push('국민연금은 기준소득월액 하한 ' + won(P.np_income_min) + '으로 계산했다 (' + P.np_income_period + ' 적용).');
-          if (npRaw > P.np_income_max) msgs.push('국민연금은 기준소득월액 상한 ' + won(P.np_income_max) + '으로 계산했다 (' + P.np_income_period + ' 적용). 월급이 그 이상이어도 보험료는 같다.');
-          if (hiRawEe < hiMin) msgs.push('건강보험은 월 보험료 하한(각 ' + won(hiMin) + ')을 적용했다.');
-          if (hiRawEe > hiMax) msgs.push('건강보험은 월 보험료 상한(각 ' + won(hiMax) + ')을 적용했다. 장기요양은 상한 적용 뒤 금액에 곱한다.');
+          if (short60) msgs.push('1개월 소정근로시간 ' + P.short_time_month_hours + '시간 미만(주 ' + P.short_time_week_hours + '시간 미만) 단시간근로자는 국민연금 근로자·건강보험 직장가입자에서 빠져 국민연금·건강보험·장기요양을 0원으로 계산했다 (국민연금법 시행령 제2조 제4호, 국민건강보험법 시행령 제9조 제1호). 3개월 이상 계속 근로하면서 사용자 동의로 국민연금 가입을 희망하거나 두 사업장 소정근로시간 합이 60시간 이상이면 국민연금에 들어갈 수 있다.');
+          if (short60 && !cont3m) msgs.push('고용보험도 적용 제외라 실업급여·고용안정 보험료를 0원으로 계산했다. 같은 사업장에서 ' + P.ei_short_continuous_months + '개월 이상 계속 근로하면 적용되니 아래 칸을 켜라 (고용보험법 시행령 제3조 제1항·제2항).');
+          if (short60 && cont3m) msgs.push(P.ei_short_continuous_months + '개월 이상 계속 근로하는 단시간근로자라 고용보험은 적용된다 (고용보험법 시행령 제3조 제2항 제1호). 국민연금·건강보험은 그래도 제외다.');
+          if (!short60 && npRaw < P.np_income_min) msgs.push('월급이 국민연금 기준소득월액 하한보다 적다. 1개월 소정근로시간이 ' + P.short_time_month_hours + '시간 미만이면 국민연금·건강보험 가입 대상이 아니니 위 칸을 켜고 다시 봐라.');
+          if (!npOut && npRaw < P.np_income_min) msgs.push('국민연금은 기준소득월액 하한 ' + won(P.np_income_min) + '으로 계산했다 (' + P.np_income_period + ' 적용).');
+          if (!npOut && npRaw > P.np_income_max) msgs.push('국민연금은 기준소득월액 상한 ' + won(P.np_income_max) + '으로 계산했다 (' + P.np_income_period + ' 적용). 월급이 그 이상이어도 보험료는 같다.');
+          if (!short60 && hiRawEe < hiMin) msgs.push('건강보험은 월 보험료 하한(각 ' + won(hiMin) + ')을 적용했다.');
+          if (!short60 && hiRawEe > hiMax) msgs.push('건강보험은 월 보험료 상한(각 ' + won(hiMax) + ')을 적용했다. 장기요양은 상한 적용 뒤 금액에 곱한다.');
           if (a60) msgs.push('만 60세 이상은 국민연금 당연 사업장가입 대상이 아니라 0원으로 계산했다 (국민연금법 제8조 제1항). 임의계속가입 중이면 4.75%를 낸다.');
           if (a65) msgs.push('만 65세 이후 새로 고용된 사람은 실업급여 보험료를 걷지 않아 고용보험 0원이다 (보험료징수법 제13조 제3항). 사업주의 고용안정·직능 보험료는 그대로다.');
           msgs.push('소득세·지방소득세는 빼지 않았다. 산재보험료는 사업주 전액 부담이며 업종별 요율이라 사업주 합계에 들어 있지 않다.');

@@ -32,6 +32,7 @@ const params = {
   farm_ratio: num('farm_ratio'),
   farm_red_ratio: num('farm_reduction_ratio'),
   farm_area: num('farm_exempt_area'),
+  farm_area_rural: num('farm_exempt_area_rural'),
   first_cap: num('first_cap'),
   first_cap_small: num('first_cap_small'),
   first_price_max: num('first_price_max'),
@@ -238,6 +239,9 @@ const stepSub = ['', '실거래가·전용면적', '1세대 기준', '생애최�
           var price = num(I.price), area = dec(I.area);
           var houses = I.houses.value, adj = I.adjusted.checked, temp2 = I.temp2.checked;
           var first = I.first.checked, firstSmall = I.first_small.checked;
+          // 국민주택규모: 85㎡ 이하, 수도권 밖 도시지역 아닌 읍·면은 100㎡ 이하 (주택법 제2조 제6호)
+          var rural = I.rural.checked;
+          var farmArea = rural ? P.farm_area_rural : P.farm_area;
           var msgs = [];
           Object.keys(V).forEach(function (k) { set(k, '—'); });
           Object.keys(FX).forEach(function (k) { setFx(k); });
@@ -279,11 +283,11 @@ const stepSub = ['', '실거래가·전용면적', '1세대 기준', '생애최�
             : '(1) × ' + pct(rate) + ' × 50% × 20% = ' + pct(eduRate);
 
           // (5) 농어촌특별세: (2% + 중과분) × 10%, 85㎡ 이하 비과세 (농특세법 제5조·제4조)
-          var small = area > 0 && area <= P.farm_area;
+          var small = area > 0 && area <= farmArea;
           var farmRate = (P.farm_std + P.heavy_base * heavyMult) * P.farm_ratio;
           var farmBase = small ? 0 : price * farmRate;
           var farmF = small
-            ? '전용 ' + area + '㎡ ≤ ' + P.farm_area + '㎡ 서민주택 비과세'
+            ? '전용 ' + area + '㎡ ≤ ' + farmArea + '㎡ 서민주택 비과세'
             : '(1) × (' + pct(P.farm_std) + (heavy ? ' + ' + pct(P.heavy_base * heavyMult) : '') + ') × 10% = ' + pct(farmRate);
 
           // (6) 생애최초 감면: 산출세액에서 200만원(소형·저가·인구감소지역 300만원) 공제, 12억 이하, 1주택만
@@ -302,13 +306,14 @@ const stepSub = ['', '실거래가·전용면적', '1세대 기준', '생애최�
               if (!small) {
                 farmOnCut = cut * P.farm_red_ratio;
                 farmF += ' + 감면액 × 20%';
-                msgs.push('전용 ' + P.farm_area + '㎡ 초과 주택은 생애최초 감면세액의 20%(' + won(Math.round(farmOnCut)) + ')를 농어촌특별세로 낸다 (농어촌특별세법 제5조 제1항 제1호).');
+                msgs.push('전용 ' + farmArea + '㎡ 초과 주택은 생애최초 감면세액의 20%(' + won(Math.round(farmOnCut)) + ')를 농어촌특별세로 낸다 (농어촌특별세법 제5조 제1항 제1호).');
               }
             }
           }
           if (firstSmall && !first) msgs.push('소형·저가·인구감소지역 300만원 한도는 생애최초 주택 구입을 켜야 적용된다.');
           if (temp2 && houses !== '2') msgs.push('일시적 2주택은 주택 수가 2주택일 때만 뜻이 있다.');
-          if (area <= 0) msgs.push('전용면적을 넣지 않아 농어촌특별세를 85㎡ 초과(0.2%)로 계산했다. 85㎡ 이하면 0이다.');
+          if (area <= 0) msgs.push('전용면적을 넣지 않아 농어촌특별세를 ' + farmArea + '㎡ 초과(0.2%)로 계산했다. ' + farmArea + '㎡ 이하면 0이다.');
+          if (rural && area > P.farm_area && area <= P.farm_area_rural) msgs.push('수도권 밖 도시지역이 아닌 읍·면 지역이라 국민주택규모가 ' + P.farm_area_rural + '㎡ 이하로 넓어져 농어촌특별세가 0이다 (주택법 제2조 제6호, 농어촌특별세법 제4조 제11호).');
 
           var farm = farmBase + farmOnCut;
           var taxTotal = acq + edu + farm - cut;

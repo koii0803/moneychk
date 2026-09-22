@@ -15,7 +15,10 @@ const related = calc.related_calcs.map((r) => {
 });
 const basisYear = calc.basis_date.slice(0, 4);
 const P = calc.params as Record<string, unknown>;
-const params = P[basisYear] as Record<string, unknown>;
+// 상·하한·최저임금은 이직일 당시 기준으로 정해진다. 그래서 한 해만 넘기지 않고 연도 블록을 전부 넘기고,
+// 화면에서 퇴직일(이직일)의 연도로 고른다. 퇴직일이 없으면 basis 연도.
+const years = Object.fromEntries(Object.entries(P).filter(([k]) => /^\d{4}$/.test(k)));
+const params = { basis: basisYear, years };
 const stepTitle = ['', '퇴직 전 임금', '나이 · 가입기간', '선택 사항'];
 const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정', '장애인 · 단시간'];
 ---
@@ -156,7 +159,7 @@ const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정',
         var root = document.querySelector('[data-calc]');
         if (!root || root.dataset.ready) return;
         root.dataset.ready = '1';
-        var P = JSON.parse(document.getElementById('calc-params').textContent);
+        var Y = JSON.parse(document.getElementById('calc-params').textContent);
         var DAY = 86400000;
 
         var fmt = function (n, d) {
@@ -188,7 +191,14 @@ const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정',
         var warn = root.querySelector('[data-warn]');
         var IDLE = '퇴직 전 3개월 임금총액과 나이·가입기간을 넣으면 실업급여가 나온다.';
 
-        var CAP = P.base_day_cap * P.benefit_rate / 100; // 구직급여 일액 상한
+        // 이직일 당시 기준으로 적용 연도를 고른다. 가진 연도 밖이면 가장 가까운 연도로 맞춘다.
+        var YEARS = Object.keys(Y.years).sort();
+        var pickYear = function (t) {
+          if (t === null) return Y.basis;
+          var y = String(new Date(t).getUTCFullYear());
+          if (Y.years[y]) return y;
+          return y < YEARS[0] ? YEARS[0] : YEARS[YEARS.length - 1];
+        };
 
         function set(id, text) { if (V[id]) V[id].textContent = text; }
         function calc() {
@@ -199,8 +209,12 @@ const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정',
           var age = ageRaw === '' ? null : Number(ageRaw);
           var band = Number(I.insured.value) || 0;
           var disabled = I.disabled.checked;
+          var ord = num(I.ordinary);
+          var year = pickYear(leave);
+          var P = Y.years[year];
           var hours = Number(I.hours.value) || P.default_hours;
           var FLOOR = P.min_wage_hour * hours * P.floor_rate / 100; // 최저구직급여일액
+          var CAP = P.base_day_cap * P.benefit_rate / 100; // 구직급여 일액 상한
           var msgs = [];
           Object.keys(V).forEach(function (k) { set(k, /_sub$/.test(k) ? '' : '—'); });
 
@@ -220,18 +234,23 @@ const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정',
             set('days_sub', daysTag);
           }
 
-          if (!wage3) {
+          // 3개월 임금이 없어도 1일 통상임금만 있으면 기초일액이 잡힌다 (제45조 제2항)
+          if (!wage3 && !ord) {
             answer.textContent = IDLE;
             warn.hidden = true; return;
           }
 
           var avg = wage3 / periodDays;
-          var raw = avg * P.benefit_rate / 100;
+          var basis = Math.max(avg, ord); // 제45조 제2항: 평균임금이 통상임금보다 적으면 통상임금
+          var useOrd = ord > avg;
+          var raw = basis * P.benefit_rate / 100;
           var daily = Math.min(Math.max(raw, FLOOR), CAP);
           var how = raw > CAP ? '상한' : raw < FLOOR ? '하한' : '';
 
           set('avg_wage', won(avg, 2));
           set('avg_wage_sub', won(wage3) + ' ÷ ' + pdHow);
+          set('basis_day', won(basis, 2));
+          set('basis_day_sub', ord ? (useOrd ? '통상임금이 더 커서 통상임금' : '평균임금이 더 커서 평균임금') : '통상임금 미입력 — 평균임금 그대로');
           set('daily_raw', won(raw, 2));
           set('daily', won(Math.round(daily)));
           set('daily_sub', how
@@ -248,8 +267,11 @@ const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정',
             answer.textContent = '예상 실업급여 총액은 ' + won(total) + '이다 (하루 ' + won(Math.round(daily)) + ' × ' + days + '일).';
           }
 
-          if (how === '상한') msgs.push('1일 평균임금의 ' + P.benefit_rate + '%(' + won(raw, 2) + ')가 상한 ' + won(CAP) + '을 넘어 상한액으로 계산했다 (시행령 제68조 제1항: 기초일액 상한 ' + fmt(P.base_day_cap) + '원 × ' + P.benefit_rate + '%). 2025.12.31. 이전 이직자는 종전 상한 66,000원이다.');
-          if (how === '하한') msgs.push('1일 평균임금의 ' + P.benefit_rate + '%(' + won(raw, 2) + ')가 하한 ' + won(FLOOR) + '보다 적어 하한액으로 계산했다 (제46조 제2항: 최저임금 ' + fmt(P.min_wage_hour) + '원 × ' + hours + '시간 × ' + P.floor_rate + '%).');
+          if (leave) msgs.push('이직일이 ' + year + '년이라 ' + year + '년 기준(상한 ' + won(CAP) + ' · 하한 ' + won(FLOOR) + ')으로 계산했다. 상·하한과 최저임금은 이직일 당시 기준으로 정해진다 (제45조 제4항·제5항).');
+          else msgs.push('퇴직일을 안 넣어 ' + Y.basis + '년 기준(상한 ' + won(CAP) + ' · 하한 ' + won(FLOOR) + ')으로 계산했다. ' + YEARS[0] + '년에 그만뒀으면 퇴직일을 넣어야 그해 기준으로 나온다.');
+          if (useOrd) msgs.push('1일 통상임금(' + won(ord) + ')이 1일 평균임금(' + won(avg, 2) + ')보다 커서 통상임금을 기초일액으로 삼았다 (제45조 제2항). 이직 당시 일용근로자였으면 이 규정은 적용되지 않는다.');
+          if (how === '상한') msgs.push('기초일액의 ' + P.benefit_rate + '%(' + won(raw, 2) + ')가 상한 ' + won(CAP) + '을 넘어 상한액으로 계산했다 (시행령 제68조 제1항: 기초일액 상한 ' + fmt(P.base_day_cap) + '원 × ' + P.benefit_rate + '%).');
+          if (how === '하한') msgs.push('기초일액의 ' + P.benefit_rate + '%(' + won(raw, 2) + ')가 하한 ' + won(FLOOR) + '보다 적어 하한액으로 계산했다 (제46조 제2항: 최저임금 ' + fmt(P.min_wage_hour) + '원 × ' + hours + '시간 × ' + P.floor_rate + '%).');
           if (hours !== P.default_hours) msgs.push('1일 소정근로시간 ' + hours + '시간 기준 하한이다. 고용24 모의계산은 8시간 기준으로 보여주므로 값이 다를 수 있다.');
           if (!leave && !pdIn) msgs.push('퇴직일이나 3개월 총 일수를 안 넣어 ' + P.default_period_days + '일로 나눴다. 퇴직일을 넣으면 정확한 일수(90~92일)로 계산한다.');
           if (age !== null && !disabled && age >= P.age_threshold) msgs.push('이직일 현재 ' + P.age_threshold + '세 이상이라 [별표 1] 아래 줄(최대 270일)을 적용했다.');
@@ -269,7 +291,7 @@ const stepSub = ['', '세전 3개월 임금총액', '소정급여일수 결정',
         root.querySelectorAll('[data-type="select"], [data-type="date"], [data-type="check"]').forEach(function (el) {
           el.addEventListener('input', calc); el.addEventListener('change', calc);
         });
-        I.hours.value = String(P.default_hours);
+        I.hours.value = String(Y.years[Y.basis].default_hours);
 
         // 공유 주소 (기획서 3번)
         var sh = root.querySelector('[data-share]');

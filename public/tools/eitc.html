@@ -280,7 +280,7 @@
   <section class="hero">
     <span class="eyebrow">근로장려세제 EITC · 자녀장려금 CTC</span>
     <h1>근로장려금·자녀장려금<br /><em>얼마 받는지</em> 조건대로 판정</h1>
-    <p class="lede">가구유형 → 총급여액 등 → 총소득·재산 요건 → 산정표 → 감액 → 최소지급 규칙까지, 국세청이 심사하는 순서 그대로 계산합니다. 산식은 조세특례제한법 제100조의5·제100조의29, 요건은 국세청 신청자격 안내를 그대로 씁니다.</p>
+    <p class="lede">가구유형 → 총급여액 등 → 총소득·재산 요건 → 산정표 → 감액 → 최소지급 규칙까지, 국세청이 심사하는 순서 그대로 계산합니다. 지급액은 조세특례제한법 제100조의5 ⑤ [별표 11]·제100조의29 ② [별표 11의2] 산정표대로, 요건은 국세청 신청자격 안내를 그대로 씁니다.</p>
     <div class="stamps">
       <span class="stamp gold"><b>2025년 귀속 · 2026년 신청</b> 현행법 기준<i class="tip" data-t="year">?</i></span>
       <span class="stamp">정기신청분 <b>8월 27일 지급 완료</b></span>
@@ -428,7 +428,7 @@
     <div class="verdict" id="verdict"></div>
     <div class="big" id="bigAmt">0<small>원</small></div>
     <div class="big-sub" id="bigSub">입력값을 넣으면 바로 계산됩니다.</div>
-    <p class="hint" style="margin-top:10px"><b>국세청 기준 그대로 계산한 예상액입니다.</b> 최종 결정은 세무서가 하며, 신청 전 홈택스 ‘계산해보기’로 한 번 더 확인하세요.</p>
+    <p class="hint" style="margin-top:10px"><b>국세청 기준 그대로 계산한 예상액입니다.</b> 최종 결정은 세무서가 하며, 신청 전 홈택스 ‘계산해보기’로 한 번 더 확인하세요.<br />지급액은 직선 산식이 아니라 <b>법정 산정표</b>(조특법 §100조의5 ⑤ [별표 11], §100조의29 ② [별표 11의2])대로 냅니다 — 근로장려금은 총급여액 등 10만원 구간, 자녀장려금은 50만원 구간에서 유리한 경계값으로 계산해 1,000원 단위로 올립니다. 다만 총급여액 등 10만원 미만처럼 별표가 10만원보다 잘게 나눈 몇 줄은 반영하지 않았습니다(그 구간은 최소지급 규칙으로 어차피 10만원으로 결정됩니다).</p>
     <div class="twin">
       <div class="tile"><div class="k"><span>근로장려금</span><span id="eitcZone"></span><i class="tip" data-t="zone">?</i></div><div class="v" id="eitcAmt">0원</div><div class="m" id="eitcMemo">—</div></div>
       <div class="tile"><div class="k"><span>자녀장려금</span><span id="ctcKids"></span></div><div class="v" id="ctcAmt">0원</div><div class="m" id="ctcMemo">—</div></div>
@@ -576,6 +576,10 @@
   };
   const CTC = { cap:7000, per:100, one:{a:2100,c:7000,den:4900}, dual:{a:2500,c:7000,den:4500} };
   const ASSET = { half:17000, cap:24000 };
+  // 법정 산정표(조특법 §100조의5 ⑤ 별표11, §100조의29 ② 별표11의2) 규칙.
+  // 총급여액 등을 구간으로 끊어 구간 안에서 유리한 경계값(점증=상한·점감=하한)으로 계산하고 1천원 단위로 올린다.
+  // 연속식으로 계산한 금액이 1만 5천원 미만이면 표에 없는 구간이라 0원이다.
+  const TBL = { stepEitc:100000, stepCtc:500000, unit:1000, min:15000 };
   const RATES = [
     ['도매업',20],['농·임·어업, 소매업',25],['광업, 자동차 및 부품 판매업, 그 밖의 업종',30],
     ['제조업, 음식점업(주점 제외), 부동산매매업',40],['전기·가스·증기·수도, 건설업',45],
@@ -610,13 +614,34 @@
   function fmtInput(inp){ const v=num(inp.value); inp.value = v? v.toLocaleString('ko-KR',{maximumFractionDigits:1}) : ''; }
 
   // ── 산식
-  function eitcCalc(type,x,R){ const r=R.eitc[type], a=r.a*M,b=r.b*M,c=r.c*M,max=r.max*M;
+  const ceilUnit = v => Math.ceil(v/TBL.unit)*TBL.unit;
+  // 연속 직선식 (구간 판정·그래프·설명용). 실제 지급액은 아래 산정표 함수로 낸다.
+  function eitcRaw(type,x,R){ const r=R.eitc[type], a=r.a*M,b=r.b*M,c=r.c*M,max=r.max*M;
     if(x<a) return {amt:x*max/a, zone:'inc'};
     if(x<b) return {amt:max, zone:'flat'};
     if(x<c) return {amt:max-(x-b)*max/(c-b), zone:'dec'};
     return {amt:0, zone:'out'}; }
-  function ctcPer(type,x){ const r = type==='dual'?CTC.dual:CTC.one, a=r.a*M, c=r.c*M;
+  function ctcRaw(type,x){ const r = type==='dual'?CTC.dual:CTC.one, a=r.a*M, c=r.c*M;
     if(x<a) return CTC.per*M; if(x<c) return CTC.per*M-(x-a)*(50*M)/(r.den*M); return 0; }
+  // 별표11 산정표: 10만원 구간 · 구간 내 유리한 경계값 · 1천원 올림
+  // 표는 홑벌이 금액이 같은 소득의 단독가구 금액보다 적어지지 않게 되어 있다(점증구간 기울기가 단독 165/400 > 홑벌이 285/700).
+  // 예: 총급여액 등 390만~400만원 구간은 표에서 단독·홑벌이 모두 1,650,000원.
+  function eitcBase(type,x,R){ return Math.max(eitcRaw(type,x,R).amt, eitcRaw('single',x,R).amt); }
+  function eitcCalc(type,x,R){
+    const z = eitcRaw(type,x,R);
+    const zAmt = eitcBase(type,x,R);
+    if(!(x>0) || zAmt < TBL.min) return {amt:0, zone:z.zone, raw:z.amt, band:null};
+    const lo = Math.floor(x/TBL.stepEitc)*TBL.stepEitc, hi = lo+TBL.stepEitc;
+    const best = Math.max(eitcBase(type,lo,R), eitcBase(type,hi,R));
+    return {amt: ceilUnit(best), zone:z.zone, raw:z.amt, band:[lo,hi]};
+  }
+  // 별표11의2 산정표: 50만원 구간 · 같은 방식
+  function ctcPer(type,x){
+    const raw = ctcRaw(type,x);
+    if(!(x>0) || raw<=0) return 0;
+    const lo = Math.floor(x/TBL.stepCtc)*TBL.stepCtc, hi = lo+TBL.stepCtc;
+    return ceilUnit(Math.max(ctcRaw(type,lo), ctcRaw(type,hi)));
+  }
   function personX(p){ // 총급여액 등 (원)
     let biz=0; p.biz.forEach(b=>{ if(!b.rental) biz+=b.rev*b.rate/100; });
     return (p.wage+biz+p.rel)*M; }
@@ -669,7 +694,8 @@
     if(eitcEligible){
       const e=eitcCalc(type,x,R); eitcZone=e.zone; let amt=e.amt; const r=R.eitc[type];
       const f = e.zone==='inc' ? `${kr(x)} × ${r.max}/${r.a}` : e.zone==='flat' ? `최대 ${r.max}만원` : e.zone==='dec' ? `${r.max}만원 − (${kr(x)} − ${comma(r.b)}만원) × ${r.max}/${r.c-r.b}` : `${comma(r.c)}만원 이상 → 0원`;
-      st(amt>0?'ok':'no','근로장려금 산정액', kr(amt), ({inc:'점증구간',flat:'평탄구간(최대)',dec:'점감구간',out:'지급 없음'})[e.zone]+' · '+f, '조특법 §100조의5 ①');
+      const band = e.band ? comma(e.band[0])+'~'+comma(e.band[1])+'원 구간' : '표 밖';
+      st(amt>0?'ok':'no','근로장려금 산정액', kr(amt), ({inc:'점증구간',flat:'평탄구간(최대)',dec:'점감구간',out:'지급 없음'})[e.zone]+' · 산정표 '+band+' · 직선식 '+f+' = '+won(Math.floor(e.raw)), '조특법 §100조의5 ⑤ [별표 11] 근로장려금 산정표');
       if(assetHalf){ amt*=0.5; st('warn','재산 감액 50%', kr(amt), '재산 1억 7,000만원 이상 2억 4,000만원 미만', '조특법 §100조의5 ④'); }
       if(S.when==='late'){ amt*=0.95; st('warn','기한 후 신청 감액 5%', kr(amt), '정기 신청기간(5.1~6.1) 이후 6.2~12.1 신청', '조특법 §100조의7 ②'); }
       amt=Math.round(amt);
@@ -691,7 +717,7 @@
       else {
         const per=ctcPer(type,x); let amt=per*S.kids; const r = type==='dual'?CTC.dual:CTC.one;
         const f = x<r.a*M ? `자녀 ${S.kids}명 × 100만원` : `자녀 ${S.kids}명 × [100만원 − (${kr(x)} − ${comma(r.a)}만원) × 50/${comma(r.den)}]`;
-        st('ok','자녀장려금 산정액', kr(amt), f+' · 1인당 '+kr(per), '조특법 §100조의29 ①');
+        st('ok','자녀장려금 산정액', kr(amt), f+' · 산정표 50만원 구간 적용 후 1인당 '+kr(per), '조특법 §100조의29 ② [별표 11의2] 자녀장려금 산정표');
         if(assetHalf){ amt*=0.5; st('warn','재산 감액 50% (자녀장려금)', kr(amt), '재산 1억 7,000만원 이상', '조특법 §100조의31 ① → §100조의5 ④ 준용'); }
         if(S.when==='late'){ amt*=0.95; st('warn','기한 후 신청 감액 5% (자녀장려금)', kr(amt), '', '조특법 §100조의31 ① → §100조의7 ② 준용'); }
         if(S.ctcDeduct>0){ const d=Math.min(amt,S.ctcDeduct); amt-=d; st('warn','자녀세액공제 차감', kr(amt), '연말정산·종소세에서 받은 자녀세액공제 '+won(S.ctcDeduct)+' 만큼 차감 (중복 불가)', '조특법 §100조의30 ②'); }
@@ -980,7 +1006,7 @@
   setTimeout(()=>$$('.card').forEach(c=>c.classList.add('in')),4000); // 빠른 스크롤로 관찰을 놓쳐도 카드가 숨지 않게
 
   render();
-  if(location.hash==='#debug') window.__eitc={S,compute,render,RULES,CTC,ASSET};
+  if(location.hash==='#debug') window.__eitc={S,compute,render,RULES,CTC,ASSET,TBL,eitcCalc,ctcPer,eitcRaw,ctcRaw};
 })();
 </script>
 </body>

@@ -231,14 +231,16 @@ const spouseSteps = calc.steps.filter((s) => s.spouse);
           set('wage_tag', floored ? '하한 적용 · 입력 ' + won(wageIn) : '');
 
           var dayWage = wage / P.days_per_month;
+          // 하한(최저임금)은 고용보험 급여에만 걸린다. 회사 유급 의무는 실제 통상임금이다
+          // (고용보험법 시행령 제101조 제2호 vs 근로기준법 제74조 제4항)
+          var dayWageCo = wageIn / P.days_per_month;
           var dayCap = K.cap_total / K.total_days;
           var capped = dayWage > dayCap;
           var priority = size === 'priority';
 
           // (3) 유급 구간: 우선지원은 고용보험이 상한까지, 나머지는 회사. 대규모는 회사 전액
-          var seg1Wage = dayWage * d1;
           var seg1Gov = priority ? Math.min(dayWage, dayCap) * d1 : 0;
-          var seg1Co = seg1Wage - seg1Gov;
+          var seg1Co = Math.max(0, dayWageCo * d1 - seg1Gov);
           // (4) 이후 구간: 규모 무관하게 고용보험이 상한까지, 회사 의무 없음
           var seg2Gov = Math.min(dayWage, dayCap) * d2;
           var seg2Co = 0;
@@ -262,7 +264,8 @@ const spouseSteps = calc.steps.filter((s) => s.spouse);
           if (floored) msgs.push('월 통상임금이 2026년 최저임금 월 환산액 ' + won(P.min_wage_month) + '(시급 ' + fmt(P.min_wage_hourly) + '원 × ' + P.month_hours + '시간)보다 적어 그 값으로 계산했다 (시행령 제101조 제2호).');
           if (capped) msgs.push('1일 통상임금 ' + won(Math.round(dayWage)) + '이 고용보험 1일 상한 ' + won(Math.round(dayCap)) + '(' + K.total_days + '일 ' + man(K.cap_total) + ' ÷ ' + K.total_days + ')을 넘어 고용보험은 상한액으로 계산했다. 마지막 ' + d2 + '일은 회사 지급 의무가 없어 차액 ' + won(Math.round((dayWage - dayCap) * d2)) + '은 받지 못한다 (근로기준법 제74조 제4항).');
           if (!priority) msgs.push('대규모기업은 최초 ' + d1 + '일 통상임금을 회사가 전액 주고, 고용보험은 ' + (d1 + 1) + '일째부터 ' + d2 + '일만 준다 (고용보험법 제76조 제1항 제1호). 급여 신청은 ' + d1 + '일이 지난 날부터 할 수 있다.');
-          else msgs.push('우선지원대상기업은 회사가 통상임금을 먼저 다 주고 고용보험 급여를 대신 받는 대위신청도 가능하다. 어느 쪽이든 근로자 총 수령액은 같다.');
+          if (floored && !priority) msgs.push('하한은 고용보험 급여에만 걸린다 (시행령 제101조 제2호). 대규모기업이 최초 ' + d1 + '일에 줘야 하는 금액은 실제 통상임금 ' + won(wageIn) + ' 기준인 ' + won(Math.round(dayWageCo * d1)) + '이다 (근로기준법 제74조 제4항).');
+          if (priority) msgs.push('우선지원대상기업은 회사가 통상임금을 먼저 다 주고 고용보험 급여를 대신 받는 대위신청도 가능하다. 어느 쪽이든 근로자 총 수령액은 같다.');
 
           // (7)~(9) 배우자 출산휴가 20일
           if (useSpouse) {
@@ -275,7 +278,8 @@ const spouseSteps = calc.steps.filter((s) => s.spouse);
               var spTotalWage = spDay * P.spouse_days;
               var spPriority = spSize === 'priority';
               var spGov = spPriority ? Math.min(spTotalWage, P.spouse_cap_total) : 0;
-              var spCo = spTotalWage - spGov;
+              // 회사 유급 의무는 실제 통상임금 기준 (하한은 고용보험 급여에만 걸린다)
+              var spCo = Math.max(0, spWageIn / P.month_hours * P.day_hours * P.spouse_days - spGov);
               var spCapped = spPriority && spTotalWage > P.spouse_cap_total;
               set('sp_day', won(Math.round(spDay)));
               set('sp_day_tag', (spWageIn < P.min_wage_month ? '하한 적용 · ' : '') + won(spWage) + ' ÷ ' + P.month_hours + ' × ' + P.day_hours);

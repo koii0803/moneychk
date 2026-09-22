@@ -258,8 +258,10 @@ const stepSub = ['', '수급 개시 연령', '현재가치 기준', '정상·조
           // (7) 조기·연기
           var adj = shift < 0 ? -P.early_rate_per_month * (-shift * 12) : shift > 0 ? P.delay_rate_per_month * (shift * 12) : 0;
           set2('adjust', (adj > 0 ? '+' : '') + pct(adj), shift ? Math.abs(shift) + '년 = ' + Math.abs(shift) * 12 + '개월 × ' + (shift < 0 ? '−' + pct(P.early_rate_per_month) : '+' + pct(P.delay_rate_per_month)) : '정상 수령');
-          // (8) 월 예상액
-          var monthly = cut(normal * (1 + adj));
+          // (8) 월 예상액 — 최고한도(제53조)는 조기 감액·연기 가산까지 끝난 월지급액에 건다
+          var adjusted = rawNormal * (1 + adj);
+          var cappedFinal = adjusted > B;
+          var monthly = cut(Math.min(adjusted, B));
           set('monthly', won(monthly));
 
           answer.textContent = claimAge + '세부터 받는 월 예상 연금액은 ' + won(monthly) + '이다 (현재가치 기준, 물가 상승 반영 전).';
@@ -271,7 +273,8 @@ const stepSub = ['', '수급 개시 연령', '현재가치 기준', '정상·조
           else msgs.push('전 기간에 2026년 상수 ' + P.const_current + '(소득대체율 ' + P.replacement_rate_current + '%)을 적용했다. 2025년 이전 가입기간이 있으면 「첫 가입 연도」를 넣어야 상수 1.245~2.4가 반영된다.');
           if (shift < 0) msgs.push('조기노령연금은 소득 있는 업무(월 소득이 A값 ' + won(A) + ' 초과)에 종사하면 받을 수 없고, 한 번 감액된 비율은 평생 간다 (제61조 제2항, 제63조 제2항).');
           if (shift > 0) msgs.push('연기 기간에는 연금이 나오지 않는다. 가산율은 연기 신청 당시 연금액에 붙는다 (제62조 제2항).');
-          if (capped) msgs.push('계산된 월액 ' + won(cut(rawNormal)) + '이 B값보다 커서 연금액 최고한도인 B값으로 막았다 (제53조).');
+          if (cappedFinal) msgs.push('계산된 월액 ' + won(cut(adjusted)) + '이 B값보다 커서 연금액 최고한도인 B값 ' + won(B) + '으로 막았다 (제53조). 최고한도는 조기 감액·연기 가산까지 끝난 월지급액에 건다.');
+          else if (capped) msgs.push('정상 수령 기준 월액 ' + won(cut(rawNormal)) + '은 B값을 넘지만, 조기 감액을 반영한 실제 월지급액은 한도 안이라 그대로 나온다 (제53조).');
           if (bIn < P.b_min) msgs.push('B값은 기준소득월액 하한 ' + won(P.b_min) + '으로 계산했다 (' + P.b_period + ' 적용).');
           if (bIn > P.b_max) msgs.push('B값은 기준소득월액 상한 ' + won(P.b_max) + '으로 계산했다 (' + P.b_period + ' 적용). 소득이 그 이상이어도 연금은 같다.');
           warn.innerHTML = msgs.join('<br />');
