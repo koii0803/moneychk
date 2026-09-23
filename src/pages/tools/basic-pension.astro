@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import CalcDock from '../../components/CalcDock.astro';
 import { SITE, CATEGORIES } from '../../config/site';
 import calc from '../../data/calcs/basic-pension.json';
 import tools from '../../data/tools.json';
@@ -8,6 +9,36 @@ import tools from '../../data/tools.json';
 // 선정기준액·기준연금액·공제액·환산율·감액률은 JSON params(연도 키)에서만 온다. 코드에 숫자를 박지 않는다.
 const cat = CATEGORIES[calc.cat as keyof typeof CATEGORIES];
 const pageUrl = `${SITE.url}/tools/${calc.slug}`;
+// 구조화 데이터: 이 페이지가 "무료 웹 계산기"라는 것과 사이트 안 위치를 구글에 알려 준다.
+// 계산기용 리치결과는 구글에 없다 — 엔티티 이해·사이트링크·빵부스러기 경로에 쓰인다.
+const jsonLd = JSON.stringify([
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: calc.name,
+    url: pageUrl,
+    description: calc.description,
+    applicationCategory: 'FinanceApplication',
+    applicationSubCategory: '모의계산기',
+    operatingSystem: 'All',
+    browserRequirements: 'JavaScript',
+    inLanguage: 'ko',
+    isAccessibleForFree: true,
+    dateModified: calc.basis_date,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    ...(calc.keyword ? { keywords: calc.keyword } : {}),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: SITE.name, item: SITE.url },
+      { '@type': 'ListItem', position: 2, name: '모의계산기', item: `${SITE.url}/tools` },
+      { '@type': 'ListItem', position: 3, name: calc.name, item: pageUrl },
+    ],
+  },
+]);
 const byStep = (n: number) => calc.inputs.filter((i) => i.step === n);
 const related = calc.related_calcs.map((r) => {
   const t = r.tool_no ? tools.find((x) => x.no === r.tool_no) : undefined;
@@ -21,6 +52,7 @@ const stepSub = ['', '단독·부부, 나이', '월 세전 금액', '부부 합�
 ---
 
 <Base title={calc.name} description={calc.description}>
+  <script type="application/ld+json" set:html={jsonLd} slot="head" />
   <div class="calc" data-calc>
     <header class="hero">
       <span class="eyebrow">모의계산기 · {cat.short}</span>
@@ -124,7 +156,7 @@ const stepSub = ['', '단독·부부, 나이', '월 세전 금액', '부부 합�
       </p>
     </section>
 
-    <section class="card slim">
+    <section class="card slim hist-card">
       <div class="card-h"><span class="num">이력</span><h2>기준값 이력</h2><p>바뀌면 줄이 늘어난다</p></div>
       <div class="tbl-wrap">
         <table class="hist">
@@ -311,6 +343,8 @@ const stepSub = ['', '단독·부부, 나이', '월 세전 금액', '부부 합�
       if (document.readyState !== 'loading') init(); else document.addEventListener('DOMContentLoaded', init);
     })();
   </script>
+
+  <CalcDock />
 </Base>
 
 <style>
@@ -434,5 +468,7 @@ const stepSub = ['', '단독·부부, 나이', '월 세전 금액', '부부 합�
     .hist td { border: 0; padding: 0; white-space: normal; }
     .hist td:nth-child(4) { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; }
   }
+  /* 기준값 이력은 화면에서만 감춘다 — JSON history 값도 마크업도 그대로 둔다 */
+  .hist-card { display: none; }
   .foot-note { margin: 28px 0 60px; font-size: 12.5px; color: var(--ink-3); text-align: center; line-height: 1.7; }
 </style>

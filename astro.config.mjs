@@ -29,5 +29,10 @@ export default defineConfig({
     remarkPlugins: [[remarkGfm, { singleTilde: false }]],
     rehypePlugins: [externalLinks],
   },
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // public/tools/eitc.html은 Astro 라우트가 아니라 정적 파일이라 사이트맵에 자동으로 안 들어간다. 손으로 넣는다.
+      customPages: ['https://moneychk.com/tools/eitc'],
+    }),
+  ],
 });
