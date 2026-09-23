@@ -181,6 +181,7 @@ const stepSub = ['', '가장 큰 자격 하나 + 추가 조건', '청구서 금�
           var E = P.elec, key = season === 'summer' ? 'summer' : 'other';
           var a = 0, af = '', b = 0, bf = '';
           if (E[q]) { a = Math.min(bill, E[q][key]); af = '전기요금 ' + won(bill) + '과 ' + (key === 'summer' ? '여름철' : '') + ' 한도 ' + won(E[q][key]) + ' 중 작은 값'; }
+          else { af = '고른 자격은 한전 복지할인 대상이 아니다'; }
           if (multi) { b = Math.min(bill * E.multi.rate / 100, E.multi.cap); bf = '전기요금 × ' + E.multi.rate + '% = ' + won(bill * E.multi.rate / 100) + ', 한도 ' + won(E.multi.cap) + ' (다자녀)'; }
           return b > a ? { v: b, f: bf } : { v: a, f: af };
         }
@@ -192,19 +193,23 @@ const stepSub = ['', '가장 큰 자격 하나 + 추가 조건', '청구서 금�
           var useB = lb > la;
           var l = useB ? lb : la, v = Math.min(bill, l);
           var label = use === 'cook' ? '취사용' : season === 'winter' ? (voucher && !useB ? '동절기(바우처 가구)' : '동절기') : '그 외 계절';
+          if (!l) return { v: 0, l: 0, f: '고른 자격은 도시가스 요금경감 대상이 아니다' };
           return { v: v, l: l, f: '가스 사용요금 ' + won(bill) + '과 ' + label + ' 한도 ' + won(l) + ' 중 작은 값' + (useB ? ' (다자녀)' : '') };
         }
         // (3) 통신: 기본감면 + 초과분 × 율, 최대액. 정부24 값은 부가세 제외라 ×(1+vat)
         function telCut(q, bill) {
           var T = P.tel, r = T[q]; if (!r) return { v: 0, f: '' };
           var k = 1 + T.vat / 100;
-          if (!r.base) { return { v: bill * r.rate / 100, f: '요금 ' + won(bill) + ' × ' + r.rate + '% (한도 없음)' }; }
+          if (r.max == null) { return { v: bill * r.rate / 100, f: '요금 ' + won(bill) + ' × ' + r.rate + '% (한도 없음)' }; }
           var base = r.base * k, cap = r.usage_cap * k, max = r.max * k;
           var b1 = Math.min(bill, base);
           var over = Math.min(Math.max(bill - base, 0), cap);
           var raw = b1 + over * r.rate / 100;
           var v = Math.min(raw, max);
-          return { v: v, f: '월정액 면제 ' + won(b1) + ' + 초과분 ' + won(over) + ' × ' + r.rate + '% = ' + won(raw) + ', 최대 ' + won(max) + ' (부가세 포함)' };
+          var tf = r.base
+            ? '월정액 면제 ' + won(b1) + ' + 초과분 ' + won(over) + ' × ' + r.rate + '% = ' + won(raw) + ', 최대 ' + won(max) + ' (부가세 포함)'
+            : '기본료·통화료 중 감면 대상 ' + won(over) + ' × ' + r.rate + '% = ' + won(raw) + ', 최대 ' + won(max) + ' (부가세 포함 청구액 ' + won(cap) + '까지가 감면 대상)';
+          return { v: v, f: tf };
         }
 
         function calc() {
@@ -238,11 +243,12 @@ const stepSub = ['', '가장 큰 자격 하나 + 추가 조건', '청구서 금�
           var tvExempt = P.tv.exempt.indexOf(q) >= 0 || bd;
           var tvv = tv && tvExempt ? P.tv.fee : 0;
           if (!tv) set('tv', 'TV 없음');
-          else if (!tvExempt) { set('tv', '면제 아님'); setF('tv', q === 'disabled' ? '시각·청각장애인 가정만 면제' : '주거·교육·차상위·다자녀는 면제 대상이 아님'); }
+          else if (!tvExempt) { set('tv', '면제 아님'); setF('tv', q === 'disabled' ? '시각·청각장애인 가정만 면제' : q === 'pension' ? '기초연금 수급자는 TV수신료 면제 대상이 아님 (방송법 시행령 제44조)' : '주거·교육·차상위·다자녀는 면제 대상이 아님'); }
           else { set('tv', won(tvv)); setF('tv', '월 수신료 ' + won(P.tv.fee) + ' 전액 면제' + (bd && P.tv.exempt.indexOf(q) < 0 ? ' (시각·청각장애인 가정)' : '')); }
           // (6) 지역난방
           var D = P.dh, da = D[q] || 0, db = multi ? D.multi : 0, dv = dh ? Math.max(da, db) : 0;
           if (!dh) set('dh', '지역난방 아님');
+          else if (!dv) { set('dh', won(0)); setF('dh', '고른 자격은 지역난방 에너지복지요금 대상이 아니다'); }
           else { set('dh', won(dv)); setF('dh', '월 ' + won(dv) + (db > da ? ' (다자녀)' : '') + ' — 매년 8~10월 12개월분 계좌 환급'); }
 
           // (7) 월 합계
@@ -259,7 +265,8 @@ const stepSub = ['', '가장 큰 자격 하나 + 추가 조건', '청구서 금�
           var filled = elec || gas || tel || tv || dh;
           answer.textContent = filled ? '매달 최대 ' + won(total) + ' 아낄 수 있다. 1년이면 ' + won(annual) + '이다.' : '월 요금을 넣으면 매달 얼마 아끼는지 나온다.';
 
-          if (season === 'winter' && gas && use !== 'cook') msgs.push('동절기 가스 한도 ' + won(g.l) + '은 2025.12.1~2026.11.30 적용 별표 1 값이다. 동절기 밖 8개월은 한도가 ' + won(gasCut(q, multi, 'other', use, voucher, gas).l) + '로 줄어든다.');
+          if (season === 'winter' && gas && use !== 'cook' && g.l > 0) msgs.push('동절기 가스 한도 ' + won(g.l) + '은 2025.12.1~2026.11.30 적용 별표 1 값이다. 동절기 밖 8개월은 한도가 ' + won(gasCut(q, multi, 'other', use, voucher, gas).l) + '로 줄어든다.');
+          if (q === 'pension') msgs.push('기초연금 수급자는 이동통신 기본료·통화료의 50%를 월 11,000원(부가세 포함 12,100원)까지 감면받는다 (복지로 「이동통신요금감면」). 전기·도시가스·TV수신료·지역난방 감면 대상은 아니니, 생계·의료·주거·교육급여나 차상위에도 해당하면 그 자격으로 다시 계산해라.');
           if ((q === 'disabled' || q === 'veteran') && tel) msgs.push('장애인·국가유공자 통신 감면은 35% 정률이고 월 최대액이 없다. 단말기 할부금·부가서비스는 빼고 요금제·통화·데이터 요금에만 적용된다.');
           if (multi && q !== 'none') msgs.push('자격 할인과 다자녀 할인은 중복되지 않는다. 전기·가스·난방 각 항목에서 큰 쪽 하나만 넣었다.');
           if (water) msgs.push('상·하수도 ' + won(water) + '은 지자체 조례로 감면 여부·금액이 달라 합계에 넣지 않았다. 관할 상수도사업본부에 확인한다.');
